@@ -3,20 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research - Nicholas J. McClure</title>
+    <title>CV - Nicholas J. McClure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- MathJax for rendering LaTeX -->
-    <script>
-      MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']]
-        }
-      };
-    </script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -40,6 +29,12 @@
             color: #228B22; /* Forest Green */
             border-bottom: 2px solid #228B22;
         }
+        .cv-section ul {
+            list-style-position: inside;
+        }
+        .cv-section li {
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
@@ -50,9 +45,9 @@
             <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
             <div class="hidden md:flex space-x-6">
                 <a href="index.html" class="nav-link text-white">Home</a>
-                <a href="cv.html" class="nav-link text-white">CV</a>
+                <a href="cv.html" class="nav-link text-white active-link">CV</a>
                 <a href="poster.html" class="nav-link text-white">Poster</a>
-                <a href="research.html" class="nav-link text-white active-link">Research</a>
+                <a href="research.html" class="nav-link text-white">Research</a>
             </div>
             <button id="mobile-menu-button" class="md:hidden text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -70,66 +65,165 @@
     <!-- Main Content -->
     <main class="flex-grow">
         <div class="container mx-auto p-8">
-            <section id="research">
-                <div class="bg-white p-8 rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold text-navy mb-6 text-center">Research: Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field</h2>
-                    <div class="space-y-10 text-gray-800">
-                        
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-3">An Evolving Investigation</h3>
-                            <p class="mb-4">This investigation began during a project to classify unclassified light curves from NASA's TESS mission. We identified a prominent "beat" frequency in the light curve of the cataclysmic variable (CV) <strong>AT 2019muu</strong>. The signal's high amplitude and its presence before the CV's superoutburst suggested it was not intrinsic to the system, but was instead caused by a contaminating source.</p>
-                            <p class="mb-4">The most likely sources were two bright stars located ~5 arcseconds from the CV, designated Target A and Target B. Using Gaia DR3 data, we characterized them as follows:</p>
-                            <div class="bg-gray-100 p-4 rounded-lg my-4 text-sm">
-                                <p class="mb-2"><strong>Target A:</strong> A solar-like main sequence star with a BP-RP value of 0.81, an effective temperature (Teff) of 5652.95 K, and a surface gravity (log g) of 4.288, located at a distance of 9159 pc.</p>
-                                <p><strong>Target B:</strong> A cooler red giant star with a BP-RP value of 1.32, a Teff of 3306 K, and a radius of 75.65 solar radii, located at 4351 pc.</p>
-                            </div>
-                            <p class="mb-4">The observed periodicity (~4.9 hours) is inconsistent with the physical properties of a red giant. The dynamical timescale of such a star is on the order of days, far too long to produce the observed rapid variations.</p>
-                             <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
-                                <p class="mb-2 text-gray-700">The dynamical timescale ($t_{\text{dyn}}$) of a star is approximated by:</p>
-                                <p class="text-lg">$$ t_{\text{dyn}} \approx \sqrt{\frac{R^3}{GM}} \propto \frac{1}{\sqrt{\rho}} $$</p>
-                                <p class="mt-2 text-sm text-gray-600">Where $R$ is the stellar radius, $M$ is the mass, and $\rho$ is the mean density. Target B's large radius and low mean density (low $\rho$) result in a long dynamical timescale, making it physically incapable of producing the observed variations.</p>
-                            </div>
-                            <p class="mb-4">This analysis ruled out Target B and established Target A as the primary suspect, motivating a ground-based observing campaign to test this hypothesis.</p>
-                        </div>
+            <section id="cv" class="bg-white p-8 rounded-lg shadow-md">
+                <div class="text-center mb-8">
+                    <a href="main.pdf" download="McClure_CV.pdf" class="bg-forest text-white py-2 px-6 rounded-md hover:bg-opacity-80 transition duration-300">Download CV (PDF)</a>
+                </div>
 
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-3">What is a Beat Frequency?</h3>
-                             <p class="mb-4">The "beating" pattern in the TESS light curve is an interference effect. It occurs when two or more periodic signals with very similar frequencies are added together. At times, the peaks of the waves align, causing constructive interference and a higher amplitude. At other times, the peak of one wave aligns with the trough of another, causing destructive interference and a lower amplitude. The visualization below demonstrates this process, showing how two simple sine waves combine to create a complex beat pattern, just like the one observed in our data.</p>
-                            <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/optimized_animated_beat_frequency_visualization.html" width="100%" height="500" style="border:0;" title="Beat Frequency Visualization"></iframe>
-                            </div>
-                            <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
-                                <p class="mb-2 text-gray-700">When two waves with frequencies $f_1$ and $f_2$ are summed, the resulting wave can be described by a trigonometric identity:</p>
-                                <p class="text-lg">$$ A\sin(2\pi f_1 t) + A\sin(2\pi f_2 t) = 2A \cos\left(2\pi \frac{f_1 - f_2}{2} t\right) \sin\left(2\pi \frac{f_1 + f_2}{2} t\right) $$</p>
-                                <p class="mt-2 text-sm text-gray-600">This shows a high-frequency sine wave (the average frequency) whose amplitude is modulated by a low-frequency cosine wave (the envelope). The frequency of this slow amplitude modulation is the beat frequency, calculated as: $f_{\text{beat}} = |f_1 - f_2|$.</p>
-                            </div>
-                        </div>
+                <h1 class="text-4xl font-bold text-navy mb-2 text-center">Nicholas J. McClure</h1>
+                <div class="text-center text-gray-600 mb-4">
+                     <a href="https://orcid.org/0009-0000-9626-2192" target="_blank" class="inline-flex items-center hover:text-forest">
+                        <svg class="w-4 h-4 mr-2" fill="#228B22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.303 17.394H5.33V8.868h1.972v8.526zm-1.006-9.52c-.667 0-1.206-.538-1.206-1.206s.538-1.206 1.206-1.206c.667 0 1.206.538 1.206 1.206s-.538 1.206-1.206 1.206zm11.238 9.52h-1.973V12.87c0-.91-.02-2.08-.91-2.08-.91 0-1.048.71-1.048 2.01v4.594H9.63V8.868h1.89v.86h.02c.26-.49.89-.99 1.77-.99 1.89 0 2.24 1.24 2.24 2.86v5.8z"/></svg>
+                        0009-0000-9626-2192
+                    </a>
+                </div>
+                <hr class="my-6 border-navy">
 
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-3">Quantifying the TESS Signal</h3>
-                            <p class="mb-4">To search for periodic signals in the TESS data, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, the Lomb-Scargle method is specifically designed to handle unevenly-sampled observations, which are common in astronomy due to factors like daylight, weather, and satellite scheduling. It effectively identifies the strength of periodic signals at different frequencies, allowing us to find the most likely periods present in the data. Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
-                             <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
-                            </div>
-                            <p class="mb-4">Folding the data on the primary period confirms a coherent, large-amplitude signal. The central goal of our research is to determine its origin.</p>
-                             <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/phase_folded_AT2019muu.html" width="100%" height="500" style="border:0;" title="Phase-folded Light Curve of AT 2019muu"></iframe>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-3">From Prime Suspects to New Leads</h3>
-                            <p class="mb-4">To test our hypothesis about Target A, we conducted initial follow-up observations at the Preston Gott Skyview Observatory in November 2024 and July 2025. Preliminary light curves from this data suggest that Target A is also not variable, ruling out the most obvious source. This finding prompted a broader search of the field. Due to TESS's large 21x21 arcsecond pixels, the photometric aperture contains dozens of stars. A wider search revealed two classified Eclipsing Binary (EB) stars within the same TESS frame, making them our new primary suspects.</p>
-                            <img src="https://storage.googleapis.com/gemini-prod/images/AT_2019muu_field_with_TESS_aperture.png" alt="AT 2019muu field with TESS aperture overlay" class="rounded-lg shadow-md mx-auto my-4">
-                        </div>
-
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-3">Current Status: Expanded Skyview Observatory Campaign</h3>
-                            <p class="mb-4">We are now conducting a more comprehensive, high-resolution observing campaign at the Preston Gott Skyview Observatory to acquire a total of 18 hours of high-cadence photometry of the AT 2019muu field. The high resolution of the Skyview telescopes allows us to separate the light from each star in the TESS aperture, including the two newly identified Eclipsing Binaries.</p>
-                            <p class="mb-4">The focus of our upcoming publication (Dec. 2025) is to use this new dataset to identify the source of the variability. The data will allow us to confirm the periods and classifications of the known EBs. This will either identify one of them as the source of the TESS signal or, if their periods do not match, provide strong evidence for the discovery of a new, uncataloged variable star in the field.</p>
-                        </div>
-
+                <div class="cv-section space-y-8">
+                    
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Research Interests</h2>
+                        <ul class="list-disc pl-5">
+                            <li>Time-domain astronomy and photometric variability in compact binary systems</li>
+                            <li>Accretion physics and outbursts in cataclysmic variables</li>
+                            <li>Applications of time-series analysis in large data sets</li>
+                            <li>Asteroseismology and stellar evolution</li>
+                        </ul>
                     </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Education</h2>
+                        <p><strong>Texas Tech University</strong>, Lubbock, TX<br><em>B.S. in Physics (Astrophysics concentration), Expected Dec 2025</em></p>
+                        <p class="mt-2"><strong>University of Texas at Arlington</strong>, Arlington, TX<br><em>B.A. in Music Composition, 2022</em></p>
+                        <p class="mt-2"><strong>University of North Texas</strong>, Denton, TX<br><em>B.S. coursework in Psychology, 2019–2020</em></p>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Research Experience</h2>
+                        <div class="pl-5 mb-6">
+                            <p class="font-bold text-lg">Mysterious Modulations</p>
+                            <p class="italic text-gray-600">March 2024 – Present | Supervisor: Dr. Michael Fausnaugh</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Performed standard image reduction on ground-based CCD data using bias, dark, and flat-field frames to prepare images for photometric analysis.</li>
+                                <li>Developed Python scripts to perform detailed time-series analysis on TESS light curves, utilizing signal processing techniques such as polynomial detrending, Lomb-Scargle periodograms for frequency analysis, and phase-folding to verify periodic signals.</li>
+                                <li>Analyzed periodicities in cataclysmic variable systems to identify and characterize sources of stellar variability, including beat frequencies from blended sources.</li>
+                                <li><em>Publication in progress.</em></li>
+                            </ul>
+                        </div>
+                        <div class="pl-5">
+                            <p class="font-bold text-lg">SkyQ</p>
+                            <p class="italic text-gray-600">May 2025 – Present | Supervisor: Dr. Michael Fausnaugh</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Developing a Python package to consolidate astronomical targets into a master table, calculate observability based on airmass and altitude, and rank targets to create streamlined observing plans.</li>
+                                <li>The goal of this project is to publish nightly observing plans to the Skyview website, increasing the accessibility of the observatory for undergraduate research.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Observing Experience</h2>
+                        <div class="pl-5">
+                            <p class="font-bold">Preston Gott Skyview Observatory, Shallowater TX</p>
+                            <p class="italic text-gray-600 mb-2">Array of 12-inch Schmidt-Cassegrain telescopes</p>
+                            <ul class="list-disc pl-5">
+                                <li><strong>2025 Oct:</strong> Photometric follow-up of CVs (~18 hours, SDSS g', r')</li>
+                                <li><strong>2025 Jul:</strong> Photometric follow-up of CVs (~5 hours, SDSS g', r')</li>
+                                <li><strong>2024 Nov:</strong> Photometric follow-up of CVs (~5 hours, SDSS g', r')</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Key Laboratory Projects</h2>
+                        <p class="italic text-gray-600 pl-5">Intermediate Physics Laboratory, Spring 2025</p>
+                        <div class="pl-10 mt-4 space-y-4">
+                            <div>
+                                <p class="font-bold">Microwave Optics in Disordered Media</p>
+                                <p>Investigated the refractive properties of a plano-convex lens constructed from quartz sand using an 11 GHz Gunn oscillator. The project involved developing a physical model, performing intensive error analysis, and using a constrained linear fit of refraction angles to confirm Snell's Law and determine a refractive index consistent with Maxwell-Garnett predictions. Culminated in a formal research paper. <a href="files/McClure V.2.pdf" target="_blank" class="text-forest hover:underline">[Download Paper]</a></p>
+                            </div>
+                            <div>
+                                <p class="font-bold">The Zeeman Effect</p>
+                                <p>Investigated the splitting of atomic spectral lines in a strong magnetic field. Measured the resulting polarization and wavelength shifts to perform a high-precision calculation of the electron's charge-to-mass ratio (e/m).</p>
+                            </div>
+                            <div>
+                                <p class="font-bold">Gravitational Constant Measurement</p>
+                                <p>Performed a high-precision measurement of the gravitational constant (G) by analyzing the period of a torsional harmonic oscillator using a laser monitoring system to detect minute angular displacements.</p>
+                            </div>
+                             <div>
+                                <p class="font-bold">Solar Cell Characterization</p>
+                                <p>Characterized the efficiency of a photovoltaic solar cell by measuring its current-voltage (I-V) curve under varying illumination conditions to determine key performance metrics, including fill factor and maximum power output.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Presentations</h2>
+                        <ul class="list-disc pl-5">
+                            <li><em>Mysterious Modulations: TESS Insights into the Dwarf Nova AT2019muu</em> — TSAPS, Dallas, TX (Oct 2024); Sigma Pi Sigma Poster Symposium, Lubbock, TX (Nov 2024, Oct 2025); 245th AAS Meeting, National Harbor, MD (Jan 2025); Texas Tech Undergraduate Research Conference (Apr 2025)</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Technical Skills</h2>
+                        <ul class="list-disc pl-5">
+                            <li><strong>Technical:</strong> Python (AstroPy, NumPy, SciPy, Matplotlib), LaTeX, Time-Series Analysis (Lomb-Scargle, Fourier methods), Signal Processing (detrending, phase-folding), CCD Photometry & Image Reduction, Data Modeling & Intensive Error Analysis, Telescope Operation</li>
+                            <li><strong>Communication:</strong> Public speaking, curriculum development, STEM outreach and education</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Teaching & Outreach Experience</h2>
+                        <p><strong>Lab/Learning Assistant</strong>, Texas Tech University — <em>Jan 2025–Present</em></p>
+                        <ul class="list-disc pl-5 mt-2">
+                            <li>Facilitated instruction for Solar System and Stellar Astronomy lab courses; guided observational exercises</li>
+                            <li>Assisted with on-site observational instruction using campus observatory equipment and instruction for Observational Astronomy (junior-level course)</li>
+                        </ul>
+                        <p class="mt-4"><strong>Astronights Volunteer</strong>, TTU Physics & Astronomy Dept. — <em>2025–Present</em></p>
+                        <ul class="list-disc pl-5 mt-2">
+                            <li>Volunteered for departmental public outreach events to teach the local community about astronomy.</li>
+                            <li>Operated a personal telescope rig to provide the public with live views of celestial objects.</li>
+                        </ul>
+                        <p class="mt-4"><strong>STEM Educator</strong>, Science Spectrum, Lubbock, TX — <em>Dec 2022–Mar 2023</em></p>
+                        <ul class="list-disc pl-5 mt-2">
+                            <li>Delivered interactive astronomy/physics demos to public audiences</li>
+                            <li>Developed original curriculum and led eclipse-outreach events (attendance 800+)</li>
+                        </ul>
+                         <p class="mt-4"><strong>Private Tutor</strong>, ClubZ! Tutoring Services — <em>Mar 2020–Dec 2021</em></p>
+                        <ul class="list-disc pl-5 mt-2">
+                            <li>Provided one-on-one tutoring in high school and undergraduate level mathematics and physics.</li>
+                            <li>Tailored instruction to individual student needs, resulting in significant grade improvements.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Academic Honors & Awards</h2>
+                        <ul class="list-disc pl-5">
+                            <li>Menzel Undergraduate Research Scholarship, Texas Tech University (2025)</li>
+                            <li>Dean’s List, Texas Tech University (2025)</li>
+                            <li>Lab Assistant of the Week, Texas Tech University (2025)</li>
+                            <li>Bucy Undergraduate Scholarship in Physics (2024)</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Relevant Coursework</h2>
+                         <ul class="list-disc pl-5">
+                            <li><strong>Astronomy:</strong> Observational Astronomy, Solar System Astronomy, Astrophysics I–II, Radio Astronomy, Radiative Processes in Astrophysics</li>
+                            <li><strong>Physics:</strong> Physics I–IV, Mechanics, E&M I–II, Quantum Mechanics, Computational Physics, Optics, Modern Physics Lab, Intermediate Lab, Error Analysis</li>
+                            <li><strong>Mathematics:</strong> Calculus I–III, Differential Equations I–II, Linear Algebra</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="text-2xl font-semibold text-forest mb-3">Professional Affiliations</h2>
+                        <ul class="list-disc pl-5">
+                            <li>American Astronomical Society — Member/Presenter — 2024–Present</li>
+                            <li>American Physical Society — Member/Presenter — 2024–Present</li>
+                            <li>Society of Physics Students (SPS), Member — 2023–Present</li>
+                            <li>College of Arts & Sciences Undergraduate Research Academy (CASURA), Member — 2024–Present</li>
+                        </ul>
+                    </div>
+
                 </div>
             </section>
         </div>
@@ -137,7 +231,7 @@
 
     <!-- Footer -->
     <footer class="bg-navy p-4 text-center text-white">
-        <p>&copy; 2.025 Nicholas J. McClure. All Rights Reserved.</p>
+        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
         <p>Contact: nic5153mcclure@gmail.com</p>
     </footer>
 
@@ -153,11 +247,11 @@
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active-link');
-            if (link.getAttribute('href') === 'research.html') {
+            if (link.getAttribute('href') === 'cv.html') {
                 link.classList.add('active-link');
             }
         });
-         document.querySelectorAll('#mobile-menu a').forEach(link => {
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
             if (link.getAttribute('href') === currentPage) {
                 link.classList.add('bg-forest');
             }

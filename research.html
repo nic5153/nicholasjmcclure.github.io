@@ -6,6 +6,17 @@
     <title>Research - Nicholas J. McClure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering LaTeX -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        }
+      };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -33,6 +44,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
+    <!-- Navigation -->
     <nav class="bg-navy p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
@@ -46,6 +58,7 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
         </div>
+        <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden mt-2">
             <a href="index.html" class="block text-white py-2 px-4">Home</a>
             <a href="cv.html" class="block text-white py-2 px-4">CV</a>
@@ -54,43 +67,66 @@
         </div>
     </nav>
     
+    <!-- Main Content -->
     <main class="flex-grow">
         <div class="container mx-auto p-8">
             <section id="research">
                 <div class="bg-white p-8 rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold text-navy mb-6 text-center">Research</h2>
-                    <div class="space-y-8 text-gray-800">
+                    <h2 class="text-3xl font-bold text-navy mb-6 text-center">Research: Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field</h2>
+                    <div class="space-y-10 text-gray-800">
                         
                         <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-2">Mysterious Modulations</h3>
-                            <p class="mb-4">Cataclysmic Variable (CV) systems exhibit complex accretion phenomena, including dramatic outbursts and changes in disk dynamics. <strong>AT 2019muu</strong> is a CV superoutburst located at <strong>RA 19:27:29.810</strong> and <strong>DEC +33:03:05.22</strong> that has been observed by the <em>Transiting Exoplanet Survey Satellite (TESS)</em>.</p>
-                            <p class="mb-4">This system exhibits a strong <strong>beat frequency</strong> visible within its light curve, with periodogram results indicating two frequencies at <strong>4.97</strong> and <strong>5.48 cycles per day</strong>.</p>
-                            <p class="mb-4">Two nearby targets were identified as potential blending sources; one is likely a <strong>δ-Scuti pulsator</strong> that undergoes a strong modulation. Further analysis is underway to confirm the nature of this blending.</p>
+                            <h3 class="text-2xl font-semibold text-forest mb-3">An Evolving Investigation</h3>
+                            <p class="mb-4">This investigation began during a project to classify unclassified light curves from NASA's TESS mission. We identified a prominent "beat" frequency in the light curve of the cataclysmic variable (CV) <strong>AT 2019muu</strong>. The signal's high amplitude and its presence before the CV's superoutburst suggested it was not intrinsic to the system, but was instead caused by a contaminating source.</p>
+                            <p class="mb-4">The most likely sources were two bright stars located ~5 arcseconds from the CV, designated Target A and Target B. Using Gaia DR3 data, we characterized them as follows:</p>
+                            <div class="bg-gray-100 p-4 rounded-lg my-4 text-sm">
+                                <p class="mb-2"><strong>Target A:</strong> A solar-like main sequence star with a BP-RP value of 0.81, an effective temperature (Teff) of 5652.95 K, and a surface gravity (log g) of 4.288, located at a distance of 9159 pc.</p>
+                                <p><strong>Target B:</strong> A cooler red giant star with a BP-RP value of 1.32, a Teff of 3306 K, and a radius of 75.65 solar radii, located at 4351 pc.</p>
+                            </div>
+                            <p class="mb-4">The observed periodicity (~4.9 hours) is inconsistent with the physical properties of a red giant. The dynamical timescale of such a star is on the order of days, far too long to produce the observed rapid variations.</p>
+                             <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
+                                <p class="mb-2 text-gray-700">The dynamical timescale ($t_{\text{dyn}}$) of a star is approximated by:</p>
+                                <p class="text-lg">$$ t_{\text{dyn}} \approx \sqrt{\frac{R^3}{GM}} \propto \frac{1}{\sqrt{\rho}} $$</p>
+                                <p class="mt-2 text-sm text-gray-600">Where $R$ is the stellar radius, $M$ is the mass, and $\rho$ is the mean density. Target B's large radius and low mean density (low $\rho$) result in a long dynamical timescale, making it physically incapable of producing the observed variations.</p>
+                            </div>
+                            <p class="mb-4">This analysis ruled out Target B and established Target A as the primary suspect, motivating a ground-based observing campaign to test this hypothesis.</p>
                         </div>
 
                         <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-2">What is a CV?</h3>
-                            <p class="mb-4">Cataclysmic variable (CV) systems are close binary star systems where a <strong>white dwarf</strong> accretes material from a companion star. As the material from the companion star is accreted, it flows toward the white dwarf, forming an <strong>accretion disk</strong> of superheated gas around it.</p>
-                            <p class="mb-4">The intense gravitational interactions and heating within the disk cause it to brighten significantly. When the accretion rate surpasses a critical threshold, it can lead to dramatic <strong>outbursts</strong>, a characteristic feature of dwarf novae (a subclass of CVs). These outbursts occur due to <strong>thermal instabilities</strong> in the disk.</p>
-                            <p class="mb-4">The orbital periods of CV systems are typically short, often ranging from a few hours to less than a day due to the compact nature of the binary. Variations like <strong>superhumps</strong>, which are created by the precession of the accretion disk as it and the white dwarf orbits the donor star, can provide insights into the system’s dynamics.</p>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-2">Methods</h3>
+                            <h3 class="text-2xl font-semibold text-forest mb-3">What is a Beat Frequency?</h3>
+                             <p class="mb-4">The "beating" pattern in the TESS light curve is an interference effect. It occurs when two or more periodic signals with very similar frequencies are added together. At times, the peaks of the waves align, causing constructive interference and a higher amplitude. At other times, the peak of one wave aligns with the trough of another, causing destructive interference and a lower amplitude. The visualization below demonstrates this process, showing how two simple sine waves combine to create a complex beat pattern, just like the one observed in our data.</p>
                             <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/light_curve_AT2019muu.html" width="100%" height="500" style="border:0;"></iframe>
+                                <iframe src="files/optimized_animated_beat_frequency_visualization.html" width="100%" height="500" style="border:0;" title="Beat Frequency Visualization"></iframe>
                             </div>
-                            <p class="mb-4">Our investigation of AT 2019muu began not at the telescope, but with data from the <strong>Transiting Exoplanet Survey Satellite (TESS)</strong>. Our original task was to organize and classify light curves in search of superoutbursting cataclysmic variables.</p>
-                            <p class="mb-4">During this process, the light curve of AT 2019muu was flagged due to the presence of a <strong>significant beat frequency</strong> clearly visible in the data. To quantify this variability, we performed Fourier analysis, producing a <strong>Lomb–Scargle periodogram</strong> that revealed two distinct peaks at <strong>4.97</strong> and <strong>5.48 cycles per day</strong>.</p>
-                            <p class="mb-4">These periods were further validated by generating <strong>phase-folded light curves</strong>, which confirmed the detected signals.</p>
+                            <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
+                                <p class="mb-2 text-gray-700">When two waves with frequencies $f_1$ and $f_2$ are summed, the resulting wave can be described by a trigonometric identity:</p>
+                                <p class="text-lg">$$ A\sin(2\pi f_1 t) + A\sin(2\pi f_2 t) = 2A \cos\left(2\pi \frac{f_1 - f_2}{2} t\right) \sin\left(2\pi \frac{f_1 + f_2}{2} t\right) $$</p>
+                                <p class="mt-2 text-sm text-gray-600">This shows a high-frequency sine wave (the average frequency) whose amplitude is modulated by a low-frequency cosine wave (the envelope). The frequency of this slow amplitude modulation is the beat frequency, calculated as: $f_{\text{beat}} = |f_1 - f_2|$.</p>
+                            </div>
                         </div>
 
                         <div>
-                            <h3 class="text-2xl font-semibold text-forest mb-2">What is a beat frequency?</h3>
-                            <p class="mb-4">When two signals of similar frequencies interfere with each other, a resulting pattern of constructive and destructive interference is created. Over certain timescales, these patterns appear in a "beating" visual, shown in the plot below.</p>
-                            <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/optimized_animated_beat_frequency_visualization.html" width="100%" height="500" style="border:0;"></iframe>
+                            <h3 class="text-2xl font-semibold text-forest mb-3">Quantifying the TESS Signal</h3>
+                            <p class="mb-4">To search for periodic signals in the TESS data, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, the Lomb-Scargle method is specifically designed to handle unevenly-sampled observations, which are common in astronomy due to factors like daylight, weather, and satellite scheduling. It effectively identifies the strength of periodic signals at different frequencies, allowing us to find the most likely periods present in the data. Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
+                             <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
                             </div>
+                            <p class="mb-4">Folding the data on the primary period confirms a coherent, large-amplitude signal. The central goal of our research is to determine its origin.</p>
+                             <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/phase_folded_AT2019muu.html" width="100%" height="500" style="border:0;" title="Phase-folded Light Curve of AT 2019muu"></iframe>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-2xl font-semibold text-forest mb-3">From Prime Suspects to New Leads</h3>
+                            <p class="mb-4">To test our hypothesis about Target A, we conducted initial follow-up observations at the Preston Gott Skyview Observatory in November 2024 and July 2025. Preliminary light curves from this data suggest that Target A is also not variable, ruling out the most obvious source. This finding prompted a broader search of the field. Due to TESS's large 21x21 arcsecond pixels, the photometric aperture contains dozens of stars. A wider search revealed two classified Eclipsing Binary (EB) stars within the same TESS frame, making them our new primary suspects.</p>
+                            <img src="https://storage.googleapis.com/gemini-prod/images/AT_2019muu_field_with_TESS_aperture.png" alt="AT 2019muu field with TESS aperture overlay" class="rounded-lg shadow-md mx-auto my-4">
+                        </div>
+
+                        <div>
+                            <h3 class="text-2xl font-semibold text-forest mb-3">Current Status: Expanded Skyview Observatory Campaign</h3>
+                            <p class="mb-4">We are now conducting a more comprehensive, high-resolution observing campaign at the Preston Gott Skyview Observatory to acquire a total of 18 hours of high-cadence photometry of the AT 2019muu field. The high resolution of the Skyview telescopes allows us to separate the light from each star in the TESS aperture, including the two newly identified Eclipsing Binaries.</p>
+                            <p class="mb-4">The focus of our upcoming publication (Dec. 2025) is to use this new dataset to identify the source of the variability. The data will allow us to confirm the periods and classifications of the known EBs. This will either identify one of them as the source of the TESS signal or, if their periods do not match, provide strong evidence for the discovery of a new, uncataloged variable star in the field.</p>
                         </div>
 
                     </div>
@@ -99,8 +135,9 @@
         </div>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-navy p-4 text-center text-white">
-        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
+        <p>&copy; 2.025 Nicholas J. McClure. All Rights Reserved.</p>
         <p>Contact: nic5153mcclure@gmail.com</p>
     </footer>
 
@@ -120,8 +157,12 @@
                 link.classList.add('active-link');
             }
         });
+         document.querySelectorAll('#mobile-menu a').forEach(link => {
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('bg-forest');
+            }
+        });
     </script>
 
 </body>
 </html>
-```eof
