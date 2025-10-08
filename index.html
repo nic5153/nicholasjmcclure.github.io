@@ -9,6 +9,24 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-image: url('files/spacepic.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 0;
+        }
+        nav, main, footer {
+            position: relative;
+            z-index: 1;
         }
         .bg-navy { background-color: #001f3f; }
         .bg-forest { background-color: #228B22; }
@@ -57,22 +75,27 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow">
+    <main class="flex-grow flex items-center">
         <div class="container mx-auto p-8">
             <!-- Home Section -->
             <section id="home">
-                <div class="bg-white p-8 rounded-lg shadow-md flex flex-col md:flex-row items-center">
-                    <div class="md:w-1/3 text-center mb-6 md:mb-0">
-                        <img src="https://placehold.co/200x200/001f3f/ffffff?text=Nicholas+J.+McClure" alt="Nicholas J. McClure" class="rounded-full mx-auto shadow-lg">
-                    </div>
-                    <div class="md:w-2/3 md:pl-10">
-                        <h2 class="text-3xl font-bold text-navy mb-4">Welcome to My Portfolio</h2>
-                        <p class="mb-4">
-                            I am a passionate and dedicated researcher with a deep interest in time-domain astronomy, particularly focusing on photometric variability in compact binary systems and accretion physics in cataclysmic variables. My work also involves applying time-series analysis and machine learning in large survey datasets. I am currently seeking to join a challenging and innovative PhD program where I can contribute to the forefront of astronomical research.
-                        </p>
-                        <p>
-                            This website provides an overview of my academic background, research experience, and key projects. Please feel free to explore my CV, research poster, and a more detailed summary of my work.
-                        </p>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="w-full text-center">
+                        <h2 class="text-3xl md:text-4xl font-bold text-navy mb-4">Welcome</h2>
+                        <div class="max-w-3xl mx-auto text-left space-y-4">
+                            <p>
+                                I am a senior at Texas Tech University, set to graduate in December 2025 with a B.S. in Physics and a concentration in Astrophysics. Currently, I work as an undergraduate researcher under Dr. Michael Fausnaugh, where my work focuses on time-domain astronomy, cataclysmic variables, and large dataset analysis.
+                            </p>
+                            <p>
+                                My core interests lie in stars and asteroseismology, and I am passionate about understanding stellar evolution, as well as academic/scientific outreach. My research experience has given me a strong foundation in lightcurve and  Fourier analysis, astronomical image calibration, observational strategies, and a wide range of laboratory physics, supported by advanced coursework in mechanics, astrophysics, and observational methods, as well as previous studies in music composition and, briefly,  psychology. My goal is to continue this work by earning a PhD in Astronomy/Astrophysics.
+                            </p>
+                            <p>
+                                Outside of my academic pursuits, I enjoy hiking, camping, and spending quality time with my dog, Orion, and my cat, Cassie (short for Cassiopeia).
+                            </p>
+                             <p class="text-center pt-4">
+                                Please feel free to explore my research and contact me at <a href="mailto:nimcclur@ttu.edu" class="text-forest hover:underline">nimcclur@ttu.edu</a> with any questions. Thanks for visiting!
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -101,7 +124,13 @@
                 link.classList.add('active-link');
             }
         });
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('bg-forest');
+            }
+        });
     </script>
 
 </body>
 </html>
+
