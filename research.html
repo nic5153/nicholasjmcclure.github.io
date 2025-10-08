@@ -78,7 +78,11 @@
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">An Evolving Investigation</h3>
                             <p class="mb-4">This investigation began during a project to classify unclassified light curves from NASA's TESS mission. We identified a prominent "beat" frequency in the light curve of the cataclysmic variable (CV) <strong>AT 2019muu</strong>. The signal's high amplitude and its presence before the CV's superoutburst suggested it was not intrinsic to the system, but was instead caused by a contaminating source.</p>
-                            <figure class="my-6 text-center">
+                             <figure class="my-6 text-center">
+                                <img src="files/AT_2019muu_field.png" alt="The AT 2019muu field" class="rounded-lg shadow-md mx-auto my-4">
+                                <figcaption class="mt-2 text-sm text-gray-600">The AT 2019muu field</figcaption>
+                            </figure>
+                             <figure class="my-6 text-center">
                                 <img src="files/Cat_Var_pic.jpg" alt="Artist's rendition of a cataclysmic variable system" class="rounded-lg shadow-md mx-auto max-w-full md:max-w-xl">
                                 <figcaption class="mt-2 text-sm text-gray-600">Artist's rendition of a cataclysmic variable. Credit: ESA and Justyn R. Maund (University of Cambridge)</figcaption>
                             </figure>
@@ -111,11 +115,11 @@
 
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">Quantifying the TESS Signal</h3>
-                            <p class="mb-4">The TESS light curve clearly shows the beat frequency. To analyze this signal, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, this method is specifically designed to handle unevenly-sampled observations, which are common in astronomy. It effectively identifies the strength of periodic signals at different frequencies, allowing us to find the most likely periods present in the data.</p>
+                            <p class="mb-4">To isolate the signal for analysis, we first applied a 4th degree polynomial to detrend the data within the time constraints of BTJD 1689.5-1710. This removes long-term instrumental or stellar trends and allows us to focus on the rapid, periodic variations.</p>
                             <div class="my-4 rounded-md overflow-hidden border">
-                                <iframe src="files/light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="TESS Light Curve of AT 2019muu"></iframe>
+                                <iframe src="files/detrended_light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="Detrended Light Curve of AT 2019muu"></iframe>
                             </div>
-                            <p class="mb-4">Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
+                            <p class="mb-4">To analyze this detrended signal, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, this method is specifically designed to handle unevenly-sampled observations, which are common in astronomy. Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
                              <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
                             </div>
@@ -128,7 +132,6 @@
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">From Prime Suspects to New Leads</h3>
                             <p class="mb-4">To test our hypothesis about Target A, we conducted initial follow-up observations at the Preston Gott Skyview Observatory in November 2024 and July 2025. Preliminary light curves from this data suggest that Target A is also not variable, ruling out the most obvious source. This finding prompted a broader search of the field. Due to TESS's large 21x21 arcsecond pixels, the photometric aperture contains dozens of stars. A wider search revealed two classified Eclipsing Binary (EB) stars within the same TESS frame, making them our new primary suspects.</p>
-                            <img src="https://storage.googleapis.com/gemini-prod/images/AT_2019muu_field_with_TESS_aperture.png" alt="AT 2019muu field with TESS aperture overlay" class="rounded-lg shadow-md mx-auto my-4">
                         </div>
 
                         <div>
