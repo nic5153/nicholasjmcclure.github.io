@@ -72,7 +72,7 @@
         <div class="container mx-auto p-8">
             <section id="research">
                 <div class="bg-white p-8 rounded-lg shadow-md">
-                    <h2 class="text-3xl font-bold text-navy mb-6 text-center">Research: Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field</h2>
+                    <h2 class="text-3xl font-bold text-navy mb-6 text-center">Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field</h2>
                     <div class="space-y-10 text-gray-800">
                         
                         <div>
@@ -107,11 +107,15 @@
 
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">Quantifying the TESS Signal</h3>
-                            <p class="mb-4">To search for periodic signals in the TESS data, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, the Lomb-Scargle method is specifically designed to handle unevenly-sampled observations, which are common in astronomy due to factors like daylight, weather, and satellite scheduling. It effectively identifies the strength of periodic signals at different frequencies, allowing us to find the most likely periods present in the data. Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
+                            <p class="mb-4">The TESS light curve clearly shows the beat frequency. To analyze this signal, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, this method is specifically designed to handle unevenly-sampled observations, which are common in astronomy. It effectively identifies the strength of periodic signals at different frequencies, allowing us to find the most likely periods present in the data.</p>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="TESS Light Curve of AT 2019muu"></iframe>
+                            </div>
+                            <p class="mb-4">Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
                              <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
                             </div>
-                            <p class="mb-4">Folding the data on the primary period confirms a coherent, large-amplitude signal. The central goal of our research is to determine its origin.</p>
+                            <p class="mb-4">Folding the data on one of the primary periods confirms a coherent, large-amplitude signal. The central goal of our research is to determine its origin.</p>
                              <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/phase_folded_AT2019muu.html" width="100%" height="500" style="border:0;" title="Phase-folded Light Curve of AT 2019muu"></iframe>
                             </div>
@@ -137,7 +141,7 @@
 
     <!-- Footer -->
     <footer class="bg-navy p-4 text-center text-white">
-        <p>&copy; 2.025 Nicholas J. McClure. All Rights Reserved.</p>
+        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
         <p>Contact: nic5153mcclure@gmail.com</p>
     </footer>
 
