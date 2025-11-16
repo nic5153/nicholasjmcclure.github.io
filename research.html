@@ -20,6 +20,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #000000;
         }
         .bg-navy { background-color: #001f3f; }
         .bg-forest { background-color: #228B22; }
@@ -40,9 +41,27 @@
             color: #228B22; /* Forest Green */
             border-bottom: 2px solid #228B22;
         }
+
+        /* Galaxy background layering */
+        #galaxy-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        nav, main, footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .galaxy-container {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+    <div id="galaxy-bg" class="galaxy-container"></div>
 
     <!-- Navigation -->
     <nav class="bg-navy p-4 shadow-md sticky top-0 z-50">
@@ -78,7 +97,7 @@
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">An Evolving Investigation</h3>
                             <p class="mb-4">This investigation began during a project to classify unclassified light curves from NASA's <a href="https://tess.mit.edu/" target="_blank" class="text-forest hover:underline"><strong>TESS</strong></a> mission. We identified a prominent beat frequency in the light curve of the cataclysmic variable (CV) <strong>AT 2019muu</strong>. The signal's high amplitude and its presence before the CV's superoutburst suggested it was not intrinsic to the system, but was instead caused by a contaminating source.</p>
-                             <figure class="my-6 text-center">
+                            <figure class="my-6 text-center">
                                 <img src="files/AT_2019muu_field.png" alt="The AT 2019muu field" class="rounded-lg shadow-md mx-auto my-4">
                                 <figcaption class="mt-2 text-sm text-gray-600">The AT 2019muu field. Image Credit: Digital Sky Survey (DSS) / Simbad</figcaption>
                             </figure>
@@ -87,7 +106,7 @@
                             <p class="mb-4">Cataclysmic variable (CV) systems are close binary star systems where a white dwarf accretes material from a companion star. As the material is pulled from the companion, it forms an accretion disk around the white dwarf.
                             <p class="mb-4">When the accretion rate surpasses a critical threshold, it can lead to dramatic outbursts, a characteristic feature of dwarf novae. These outbursts are caused by a thermal-viscous instabiility in the accretion disk, leading to a sudden increase in brightness.
                         </div>
-                             <figure class="my-6 text-center">
+                            <figure class="my-6 text-center">
                                 <img src="files/Cat_Var_pic.jpg" alt="Artist's rendition of a cataclysmic variable system" class="rounded-lg shadow-md mx-auto max-w-full md:max-w-xl">
                                 <figcaption class="mt-2 text-sm text-gray-600">Artist's rendition of a cataclysmic variable. Credit: ESA and Justyn R. Maund (University of Cambridge)</figcaption>
                             </figure>
@@ -98,7 +117,7 @@
                                 <p><strong>Target B:</strong> A cooler red giant star with a BP-RP value of 1.32, a Teff of 3306 K, and a radius of 75.65 solar radii, located at 4351 pc.</p>
                             </div>
                             <p class="mb-4">The observed periodicity (~4.9 hours) is inconsistent with the physical properties of a red giant. The dynamical timescale of such a star is on the order of days, far too long to produce the observed rapid variations.</p>
-                             <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
+                            <div class="bg-gray-200 p-4 rounded-lg my-4 text-center">
                                 <p class="mb-2 text-gray-700">The dynamical timescale ($t_{\text{dyn}}$) of a star is approximated by:</p>
                                 <p class="text-lg">$$ t_{\text{dyn}} \approx \sqrt{\frac{R^3}{GM}} \propto \frac{1}{\sqrt{\rho}} $$</p>
                                 <p class="mt-2 text-sm text-gray-600">Where $R$ is the stellar radius, $M$ is the mass, and $\rho$ is the mean density. Target B's large radius and low mean density (low $\rho$) result in a long dynamical timescale, making it physically incapable of producing the observed variations.</p>
@@ -108,7 +127,7 @@
 
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">What is a Beat Frequency?</h3>
-                             <p class="mb-4">The "beating" pattern in the TESS light curve is an interference effect. It occurs when two or more periodic signals with very similar frequencies are added together. At times, the peaks of the waves align, causing constructive interference and a higher amplitude. At other times, the peak of one wave aligns with the trough of another, causing destructive interference and a lower amplitude. The visualization below demonstrates this process, showing how two simple sine waves combine to create a complex beat pattern, just like the one observed in our data.</p>
+                            <p class="mb-4">The "beating" pattern in the TESS light curve is an interference effect. It occurs when two or more periodic signals with very similar frequencies are added together. At times, the peaks of the waves align, causing constructive interference and a higher amplitude. At other times, the peak of one wave aligns with the trough of another, causing destructive interference and a lower amplitude. The visualization below demonstrates this process, showing how two simple sine waves combine to create a complex beat pattern, just like the one observed in our data.</p>
                             <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/optimized_animated_beat_frequency_visualization.html" width="100%" height="500" style="border:0;" title="Beat Frequency Visualization"></iframe>
                             </div>
@@ -122,18 +141,18 @@
                         <div>
                             <h3 class="text-2xl font-semibold text-forest mb-3">Quantifying the TESS Signal</h3>
                             <p class="mb-4">The raw TESS light curve (top) clearly shows the beat frequency superimposed on other trends. To isolate this signal, we first applied a 4th degree polynomial to detrend the data within the time constraints of BTJD 1689.5-1710. This removes long-term instrumental or stellar trends and reveals the rapid, periodic variations (bottom).</p>
-                             <div class="my-4 rounded-md overflow-hidden border">
+                            <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="TESS Light Curve of AT 2019muu"></iframe>
                             </div>
                             <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/detrended_light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="Detrended Light Curve of AT 2019muu"></iframe>
                             </div>
                             <p class="mb-4">To analyze this detrended signal, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, this method is specifically designed to handle unevenly-sampled observations, which are common in astronomy. Our analysis revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.</p>
-                             <div class="my-4 rounded-md overflow-hidden border">
+                            <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
                             </div>
                             <p class="mb-4">Folding the data on one of the primary periods confirms a coherent, large-amplitude signal. The central goal of our research is to determine its origin.</p>
-                             <div class="my-4 rounded-md overflow-hidden border">
+                            <div class="my-4 rounded-md overflow-hidden border">
                                 <iframe src="files/phase_folded_AT2019muu.html" width="100%" height="500" style="border:0;" title="Phase-folded Light Curve of AT 2019muu"></iframe>
                             </div>
                         </div>
@@ -161,6 +180,7 @@
         <p>Contact: nic5153mcclure@gmail.com</p>
     </footer>
 
+    <!-- Existing nav/mobile JS -->
     <script>
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -177,11 +197,324 @@
                 link.classList.add('active-link');
             }
         });
-         document.querySelectorAll('#mobile-menu a').forEach(link => {
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
             if (link.getAttribute('href') === currentPage) {
                 link.classList.add('bg-forest');
             }
         });
+    </script>
+
+    <!-- Galaxy background (OGL) -->
+    <script type="module">
+        import { Renderer, Program, Mesh, Triangle } from 'https://cdn.jsdelivr.net/npm/ogl@1.0.5/dist/ogl.mjs';
+
+        const vertexShader = `
+attribute vec2 uv;
+attribute vec2 position;
+
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position, 0.0, 1.0);
+}
+`;
+
+        const fragmentShader = `
+precision highp float;
+
+uniform float uTime;
+uniform vec3 uResolution;
+uniform vec2 uFocal;
+uniform vec2 uRotation;
+uniform float uStarSpeed;
+uniform float uDensity;
+uniform float uHueShift;
+uniform float uSpeed;
+uniform vec2 uMouse;
+uniform float uGlowIntensity;
+uniform float uSaturation;
+uniform bool uMouseRepulsion;
+uniform float uTwinkleIntensity;
+uniform float uRotationSpeed;
+uniform float uRepulsionStrength;
+uniform float uMouseActiveFactor;
+uniform float uAutoCenterRepulsion;
+uniform bool uTransparent;
+
+varying vec2 vUv;
+
+#define NUM_LAYER 4.0
+#define STAR_COLOR_CUTOFF 0.2
+#define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
+#define PERIOD 3.0
+
+float Hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float tri(float x) {
+  return abs(fract(x) * 2.0 - 1.0);
+}
+
+float tris(float x) {
+  float t = fract(x);
+  return 1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0));
+}
+
+float trisn(float x) {
+  float t = fract(x);
+  return 2.0 * (1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0))) - 1.0;
+}
+
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+float Star(vec2 uv, float flare) {
+  float d = length(uv);
+  float m = (0.05 * uGlowIntensity) / d;
+  float rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * flare * uGlowIntensity;
+  uv *= MAT45;
+  rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+  m += rays * 0.3 * flare * uGlowIntensity;
+  m *= smoothstep(1.0, 0.2, d);
+  return m;
+}
+
+vec3 StarLayer(vec2 uv) {
+  vec3 col = vec3(0.0);
+
+  vec2 gv = fract(uv) - 0.5; 
+  vec2 id = floor(uv);
+
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 offset = vec2(float(x), float(y));
+      vec2 si = id + offset;
+      float seed = Hash21(si);
+      float size = fract(seed * 345.32);
+      float glossLocal = tri(uStarSpeed / (PERIOD * seed + 1.0));
+      float flareSize = smoothstep(0.9, 1.0, size) * glossLocal;
+
+      float red = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 1.0)) + STAR_COLOR_CUTOFF;
+      float blu = smoothstep(STAR_COLOR_CUTOFF, 1.0, Hash21(si + 3.0)) + STAR_COLOR_CUTOFF;
+      float grn = min(red, blu) * seed;
+      vec3 base = vec3(red, grn, blu);
+      
+      float hue = atan(base.g - base.r, base.b - base.r) / (2.0 * 3.14159) + 0.5;
+      hue = fract(hue + uHueShift / 360.0);
+      float sat = length(base - vec3(dot(base, vec3(0.299, 0.587, 0.114)))) * uSaturation;
+      float val = max(max(base.r, base.g), base.b);
+      base = hsv2rgb(vec3(hue, sat, val));
+
+      vec2 pad = vec2(
+        tris(seed * 34.0 + uTime * uSpeed / 10.0),
+        tris(seed * 38.0 + uTime * uSpeed / 30.0)
+      ) - 0.5;
+
+      float star = Star(gv - offset - pad, flareSize);
+      vec3 color = base;
+
+      float twinkle = trisn(uTime * uSpeed + seed * 6.2831) * 0.5 + 1.0;
+      twinkle = mix(1.0, twinkle, uTwinkleIntensity);
+      star *= twinkle;
+      
+      col += star * size * color;
+    }
+  }
+
+  return col;
+}
+
+void main() {
+  vec2 focalPx = uFocal * uResolution.xy;
+  vec2 uv = (vUv * uResolution.xy - focalPx) / uResolution.y;
+
+  vec2 mouseNorm = uMouse - vec2(0.5);
+  
+  if (uAutoCenterRepulsion > 0.0) {
+    vec2 centerUV = vec2(0.0, 0.0);
+    float centerDist = length(uv - centerUV);
+    vec2 repulsion = normalize(uv - centerUV) * (uAutoCenterRepulsion / (centerDist + 0.1));
+    uv += repulsion * 0.05;
+  } else if (uMouseRepulsion) {
+    vec2 mousePosUV = (uMouse * uResolution.xy - focalPx) / uResolution.y;
+    float mouseDist = length(uv - mousePosUV);
+    vec2 repulsion = normalize(uv - mousePosUV) * (uRepulsionStrength / (mouseDist + 0.1));
+    uv += repulsion * 0.05 * uMouseActiveFactor;
+  } else {
+    vec2 mouseOffset = mouseNorm * 0.1 * uMouseActiveFactor;
+    uv += mouseOffset;
+  }
+
+  float autoRotAngle = uTime * uRotationSpeed;
+  mat2 autoRot = mat2(cos(autoRotAngle), -sin(autoRotAngle), sin(autoRotAngle), cos(autoRotAngle));
+  uv = autoRot * uv;
+
+  uv = mat2(uRotation.x, -uRotation.y, uRotation.y, uRotation.x) * uv;
+
+  vec3 col = vec3(0.0);
+
+  for (float i = 0.0; i < 1.0; i += 1.0 / NUM_LAYER) {
+    float depth = fract(i + uStarSpeed * uSpeed);
+    float scale = mix(20.0 * uDensity, 0.5 * uDensity, depth);
+    float fade = depth * smoothstep(1.0, 0.9, depth);
+    col += StarLayer(uv * scale + i * 453.32) * fade;
+  }
+
+  if (uTransparent) {
+    float alpha = length(col);
+    alpha = smoothstep(0.0, 0.3, alpha);
+    alpha = min(alpha, 1.0);
+    gl_FragColor = vec4(col, alpha);
+  } else {
+    gl_FragColor = vec4(col, 1.0);
+  }
+}
+`;
+
+        const container = document.getElementById('galaxy-bg');
+
+        if (container) {
+          const renderer = new Renderer({
+            alpha: true,
+            premultipliedAlpha: false
+          });
+
+          const gl = renderer.gl;
+
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          gl.clearColor(0, 0, 0, 0);
+
+          const geometry = new Triangle(gl);
+
+          // Defaults mirroring your React props
+          const focal = [0.5, 0.5];
+          const rotation = [1.0, 0.0];
+          const starSpeed = 0.5;
+          const density = 1.0;
+          const hueShift = 140.0;
+          const speed = 1.0;
+          const glowIntensity = 0.3;
+          const saturation = 0.0;
+          const mouseRepulsion = true;
+          const repulsionStrength = 2.0;
+          const twinkleIntensity = 0.3;
+          const rotationSpeed = 0.1;
+          const autoCenterRepulsion = 0.0;
+          const transparent = true;
+          const mouseInteraction = true;
+
+          const uResolutionArray = new Float32Array(3);
+          const uFocalArray = new Float32Array(focal);
+          const uRotationArray = new Float32Array(rotation);
+          const uMouseArray = new Float32Array([0.5, 0.5]);
+
+          const uniforms = {
+            uTime: { value: 0 },
+            uResolution: { value: uResolutionArray },
+            uFocal: { value: uFocalArray },
+            uRotation: { value: uRotationArray },
+            uStarSpeed: { value: starSpeed },
+            uDensity: { value: density },
+            uHueShift: { value: hueShift },
+            uSpeed: { value: speed },
+            uMouse: { value: uMouseArray },
+            uGlowIntensity: { value: glowIntensity },
+            uSaturation: { value: saturation },
+            uMouseRepulsion: { value: mouseRepulsion },
+            uTwinkleIntensity: { value: twinkleIntensity },
+            uRotationSpeed: { value: rotationSpeed },
+            uRepulsionStrength: { value: repulsionStrength },
+            uMouseActiveFactor: { value: 0.0 },
+            uAutoCenterRepulsion: { value: autoCenterRepulsion },
+            uTransparent: { value: transparent }
+          };
+
+          const program = new Program(gl, {
+            vertex: vertexShader,
+            fragment: fragmentShader,
+            uniforms
+          });
+
+          const mesh = new Mesh(gl, { geometry, program });
+
+          function resize() {
+            const scale = 1;
+            const width = container.offsetWidth * scale;
+            const height = container.offsetHeight * scale;
+            renderer.setSize(width, height);
+            uResolutionArray[0] = gl.canvas.width;
+            uResolutionArray[1] = gl.canvas.height;
+            uResolutionArray[2] = gl.canvas.width / gl.canvas.height;
+          }
+
+          window.addEventListener('resize', resize);
+          resize();
+
+          container.appendChild(gl.canvas);
+
+          const targetMousePos = { x: 0.5, y: 0.5 };
+          const smoothMousePos = { x: 0.5, y: 0.5 };
+          let targetMouseActive = 0.0;
+          let smoothMouseActive = 0.0;
+          const lerpFactor = 0.05;
+
+          function handleMouseMove(e) {
+            const rect = container.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = 1.0 - (e.clientY - rect.top) / rect.height;
+            targetMousePos.x = x;
+            targetMousePos.y = y;
+            targetMouseActive = 1.0;
+          }
+
+          function handleMouseLeave() {
+            targetMouseActive = 0.0;
+          }
+
+          if (mouseInteraction) {
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseleave', handleMouseLeave);
+          }
+
+          let animationFrameId;
+
+          function update(t) {
+            animationFrameId = requestAnimationFrame(update);
+
+            uniforms.uTime.value = t * 0.001;
+            uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
+
+            smoothMousePos.x += (targetMousePos.x - smoothMousePos.x) * lerpFactor;
+            smoothMousePos.y += (targetMousePos.y - smoothMousePos.y) * lerpFactor;
+            smoothMouseActive += (targetMouseActive - smoothMouseActive) * lerpFactor;
+
+            uMouseArray[0] = smoothMousePos.x;
+            uMouseArray[1] = smoothMousePos.y;
+            uniforms.uMouseActiveFactor.value = smoothMouseActive;
+
+            renderer.render({ scene: mesh });
+          }
+
+          animationFrameId = requestAnimationFrame(update);
+
+          window.addEventListener('beforeunload', () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', resize);
+            if (mouseInteraction) {
+              container.removeEventListener('mousemove', handleMouseMove);
+              container.removeEventListener('mouseleave', handleMouseLeave);
+            }
+          });
+        }
     </script>
 
 </body>
