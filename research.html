@@ -34,11 +34,11 @@
         }
 
         .nav-link:hover {
-            color: #228B22; /* Forest Green */
+            color: #228B22;
         }
         
         .active-link {
-            color: #228B22; /* Forest Green */
+            color: #228B22;
             border-bottom: 2px solid #228B22;
         }
 
@@ -90,7 +90,7 @@
     <main class="flex-grow">
         <div class="container mx-auto p-8">
             <section id="research">
-                <div class="bg-white p-8 rounded-lg shadow-md">
+                <div class="bg-white bg-opacity-95 p-8 rounded-lg shadow-md">
                     <h2 class="text-3xl font-bold text-navy mb-6 text-center">
                         Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field
                     </h2>
@@ -277,7 +277,6 @@
             mobileMenu.classList.toggle('hidden');
         });
         
-        // Set active link based on current page
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active-link');
@@ -292,16 +291,24 @@
         });
     </script>
 
-    <!-- Galaxy background (OGL) -->
+    <!-- Galaxy background using Three.js -->
     <script type="module">
-        import { Renderer, Program, Mesh, Triangle } from 'https://cdn.jsdelivr.net/npm/ogl@0.0.104/dist/ogl.mjs';
+        import {
+            Scene,
+            OrthographicCamera,
+            WebGLRenderer,
+            PlaneGeometry,
+            Mesh,
+            ShaderMaterial,
+            Vector3,
+            Vector2,
+            Clock
+        } from 'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js';
 
         const vertexShader = `
-attribute vec2 uv;
 attribute vec2 position;
-
+attribute vec2 uv;
 varying vec2 vUv;
-
 void main() {
   vUv = uv;
   gl_Position = vec4(position, 0.0, 1.0);
@@ -468,139 +475,104 @@ void main() {
 `;
 
         const container = document.getElementById('galaxy-bg');
+        if (!container) {
+            console.warn('Galaxy container not found');
+        } else {
+            const scene = new Scene();
+            const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            camera.position.z = 1;
 
-        if (container) {
-          const renderer = new Renderer({
-            alpha: true,
-            premultipliedAlpha: false
-          });
+            const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setClearColor(0x000000, 0);
+            renderer.domElement.style.width = '100%';
+            renderer.domElement.style.height = '100%';
+            container.appendChild(renderer.domElement);
 
-          const gl = renderer.gl;
+            const uniforms = {
+                uTime: { value: 0 },
+                uResolution: { value: new Vector3(1, 1, 1) },
+                uFocal: { value: new Vector2(0.5, 0.5) },
+                uRotation: { value: new Vector2(1.0, 0.0) },
+                uStarSpeed: { value: 0.5 },
+                uDensity: { value: 1.0 },
+                uHueShift: { value: 140.0 },
+                uSpeed: { value: 1.0 },
+                uMouse: { value: new Vector2(0.5, 0.5) },
+                uGlowIntensity: { value: 0.3 },
+                uSaturation: { value: 0.0 },
+                uMouseRepulsion: { value: true },
+                uTwinkleIntensity: { value: 0.3 },
+                uRotationSpeed: { value: 0.1 },
+                uRepulsionStrength: { value: 2.0 },
+                uMouseActiveFactor: { value: 0.0 },
+                uAutoCenterRepulsion: { value: 0.0 },
+                uTransparent: { value: true }
+            };
 
-          gl.enable(gl.BLEND);
-          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-          gl.clearColor(0, 0, 0, 0);
+            const material = new ShaderMaterial({
+                uniforms,
+                vertexShader,
+                fragmentShader,
+                transparent: true
+            });
 
-          const geometry = new Triangle(gl);
+            const geometry = new PlaneGeometry(2, 2);
+            const mesh = new Mesh(geometry, material);
+            scene.add(mesh);
 
-          // Defaults mirroring your React props
-          const focal = [0.5, 0.5];
-          const rotation = [1.0, 0.0];
-          const starSpeed = 0.5;
-          const density = 1.0;
-          const hueShift = 140.0;
-          const speed = 1.0;
-          const glowIntensity = 0.3;
-          const saturation = 0.0;
-          const mouseRepulsion = true;
-          const repulsionStrength = 2.0;
-          const twinkleIntensity = 0.3;
-          const rotationSpeed = 0.1;
-          const autoCenterRepulsion = 0.0;
-          const transparent = true;
-          const mouseInteraction = true;
+            const clock = new Clock();
 
-          const uResolutionArray = new Float32Array(3);
-          const uFocalArray = new Float32Array(focal);
-          const uRotationArray = new Float32Array(rotation);
-          const uMouseArray = new Float32Array([0.5, 0.5]);
+            function setSize() {
+                const width = window.innerWidth || 1;
+                const height = window.innerHeight || 1;
+                renderer.setSize(width, height, false);
 
-          const uniforms = {
-            uTime: { value: 0 },
-            uResolution: { value: uResolutionArray },
-            uFocal: { value: uFocalArray },
-            uRotation: { value: uRotationArray },
-            uStarSpeed: { value: starSpeed },
-            uDensity: { value: density },
-            uHueShift: { value: hueShift },
-            uSpeed: { value: speed },
-            uMouse: { value: uMouseArray },
-            uGlowIntensity: { value: glowIntensity },
-            uSaturation: { value: saturation },
-            uMouseRepulsion: { value: mouseRepulsion },
-            uTwinkleIntensity: { value: twinkleIntensity },
-            uRotationSpeed: { value: rotationSpeed },
-            uRepulsionStrength: { value: repulsionStrength },
-            uMouseActiveFactor: { value: 0.0 },
-            uAutoCenterRepulsion: { value: autoCenterRepulsion },
-            uTransparent: { value: transparent }
-          };
-
-          const program = new Program(gl, {
-            vertex: vertexShader,
-            fragment: fragmentShader,
-            uniforms
-          });
-
-          const mesh = new Mesh(gl, { geometry, program });
-
-          function resize() {
-            const width = container.offsetWidth;
-            const height = container.offsetHeight;
-            renderer.setSize(width, height);
-            uResolutionArray[0] = gl.canvas.width;
-            uResolutionArray[1] = gl.canvas.height;
-            uResolutionArray[2] = gl.canvas.width / gl.canvas.height;
-          }
-
-          window.addEventListener('resize', resize);
-          resize();
-
-          container.appendChild(gl.canvas);
-
-          const targetMousePos = { x: 0.5, y: 0.5 };
-          const smoothMousePos = { x: 0.5, y: 0.5 };
-          let targetMouseActive = 0.0;
-          let smoothMouseActive = 0.0;
-          const lerpFactor = 0.05;
-
-          function handleMouseMove(e) {
-            const rect = container.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / rect.width;
-            const y = 1.0 - (e.clientY - rect.top) / rect.height;
-            targetMousePos.x = x;
-            targetMousePos.y = y;
-            targetMouseActive = 1.0;
-          }
-
-          function handleMouseLeave() {
-            targetMouseActive = 0.0;
-          }
-
-          if (mouseInteraction) {
-            container.addEventListener('mousemove', handleMouseMove);
-            container.addEventListener('mouseleave', handleMouseLeave);
-          }
-
-          let animationFrameId;
-
-          function update(t) {
-            animationFrameId = requestAnimationFrame(update);
-
-            uniforms.uTime.value = t * 0.001;
-            uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
-
-            smoothMousePos.x += (targetMousePos.x - smoothMousePos.x) * lerpFactor;
-            smoothMousePos.y += (targetMousePos.y - smoothMousePos.y) * lerpFactor;
-            smoothMouseActive += (targetMouseActive - smoothMouseActive) * lerpFactor;
-
-            uMouseArray[0] = smoothMousePos.x;
-            uMouseArray[1] = smoothMousePos.y;
-            uniforms.uMouseActiveFactor.value = smoothMouseActive;
-
-            renderer.render({ scene: mesh });
-          }
-
-          animationFrameId = requestAnimationFrame(update);
-
-          window.addEventListener('beforeunload', () => {
-            cancelAnimationFrame(animationFrameId);
-            window.removeEventListener('resize', resize);
-            if (mouseInteraction) {
-              container.removeEventListener('mousemove', handleMouseMove);
-              container.removeEventListener('mouseleave', handleMouseLeave);
+                const canvasWidth = renderer.domElement.width;
+                const canvasHeight = renderer.domElement.height;
+                uniforms.uResolution.value.set(canvasWidth, canvasHeight, canvasWidth / canvasHeight);
             }
-          });
+
+            setSize();
+            window.addEventListener('resize', setSize);
+
+            const targetMouse = new Vector2(0.5, 0.5);
+            const currentMouse = new Vector2(0.5, 0.5);
+            let targetActive = 0.0;
+            let currentActive = 0.0;
+            const mouseDamping = 0.05;
+
+            function handlePointerMove(event) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = 1.0 - (event.clientY - rect.top) / rect.height;
+                targetMouse.set(x, y);
+                targetActive = 1.0;
+            }
+
+            function handlePointerLeave() {
+                targetActive = 0.0;
+            }
+
+            renderer.domElement.addEventListener('pointermove', handlePointerMove);
+            renderer.domElement.addEventListener('pointerleave', handlePointerLeave);
+
+            function renderLoop() {
+                const t = clock.getElapsedTime();
+                uniforms.uTime.value = t;
+                uniforms.uStarSpeed.value = (t * uniforms.uStarSpeed.value) / 10.0;
+
+                currentMouse.lerp(targetMouse, mouseDamping);
+                uniforms.uMouse.value.copy(currentMouse);
+
+                currentActive += (targetActive - currentActive) * mouseDamping;
+                uniforms.uMouseActiveFactor.value = currentActive;
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(renderLoop);
+            }
+
+            renderLoop();
         }
     </script>
 
