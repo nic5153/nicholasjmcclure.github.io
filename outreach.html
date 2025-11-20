@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research - Nicholas J. McClure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering LaTeX -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        }
+      };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+        }
+
+        #floating-lines-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+
+        nav, main, footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .bg-navy { background-color: #001f3f; }
+        .bg-forest { background-color: #228B22; }
+        .text-navy { color: #001f3f; }
+        .text-forest { color: #228B22; }
+        .border-forest { border-color: #228B22; }
+        .border-navy { border-color: #001f3f; }
+
+        .nav-link {
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #228B22; /* Forest Green */
+        }
+        
+        .active-link {
+            color: #228B22; /* Forest Green */
+            border-bottom: 2px solid #228B22;
+        }
+
+        summary {
+            list-style: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* Accordion animation */
+        .accordion-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, opacity 0.35s ease;
+        }
+
+        details[open] .accordion-content {
+            max-height: 2000px; /* should be taller than any section */
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col min-h-screen">
+    <div id="floating-lines-bg"></div>
+
+    <!-- Navigation -->
+    <nav class="bg-navy p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
+            <div class="hidden md:flex space-x-6">
+                <a href="index.html" class="nav-link text-white">Home</a>
+                <a href="cv.html" class="nav-link text-white">CV</a>
+                <a href="poster.html" class="nav-link text-white">Poster</a>
+                <a href="research.html" class="nav-link text-white active-link">Research</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden mt-2">
+            <a href="index.html" class="block text-white py-2 px-4">Home</a>
+            <a href="cv.html" class="block text-white py-2 px-4">CV</a>
+            <a href="poster.html" class="block text-white py-2 px-4">Poster</a>
+            <a href="research.html" class="block text-white py-2 px-4">Research</a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <div class="container mx-auto p-8 max-w-4xl">
+            <section id="research">
+                <div class="bg-black bg-opacity-40 p-6 rounded-lg shadow-lg mb-6">
+                    <h2 class="text-3xl font-bold text-white text-center">
+                        Mysterious Modulations: Investigating Source Contamination in the AT 2019muu Field
+                    </h2>
+                    <p class="text-gray-200 text-center mt-2 text-sm">
+                        Click a section below to expand details.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+
+                    <!-- Section 1 -->
+                    <details class="accordion bg-white bg-opacity-90 rounded-lg shadow-md">
+                        <summary class="flex items-center justify-between cursor-pointer px-6 py-4">
+                            <span class="text-xl font-semibold text-navy">
+                                An Evolving Investigation & CV Background
+                            </span>
+                            <span class="accordion-icon text-gray-500 text-2xl leading-none select-none">+</span>
+                        </summary>
+                        <div class="accordion-content px-6 pb-6 pt-2 space-y-4 text-gray-800">
+                            <p>
+                                This investigation began during a project to classify unclassified light curves from NASA's
+                                <a href="https://tess.mit.edu/" target="_blank" class="text-forest hover:underline"><strong>TESS</strong></a>
+                                mission. We identified a prominent beat frequency in the light curve of the cataclysmic variable (CV)
+                                <strong>AT 2019muu</strong>. The signal's high amplitude and its presence before the CV's superoutburst suggested
+                                it was not intrinsic to the system, but was instead caused by a contaminating source.
+                            </p>
+                            <figure class="my-4 text-center">
+                                <img src="files/AT_2019muu_field.png" alt="The AT 2019muu field" class="rounded-lg shadow-md mx-auto my-4">
+                                <figcaption class="mt-2 text-sm text-gray-600">
+                                    The AT 2019muu field. Image Credit: Digital Sky Survey (DSS) / Simbad
+                                </figcaption>
+                            </figure>
+
+                            <div>
+                                <h3 class="text-2xl font-semibold text-forest mb-2">What is a Cataclysmic Variable?</h3>
+                                <p class="mb-4">
+                                    Cataclysmic variable (CV) systems are close binary star systems where a white dwarf accretes material
+                                    from a companion star. As the material is pulled from the companion, it forms an accretion disk around
+                                    the white dwarf.
+                                </p>
+                                <p class="mb-4">
+                                    When the accretion rate surpasses a critical threshold, it can lead to dramatic outbursts, a characteristic
+                                    feature of dwarf novae. These outbursts are caused by a thermal-viscous instability in the accretion disk,
+                                    leading to a sudden increase in brightness.
+                                </p>
+                            </div>
+
+                            <figure class="my-4 text-center">
+                                <img src="files/Cat_Var_pic.jpg" alt="Artist's rendition of a cataclysmic variable system" class="rounded-lg shadow-md mx-auto max-w-full md:max-w-xl">
+                                <figcaption class="mt-2 text-sm text-gray-600">
+                                    Artist's rendition of a cataclysmic variable. Credit: ESA and Justyn R. Maund (University of Cambridge)
+                                </figcaption>
+                            </figure>
+
+                            <h3 class="text-2xl font-semibold text-forest mb-2">Contaminating Candidates</h3>
+                            <p class="mb-4">
+                                The most likely sources were two bright stars located ~5 arcseconds from the CV, designated Target A and
+                                Target B. Using Gaia DR3/DR2 data, we characterized them as follows:
+                            </p>
+                            <div class="bg-gray-100 p-4 rounded-lg my-2 text-sm">
+                                <p class="mb-2">
+                                    <strong>Target A:</strong> A solar-like main sequence star with a BP-RP value of 0.81, an effective
+                                    temperature (Teff) of 5652.95 K, and a surface gravity (log g) of 4.288, located at a distance of 9159 pc.
+                                </p>
+                                <p>
+                                    <strong>Target B:</strong> A cooler red giant star with a BP-RP value of 1.32, a Teff of 3306 K, and a radius
+                                    of 75.65 solar radii, located at 4351 pc.
+                                </p>
+                            </div>
+                            <p class="mb-4">
+                                The observed periodicity (~4.9 hours) is inconsistent with the physical properties of a red giant. The
+                                dynamical timescale of such a star is on the order of days, far too long to produce the observed rapid variations.
+                            </p>
+                            <div class="bg-gray-200 p-4 rounded-lg my-2 text-center">
+                                <p class="mb-2 text-gray-700">
+                                    The dynamical timescale ($t_{\text{dyn}}$) of a star is approximated by:
+                                </p>
+                                <p class="text-lg">
+                                    $$ t_{\text{dyn}} \approx \sqrt{\frac{R^3}{GM}} \propto \frac{1}{\sqrt{\rho}} $$
+                                </p>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    Where $R$ is the stellar radius, $M$ is the mass, and $\rho$ is the mean density. Target B's large radius
+                                    and low mean density (low $\rho$) result in a long dynamical timescale, making it physically incapable of
+                                    producing the observed variations.
+                                </p>
+                            </div>
+                            <p>
+                                This analysis ruled out Target B and established Target A as the primary suspect, motivating a ground-based
+                                observing campaign to test this hypothesis.
+                            </p>
+                        </div>
+                    </details>
+
+                    <!-- Section 2 -->
+                    <details class="accordion bg-white bg-opacity-90 rounded-lg shadow-md">
+                        <summary class="flex items-center justify-between cursor-pointer px-6 py-4">
+                            <span class="text-xl font-semibold text-navy">
+                                What is a Beat Frequency?
+                            </span>
+                            <span class="accordion-icon text-gray-500 text-2xl leading-none select-none">+</span>
+                        </summary>
+                        <div class="accordion-content px-6 pb-6 pt-2 space-y-4 text-gray-800">
+                            <p class="mb-4">
+                                The "beating" pattern in the TESS light curve is an interference effect. It occurs when two or more periodic
+                                signals with very similar frequencies are added together. At times, the peaks of the waves align, causing
+                                constructive interference and a higher amplitude. At other times, the peak of one wave aligns with the trough
+                                of another, causing destructive interference and a lower amplitude. The visualization below demonstrates this
+                                process, showing how two simple sine waves combine to create a complex beat pattern, just like the one observed
+                                in our data.
+                            </p>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/optimized_animated_beat_frequency_visualization.html" width="100%" height="500" style="border:0;" title="Beat Frequency Visualization"></iframe>
+                            </div>
+                            <div class="bg-gray-200 p-4 rounded-lg my-2 text-center">
+                                <p class="mb-2 text-gray-700">
+                                    When two waves with frequencies $f_1$ and $f_2$ are summed, the resulting wave can be described by a trigonometric identity:
+                                </p>
+                                <p class="text-lg">
+                                    $$ A\sin(2\pi f_1 t) + A\sin(2\pi f_2 t) = 2A \cos\left(2\pi \frac{f_1 - f_2}{2} t\right) \sin\left(2\pi \frac{f_1 + f_2}{2} t\right) $$
+                                </p>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    This shows a high-frequency sine wave (the average frequency) whose amplitude is modulated by a low-frequency cosine wave
+                                    (the envelope). The frequency of this slow amplitude modulation is the beat frequency, calculated as: 
+                                    $f_{\text{beat}} = |f_1 - f_2|$.
+                                </p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Section 3 -->
+                    <details class="accordion bg-white bg-opacity-90 rounded-lg shadow-md">
+                        <summary class="flex items-center justify-between cursor-pointer px-6 py-4">
+                            <span class="text-xl font-semibold text-navy">
+                                Quantifying the TESS Signal
+                            </span>
+                            <span class="accordion-icon text-gray-500 text-2xl leading-none select-none">+</span>
+                        </summary>
+                        <div class="accordion-content px-6 pb-6 pt-2 space-y-4 text-gray-800">
+                            <p class="mb-4">
+                                The raw TESS light curve (top) clearly shows the beat frequency superimposed on other trends. To isolate this
+                                signal, we first applied a 4th degree polynomial to detrend the data within the time constraints of BTJD 1689.5–1710.
+                                This removes long-term instrumental or stellar trends and reveals the rapid, periodic variations (bottom).
+                            </p>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="TESS Light Curve of AT 2019muu"></iframe>
+                            </div>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/detrended_light_curve_AT2019muu.html" width="100%" height="500" style="border:0;" title="Detrended Light Curve of AT 2019muu"></iframe>
+                            </div>
+                            <p class="mb-4">
+                                To analyze this detrended signal, we used a Lomb-Scargle periodogram. Unlike a standard Fourier transform, this
+                                method is specifically designed to handle unevenly-sampled observations, which are common in astronomy. Our analysis
+                                revealed two dominant peaks at <strong>4.97 cycles/day</strong> and <strong>5.48 cycles/day</strong>.
+                            </p>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/lomb_scargle_AT2019muu.html" width="100%" height="500" style="border:0;" title="Lomb-Scargle Periodogram of AT 2019muu"></iframe>
+                            </div>
+                            <p class="mb-4">
+                                Folding the data on one of the primary periods confirms a coherent, large-amplitude signal. The central goal of
+                                our research is to determine its origin.
+                            </p>
+                            <div class="my-4 rounded-md overflow-hidden border">
+                                <iframe src="files/phase_folded_AT2019muu.html" width="100%" height="500" style="border:0;" title="Phase-folded Light Curve of AT 2019muu"></iframe>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Section 4 -->
+                    <details class="accordion bg-white bg-opacity-90 rounded-lg shadow-md">
+                        <summary class="flex items-center justify-between cursor-pointer px-6 py-4">
+                            <span class="text-xl font-semibold text-navy">
+                                From Prime Suspects to New Leads
+                            </span>
+                            <span class="accordion-icon text-gray-500 text-2xl leading-none select-none">+</span>
+                        </summary>
+                        <div class="accordion-content px-6 pb-6 pt-2 space-y-4 text-gray-800">
+                            <p class="mb-4">
+                                To test our hypothesis about Target A, we conducted initial follow-up observations at the Preston Gott Skyview
+                                Observatory in November 2024 and July 2025. Preliminary light curves from this data suggest that Target A is also
+                                not variable, ruling out the most obvious source. This finding prompted a broader search of the field. Due to TESS's
+                                large 21×21 arcsecond pixels, the photometric aperture contains dozens of stars. A wider search revealed two classified
+                                Eclipsing Binary (EB) stars within the same TESS frame, making them our new primary suspects.
+                            </p>
+                        </div>
+                    </details>
+
+                    <!-- Section 5 -->
+                    <details class="accordion bg-white bg-opacity-90 rounded-lg shadow-md">
+                        <summary class="flex items-center justify-between cursor-pointer px-6 py-4">
+                            <span class="text-xl font-semibold text-navy">
+                                Current Status: Expanded Skyview Observatory Campaign
+                            </span>
+                            <span class="accordion-icon text-gray-500 text-2xl leading-none select-none">+</span>
+                        </summary>
+                        <div class="accordion-content px-6 pb-6 pt-2 space-y-4 text-gray-800">
+                            <p class="mb-4">
+                                We are now conducting a more comprehensive, high-resolution observing campaign at the Preston Gott Skyview Observatory
+                                to acquire a total of 18 hours of high-cadence photometry of the AT 2019muu field. The high resolution of the Skyview
+                                telescopes allows us to separate the light from each star in the TESS aperture, including the two newly identified
+                                Eclipsing Binaries.
+                            </p>
+                            <p class="mb-4">
+                                The focus of our upcoming publication (Dec. 2025) is to use this new dataset to identify the source of the variability.
+                                The data will allow us to confirm the periods and classifications of the known EBs. This will either identify one of
+                                them as the source of the TESS signal or, if their periods do not match, provide strong evidence for the discovery of
+                                a new, uncataloged variable star in the field.
+                            </p>
+                        </div>
+                    </details>
+
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-navy p-4 text-center text-white">
+        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
+        <p>Contact: nic5153mcclure@gmail.com</p>
+    </footer>
+
+    <!-- FloatingLines background (Three.js, no React) -->
+    <script type="module">
+        import {
+            Scene,
+            OrthographicCamera,
+            WebGLRenderer,
+            PlaneGeometry,
+            Mesh,
+            ShaderMaterial,
+            Vector3,
+            Vector2,
+            Clock
+        } from 'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js';
+
+        const vertexShader = `precision highp float;
+
+void main() {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+        const fragmentShader = `precision highp float;
+
+uniform float iTime;
+uniform vec3  iResolution;
+uniform float animationSpeed;
+
+uniform bool enableTop;
+uniform bool enableMiddle;
+uniform bool enableBottom;
+
+uniform int topLineCount;
+uniform int middleLineCount;
+uniform int bottomLineCount;
+
+uniform float topLineDistance;
+uniform float middleLineDistance;
+uniform float bottomLineDistance;
+
+uniform vec3 topWavePosition;
+uniform vec3 middleWavePosition;
+uniform vec3 bottomWavePosition;
+
+uniform vec2 iMouse;
+uniform bool interactive;
+uniform float bendRadius;
+uniform float bendStrength;
+uniform float bendInfluence;
+
+uniform bool parallax;
+uniform float parallaxStrength;
+uniform vec2 parallaxOffset;
+
+uniform vec3 lineGradient[8];
+uniform int lineGradientCount;
+
+const vec3 BLACK = vec3(0.0);
+const vec3 PINK  = vec3(233.0, 71.0, 245.0) / 255.0;
+const vec3 BLUE  = vec3(47.0,  75.0, 162.0) / 255.0;
+
+mat2 rotate(float r) {
+  return mat2(cos(r), sin(r), -sin(r), cos(r));
+}
+
+vec3 background_color(vec2 uv) {
+  vec3 col = vec3(0.0);
+
+  float y = sin(uv.x - 0.2) * 0.3 - 0.1;
+  float m = uv.y - y;
+
+  col += mix(BLUE, BLACK, smoothstep(0.0, 1.0, abs(m)));
+  col += mix(PINK, BLACK, smoothstep(0.0, 1.0, abs(m - 0.8)));
+  return col * 0.5;
+}
+
+vec3 getLineColor(float t, vec3 baseColor) {
+  if (lineGradientCount <= 0) {
+    return baseColor;
+  }
+
+  vec3 gradientColor;
+  
+  if (lineGradientCount == 1) {
+    gradientColor = lineGradient[0];
+  } else {
+    float clampedT = clamp(t, 0.0, 0.9999);
+    float scaled = clampedT * float(lineGradientCount - 1);
+    int idx = int(floor(scaled));
+    float f = fract(scaled);
+    int idx2 = min(idx + 1, lineGradientCount - 1);
+
+    vec3 c1 = lineGradient[idx];
+    vec3 c2 = lineGradient[idx2];
+    
+    gradientColor = mix(c1, c2, f);
+  }
+  
+  return gradientColor * 0.5;
+}
+
+float wave(vec2 uv, float offset, vec2 screenUv, vec2 mouseUv, bool shouldBend) {
+  float time = iTime * animationSpeed;
+
+  float x_offset   = offset;
+  float x_movement = time * 0.1;
+  float amp        = sin(offset + time * 0.2) * 0.3;
+  float y          = sin(uv.x + x_offset + x_movement) * amp;
+
+  if (shouldBend) {
+    vec2 d = screenUv - mouseUv;
+    float influence = exp(-dot(d, d) * bendRadius);
+    float bendOffset = (mouseUv.y - screenUv.y) * influence * bendStrength * bendInfluence;
+    y += bendOffset;
+  }
+
+  float m = uv.y - y;
+  return 0.0175 / max(abs(m) + 0.01, 1e-3) + 0.01;
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+  vec2 baseUv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
+  baseUv.y *= -1.0;
+  
+  if (parallax) {
+    baseUv += parallaxOffset;
+  }
+
+  vec3 col = vec3(0.0);
+
+  vec3 b = lineGradientCount > 0 ? vec3(0.0) : background_color(baseUv);
+
+  vec2 mouseUv = vec2(0.0);
+  if (interactive) {
+    mouseUv = (2.0 * iMouse - iResolution.xy) / iResolution.y;
+    mouseUv.y *= -1.0;
+  }
+  
+  if (enableBottom) {
+    for (int i = 0; i < bottomLineCount; ++i) {
+      float fi = float(i);
+      float t = fi / max(float(bottomLineCount - 1), 1.0);
+      vec3 lineCol = getLineColor(t, b);
+      
+      float angle = bottomWavePosition.z * log(length(baseUv) + 1.0);
+      vec2 ruv = baseUv * rotate(angle);
+      col += lineCol * wave(
+        ruv + vec2(bottomLineDistance * fi + bottomWavePosition.x, bottomWavePosition.y),
+        1.5 + 0.2 * fi,
+        baseUv,
+        mouseUv,
+        interactive
+      ) * 0.2;
+    }
+  }
+
+  if (enableMiddle) {
+    for (int i = 0; i < middleLineCount; ++i) {
+      float fi = float(i);
+      float t = fi / max(float(middleLineCount - 1), 1.0);
+      vec3 lineCol = getLineColor(t, b);
+      
+      float angle = middleWavePosition.z * log(length(baseUv) + 1.0);
+      vec2 ruv = baseUv * rotate(angle);
+      col += lineCol * wave(
+        ruv + vec2(middleLineDistance * fi + middleWavePosition.x, middleWavePosition.y),
+        2.0 + 0.15 * fi,
+        baseUv,
+        mouseUv,
+        interactive
+      );
+    }
+  }
+
+  if (enableTop) {
+    for (int i = 0; i < topLineCount; ++i) {
+      float fi = float(i);
+      float t = fi / max(float(topLineCount - 1), 1.0);
+      vec3 lineCol = getLineColor(t, b);
+      
+      float angle = topWavePosition.z * log(length(baseUv) + 1.0);
+      vec2 ruv = baseUv * rotate(angle);
+      ruv.x *= -1.0;
+      col += lineCol * wave(
+        ruv + vec2(topLineDistance * fi + topWavePosition.x, topWavePosition.y),
+        1.0 + 0.2 * fi,
+        baseUv,
+        mouseUv,
+        interactive
+      ) * 0.1;
+    }
+  }
+
+  fragColor = vec4(col, 1.0);
+}
+
+void main() {
+  vec4 color = vec4(0.0);
+  mainImage(color, gl_FragCoord.xy);
+  gl_FragColor = color;
+}
+`;
+
+        const MAX_GRADIENT_STOPS = 8;
+
+        function hexToVec3(hex) {
+          let value = hex.trim();
+
+          if (value.startsWith('#')) {
+            value = value.slice(1);
+          }
+
+          let r = 255;
+          let g = 255;
+          let b = 255;
+
+          if (value.length === 3) {
+            r = parseInt(value[0] + value[0], 16);
+            g = parseInt(value[1] + value[1], 16);
+            b = parseInt(value[2] + value[2], 16);
+          } else if (value.length === 6) {
+            r = parseInt(value.slice(0, 2), 16);
+            g = parseInt(value.slice(2, 4), 16);
+            b = parseInt(value.slice(4, 6), 16);
+          }
+
+          return new Vector3(r / 255, g / 255, b / 255);
+        }
+
+        const container = document.getElementById('floating-lines-bg');
+        if (container) {
+          const scene = new Scene();
+          const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+          camera.position.z = 1;
+
+          const renderer = new WebGLRenderer({ antialias: true, alpha: false });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          renderer.domElement.style.width = '100%';
+          renderer.domElement.style.height = '100%';
+          container.appendChild(renderer.domElement);
+
+          const uniforms = {
+            iTime: { value: 0 },
+            iResolution: { value: new Vector3(1, 1, 1) },
+            animationSpeed: { value: 1.0 },
+
+            enableTop: { value: true },
+            enableMiddle: { value: true },
+            enableBottom: { value: true },
+
+            topLineCount: { value: 6 },
+            middleLineCount: { value: 6 },
+            bottomLineCount: { value: 6 },
+
+            topLineDistance: { value: 0.05 },
+            middleLineDistance: { value: 0.03 },
+            bottomLineDistance: { value: 0.05 },
+
+            topWavePosition: { value: new Vector3(10.0, 0.5, -0.4) },
+            middleWavePosition: { value: new Vector3(5.0, 0.0, 0.2) },
+            bottomWavePosition: { value: new Vector3(2.0, -0.7, 0.4) },
+
+            iMouse: { value: new Vector2(-1000, -1000) },
+            interactive: { value: true },
+            bendRadius: { value: 5.0 },
+            bendStrength: { value: -0.5 },
+            bendInfluence: { value: 0.0 },
+
+            parallax: { value: true },
+            parallaxStrength: { value: 0.2 },
+            parallaxOffset: { value: new Vector2(0, 0) },
+
+            lineGradient: {
+              value: Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1))
+            },
+            lineGradientCount: { value: 0 }
+          };
+
+          const linesGradient = ['#2f4ba2', '#e947f5', '#ffffff'];
+
+          if (linesGradient && linesGradient.length > 0) {
+            const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
+            uniforms.lineGradientCount.value = stops.length;
+
+            stops.forEach((hex, i) => {
+              const color = hexToVec3(hex);
+              uniforms.lineGradient.value[i].set(color.x, color.y, color.z);
+            });
+          }
+
+          const material = new ShaderMaterial({
+            uniforms,
+            vertexShader,
+            fragmentShader
+          });
+
+          const geometry = new PlaneGeometry(2, 2);
+          const mesh = new Mesh(geometry, material);
+          scene.add(mesh);
+
+          const clock = new Clock();
+
+          function setSize() {
+            const width = window.innerWidth || 1;
+            const height = window.innerHeight || 1;
+
+            renderer.setSize(width, height, false);
+
+            const canvasWidth = renderer.domElement.width;
+            const canvasHeight = renderer.domElement.height;
+            uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1);
+          }
+
+          setSize();
+          window.addEventListener('resize', setSize);
+
+          const targetMouse = new Vector2(-1000, -1000);
+          const currentMouse = new Vector2(-1000, -1000);
+          let targetInfluence = 0.0;
+          let currentInfluence = 0.0;
+
+          const targetParallax = new Vector2(0, 0);
+          const currentParallax = new Vector2(0, 0);
+          const mouseDamping = 0.05;
+
+          function handlePointerMove(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const dpr = renderer.getPixelRatio();
+
+            targetMouse.set(x * dpr, (rect.height - y) * dpr);
+            targetInfluence = 1.0;
+
+            if (uniforms.parallax.value) {
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const offsetX = (x - centerX) / rect.width;
+              const offsetY = -(y - centerY) / rect.height;
+              targetParallax.set(offsetX * uniforms.parallaxStrength.value, offsetY * uniforms.parallaxStrength.value);
+            }
+          }
+
+          function handlePointerLeave() {
+            targetInfluence = 0.0;
+          }
+
+          renderer.domElement.addEventListener('pointermove', handlePointerMove);
+          renderer.domElement.addEventListener('pointerleave', handlePointerLeave);
+
+          function renderLoop() {
+            uniforms.iTime.value = clock.getElapsedTime();
+
+            if (uniforms.interactive.value) {
+              currentMouse.lerp(targetMouse, mouseDamping);
+              uniforms.iMouse.value.copy(currentMouse);
+
+              currentInfluence += (targetInfluence - currentInfluence) * mouseDamping;
+              uniforms.bendInfluence.value = currentInfluence;
+            }
+
+            if (uniforms.parallax.value) {
+              currentParallax.lerp(targetParallax, mouseDamping);
+              uniforms.parallaxOffset.value.copy(currentParallax);
+            }
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(renderLoop);
+          }
+
+          renderLoop();
+        }
+    </script>
+
+    <!-- Existing nav/mobile JS + accordion behavior -->
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Set active link based on current page
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active-link');
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('active-link');
+            }
+        });
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('bg-forest');
+            }
+        });
+
+        // Accordion: smooth plus/minus + only one open at a time
+        const accordions = document.querySelectorAll('details.accordion');
+
+        accordions.forEach(det => {
+            det.addEventListener('toggle', () => {
+                if (det.open) {
+                    // close all others
+                    accordions.forEach(other => {
+                        if (other !== det) {
+                            other.open = false;
+                        }
+                    });
+                }
+
+                // update icons
+                accordions.forEach(a => {
+                    const icon = a.querySelector('.accordion-icon');
+                    if (!icon) return;
+                    icon.textContent = a.open ? '−' : '+';
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
