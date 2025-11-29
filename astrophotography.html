@@ -78,7 +78,11 @@
         }
         
         /* Prevent dropdown flicker */
-        .group:hover .group-hover\:block { display: block; }
+        .group:hover .group-hover\:block,
+        .group:focus-within .group-hover\:block {
+            display: block;
+        }
+
     </style>
 </head>
 <body class="text-gray-800 flex flex-col min-h-screen">
@@ -93,7 +97,7 @@
                     <button class="text-white nav-link flex items-center space-x-1">
                         <span>🔭 Science</span><span class="text-sm">▼</span>
                     </button>
-                    <div class="absolute left-0 mt-2 hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
+                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
                         <a href="research.html" class="block px-4 py-2 hover:bg-gray-100">Research</a>
                         <a href="astrophotography.html" class="block px-4 py-2 hover:bg-gray-100">Astrophotography</a>
                     </div>
@@ -102,12 +106,13 @@
                     <button class="text-white nav-link flex items-center space-x-1">
                         <span>👤 About</span><span class="text-sm">▼</span>
                     </button>
-                    <div class="absolute left-0 mt-2 hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
+                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
                         <a href="cv.html" class="block px-4 py-2 hover:bg-gray-100">CV</a>
                         <a href="outreach.html" class="block px-4 py-2 hover:bg-gray-100">Outreach</a>
                         <a href="poster.html" class="block px-4 py-2 hover:bg-gray-100">Poster</a>
                     </div>
                 </div>
+
             </div>
             <button id="mobile-menu-button" class="md:hidden text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
