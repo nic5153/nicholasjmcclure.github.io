@@ -21,9 +21,14 @@
             z-index: 0;
         }
 
-        nav, main, footer {
+        nav, footer {
             position: relative;
-            z-index: 1;
+            z-index: 60;
+        }
+        
+        main {
+            position: relative;
+            z-index: 10;
         }
         
         .bg-navy { background-color: #001f3f; }
@@ -53,10 +58,10 @@
 
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+<body class="text-gray-800 flex flex-col min-h-screen">
     <div id="floating-lines-bg"></div>
 
-    <nav class="bg-navy p-4 shadow-md sticky top-0 z-[60]">
+    <nav class="bg-navy p-4 shadow-md sticky top-0">
         <div class="container mx-auto flex justify-between items-center">
             <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
             <div class="hidden md:flex space-x-8 items-center">
@@ -101,40 +106,58 @@
         </div>
     </nav>
 
-    <main class="flex-grow">
-        <div class="container mx-auto p-8">
-            <section id="about" class="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg">
-                <div class="flex flex-col items-center">
-                    <div class="w-full md:w-3/4">
-                        <h1 class="text-3xl md:text-4xl font-bold text-navy mb-4 text-center">
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="container mx-auto max-w-5xl">
+            <section id="about" class="bg-white bg-opacity-95 p-8 md:p-12 rounded-xl shadow-2xl backdrop-blur-sm">
+                
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-10">
+                    
+                    <div class="w-64 flex-shrink-0">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-navy to-forest rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+                            <img src="files/profile.jpg" 
+                                 alt="Nicholas J. McClure Graduation Photo" 
+                                 class="relative w-full h-auto rounded-lg shadow-lg border-2 border-white object-cover transform transition duration-500 hover:scale-[1.02]">
+                        </div>
+                    </div>
+
+                    <div class="flex-grow text-center md:text-left">
+                        <h1 class="text-4xl font-bold text-navy mb-2">
                             Nicholas J. McClure
                         </h1>
-                        <h2 class="text-xl text-forest mb-4 text-center">
+                        <h2 class="text-xl text-forest font-medium mb-6">
                             Astrophysics Research Assistant | Texas Tech University
                         </h2>
-                        <p class="mb-4">
-                            I am an astrophysics research assistant at Texas Tech University with a B.S. in physics (astrophysics)/minor in mathematics with a passion for
-                            time-domain astronomy, cataclysmic variables, and stellar pulsations. I work primarily with
-                            large data sets such as TESS, ZTF, and ground-based observations to investigate
-                            periodic variability in compact binary systems and pulsating stars.
-                        </p>
-                        <p class="mb-4">
-                            My core interests lie in stellar structure and evolution, accretion physics, and asteroseismology
-                            with an emphasis in signal processing. I am also passionate about public and academic/scientific outreach, as well as science education.
-                            My research experience has given me a strong foundation in astronomical image calibration,
-                            observational strategies and planning, public presentation/communication skills, and extensive Python utilization with packages such as NumPy, SciPy, Astropy, Tkinter, Matplotlib and more.
-                            My goal is to continue this work by earning a PhD in Astronomy/Astrophysics.
-                        </p>
-                        <p class="mb-4">
-                            Outside of my academic pursuits, I enjoy astrophotography, orchestral and wind ensemble music,
-                            and spending time with my dog, Orion, and my cat, Cassie (short for Cassiopeia).
-                        </p>
-                        <p class="text-center pt-4">
-                            Please feel free to explore this site, view my <a href="cv.html" class="text-forest underline">CV</a>, and contact me at
-                            <a href="mailto:nimcclur@ttu.edu" class="text-forest underline">nimcclur@ttu.edu</a> with any questions. Thanks for visiting!
-                        </p>
+                        
+                        <div class="space-y-4 text-gray-700 leading-relaxed">
+                            <p>
+                                I am an astrophysics research assistant at Texas Tech University with a B.S. in physics (astrophysics)/minor in mathematics with a passion for
+                                time-domain astronomy, cataclysmic variables, and stellar pulsations. I work primarily with
+                                large data sets such as TESS, ZTF, and ground-based observations to investigate
+                                periodic variability in compact binary systems and pulsating stars.
+                            </p>
+                            <p>
+                                My core interests lie in stellar structure and evolution, accretion physics, and asteroseismology
+                                with an emphasis in signal processing. I am also passionate about public and academic/scientific outreach, as well as science education.
+                                My research experience has given me a strong foundation in astronomical image calibration,
+                                observational strategies and planning, public presentation/communication skills, and extensive Python utilization with packages such as NumPy, SciPy, Astropy, Tkinter, Matplotlib and more.
+                                My goal is to continue this work by earning a PhD in Astronomy/Astrophysics.
+                            </p>
+                            <p>
+                                Outside of my academic pursuits, I enjoy astrophotography, orchestral and wind ensemble music,
+                                and spending time with my dog, Orion, and my cat, Cassie (short for Cassiopeia).
+                            </p>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-gray-200">
+                            <p class="text-gray-600">
+                                Please feel free to explore this site, view my <a href="cv.html" class="text-forest font-bold hover:underline">CV</a>, and contact me at
+                                <a href="mailto:nimcclur@ttu.edu" class="text-forest font-bold hover:underline">nimcclur@ttu.edu</a> with any questions. Thanks for visiting!
+                            </p>
+                        </div>
                     </div>
                 </div>
+
             </section>
         </div>
     </main>
