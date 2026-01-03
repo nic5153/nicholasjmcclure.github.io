@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Research - Nicholas J. McClure</title>
+    <title>Outreach - Nicholas J. McClure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
@@ -31,9 +31,14 @@
             z-index: 0;
         }
 
-        nav, main, footer {
+        nav, footer {
             position: relative;
-            z-index: 1;
+            z-index: 60;
+        }
+        
+        main {
+            position: relative;
+            z-index: 10;
         }
 
         .bg-navy { background-color: #001f3f; }
@@ -48,33 +53,12 @@
         }
 
         .nav-link:hover {
-            color: #228B22; /* Forest Green */
+            color: #228B22;
         }
         
         .active-link {
-            color: #228B22; /* Forest Green */
+            color: #228B22;
             border-bottom: 2px solid #228B22;
-        }
-
-        summary {
-            list-style: none;
-        }
-
-        summary::-webkit-details-marker {
-            display: none;
-        }
-
-        /* Accordion animation */
-        .accordion-content {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: max-height 0.35s ease, opacity 0.35s ease;
-        }
-
-        details[open] .accordion-content {
-            max-height: 2000px; /* should be taller than any section */
-            opacity: 1;
         }
         
         /* Prevent dropdown flicker */
@@ -82,13 +66,12 @@
         .group:focus-within .group-hover\:block {
             display: block;
         }
-
     </style>
 </head>
 <body class="text-gray-800 flex flex-col min-h-screen">
     <div id="floating-lines-bg"></div>
 
-    <nav class="bg-navy p-4 shadow-md sticky top-0 z-[60]">
+    <nav class="bg-navy p-4 shadow-md sticky top-0">
         <div class="container mx-auto flex justify-between items-center">
             <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
             <div class="hidden md:flex space-x-8 items-center">
@@ -133,9 +116,53 @@
         </div>
     </nav>
 
-    
+    <main class="container mx-auto px-4 py-12 flex-grow">
+        
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-white mb-4">AstroNight 2024</h1>
+            <div class="h-1 w-24 bg-forest mx-auto mb-6"></div>
+            <p class="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
+                In November, I had the privilege of volunteering at AstroNight, an event dedicated to bringing the cosmos closer to the community.
+                I spent the evening guiding public viewing sessions and leading educational talks with my personal telescope setup, helping attendees explore the wonders of the night sky.
+            </p>
+        </div>
 
-    <footer class="bg-navy p-4 text-center text-white">
+        <div class="max-w-6xl mx-auto space-y-8">
+            
+            <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
+                <img src="files/astronight3.jpg" 
+                     alt="Leading an educational talk at AstroNight" 
+                     class="w-full h-[400px] md:h-[500px] object-cover object-center transform transition-transform duration-700 hover:scale-105">
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+                    <p class="text-white text-lg font-medium">Leading educational discussions on astronomy</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
+                    <img src="files/astronight1.jpg" 
+                         alt="Telescope demonstration outdoors" 
+                         class="w-full h-[350px] object-cover transform transition-transform duration-700 hover:scale-105">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+                        <p class="text-white font-medium">Demonstrating telescope operation in the field</p>
+                    </div>
+                </div>
+
+                <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
+                    <img src="files/astronight2.jpg" 
+                         alt="Public viewing session" 
+                         class="w-full h-[350px] object-cover transform transition-transform duration-700 hover:scale-105">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+                        <p class="text-white font-medium">Guiding public observations</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+    </main>
+    <footer class="bg-navy p-4 text-center text-white mt-12">
         <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
         <p>Contact: nic5153mcclure@gmail.com</p>
     </footer>
@@ -534,29 +561,6 @@ void main() {
             if (link.getAttribute('href') === currentPage) {
                 link.classList.add('bg-forest');
             }
-        });
-
-        // Accordion: smooth plus/minus + only one open at a time
-        const accordions = document.querySelectorAll('details.accordion');
-
-        accordions.forEach(det => {
-            det.addEventListener('toggle', () => {
-                if (det.open) {
-                    // close all others
-                    accordions.forEach(other => {
-                        if (other !== det) {
-                            other.open = false;
-                        }
-                    });
-                }
-
-                // update icons
-                accordions.forEach(a => {
-                    const icon = a.querySelector('.accordion-icon');
-                    if (!icon) return;
-                    icon.textContent = a.open ? '−' : '+';
-                });
-            });
         });
     </script>
 </body>
