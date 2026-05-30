@@ -1,0 +1,16 @@
+name = "observing-vault"
+main = "worker.js"
+compatibility_date = "2026-05-29"
+
+[vars]
+ALLOWED_ORIGIN = "https://nic5153.github.io"
+
+[[r2_buckets]]
+binding = "OBS_BUCKET"
+bucket_name = "observing-vault"
+
+# Add the D1 binding after creating the database:
+# [[d1_databases]]
+# binding = "PLANNER_DB"
+# database_name = "nightvector-planner"
+# database_id = "<copy from Cloudflare D1 dashboard>"

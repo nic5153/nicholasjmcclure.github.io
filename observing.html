@@ -1,0 +1,2835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NightVector - Nicholas J. McClure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void: #05030b;
+            --panel: rgba(9, 13, 31, 0.82);
+            --panel-strong: rgba(13, 18, 42, 0.95);
+            --cyan: #00e5ff;
+            --green: #48ff9b;
+            --magenta: #e44cff;
+            --violet: #7c4dff;
+            --amber: #ffd166;
+            --text: #eef7ff;
+            --muted: #98a8c8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(124, 77, 255, 0.25), transparent 30%),
+                radial-gradient(circle at 80% 5%, rgba(0, 229, 255, 0.20), transparent 28%),
+                radial-gradient(circle at 70% 85%, rgba(72, 255, 155, 0.14), transparent 34%),
+                var(--void);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(228, 76, 255, 0.05) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, transparent, black 12%, black 72%, transparent);
+            z-index: 0;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.035),
+                rgba(255, 255, 255, 0.035) 1px,
+                transparent 1px,
+                transparent 5px
+            );
+            mix-blend-mode: screen;
+            opacity: 0.35;
+            z-index: 0;
+        }
+
+        nav, main, footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .bg-navy { background-color: #001f3f; }
+        .bg-forest { background-color: #228B22; }
+        .text-navy { color: #001f3f; }
+        .nav-link { transition: color 0.3s ease; }
+        .nav-link:hover { color: #48ff9b; }
+        .active-link {
+            color: #48ff9b;
+            border-bottom: 2px solid #48ff9b;
+        }
+        .group:hover .group-hover\:block,
+        .group:focus-within .group-hover\:block {
+            display: block;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .neon-shell {
+            border: 1px solid rgba(0, 229, 255, 0.28);
+            background: linear-gradient(145deg, rgba(8, 13, 32, 0.94), rgba(10, 6, 28, 0.88));
+            box-shadow:
+                0 0 0 1px rgba(228, 76, 255, 0.12),
+                0 0 32px rgba(0, 229, 255, 0.12),
+                inset 0 0 30px rgba(124, 77, 255, 0.08);
+        }
+
+        .panel {
+            border: 1px solid rgba(0, 229, 255, 0.18);
+            background: var(--panel);
+            box-shadow: inset 0 0 24px rgba(0, 229, 255, 0.04);
+        }
+
+        .target-row {
+            border: 1px solid rgba(152, 168, 200, 0.16);
+            background: rgba(8, 12, 28, 0.72);
+            transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        }
+
+        .target-row:hover,
+        .target-row.active {
+            border-color: rgba(72, 255, 155, 0.72);
+            background: rgba(14, 21, 45, 0.92);
+            transform: translateY(-1px);
+        }
+
+        .chip {
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            color: var(--muted);
+            background: rgba(3, 7, 18, 0.58);
+            transition: all 0.16s ease;
+        }
+
+        .chip:hover,
+        .chip.active {
+            color: #07101c;
+            border-color: transparent;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.24);
+        }
+
+        .field-grid {
+            background:
+                radial-gradient(circle at center, rgba(72, 255, 155, 0.12), transparent 45%),
+                linear-gradient(rgba(0, 229, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(228, 76, 255, 0.08) 1px, transparent 1px),
+                #050711;
+            background-size: auto, 24px 24px, 24px 24px, auto;
+        }
+
+        .target-ellipse {
+            border: 2px solid var(--green);
+            box-shadow:
+                0 0 16px rgba(72, 255, 155, 0.65),
+                inset 0 0 18px rgba(72, 255, 155, 0.14);
+        }
+
+        .fov-frame {
+            border: 2px solid rgba(0, 229, 255, 0.75);
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.45);
+        }
+
+        .meter {
+            background: rgba(152, 168, 200, 0.16);
+        }
+
+        .meter span {
+            background: linear-gradient(90deg, var(--magenta), var(--cyan), var(--green));
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.38);
+        }
+
+        .upload-progress {
+            background: rgba(152, 168, 200, 0.16);
+            border: 1px solid rgba(0, 229, 255, 0.18);
+            overflow: hidden;
+        }
+
+        .upload-progress span {
+            display: block;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--green));
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.42);
+            transition: width 0.18s ease;
+        }
+
+        .neon-button {
+            color: #031018;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+            transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .neon-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 26px rgba(72, 255, 155, 0.34);
+        }
+
+        .ghost-button {
+            border: 1px solid rgba(228, 76, 255, 0.42);
+            color: var(--text);
+            background: rgba(228, 76, 255, 0.08);
+        }
+
+        .ghost-button:hover {
+            border-color: var(--magenta);
+            box-shadow: 0 0 18px rgba(228, 76, 255, 0.22);
+        }
+
+        .input-dark {
+            color: var(--text);
+            background: rgba(2, 6, 23, 0.76);
+            border: 1px solid rgba(0, 229, 255, 0.24);
+        }
+
+        .input-dark:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(72, 255, 155, 0.12);
+        }
+
+        .scroll-soft {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 229, 255, 0.7) rgba(5, 7, 17, 0.7);
+        }
+
+        @media (min-width: 900px) and (max-width: 1535px) {
+            .planner-grid {
+                grid-template-columns: minmax(300px, 0.75fr) minmax(520px, 1.25fr);
+            }
+
+            .planner-grid > aside:last-child {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(260px, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .planner-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .planner-grid > aside:last-child {
+                display: block;
+            }
+
+            .planner-grid > aside:last-child > * + * {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="bg-navy p-4 shadow-md sticky top-0 z-[60]">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
+            <div class="hidden md:flex space-x-8 items-center">
+                <a href="index.html" class="nav-link text-white">Home</a>
+                <div class="relative group">
+                    <button class="text-white nav-link flex items-center space-x-1">
+                        <span>🔭 Science</span><span class="text-sm">▼</span>
+                    </button>
+                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-56 py-2 z-[70]">
+                        <a href="astrophotography.html" class="block px-4 py-2 hover:bg-gray-100">Astrophotography</a>
+                        <a href="observing.html" class="block px-4 py-2 hover:bg-gray-100">NightVector</a>
+                    </div>
+                </div>
+                <div class="relative group">
+                    <button class="text-white nav-link flex items-center space-x-1">
+                        <span>👤 About</span><span class="text-sm">▼</span>
+                    </button>
+                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
+                        <a href="cv.html" class="block px-4 py-2 hover:bg-gray-100">CV</a>
+                        <a href="outreach.html" class="block px-4 py-2 hover:bg-gray-100">Outreach</a>
+                        <a href="poster.html" class="block px-4 py-2 hover:bg-gray-100">Poster</a>
+                    </div>
+                </div>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden mt-2 bg-navy text-white rounded-md overflow-hidden">
+            <a href="index.html" class="block py-2 px-4">Home</a>
+            <p class="px-4 pt-3 pb-1 text-sm opacity-70">Science</p>
+            <a href="astrophotography.html" class="block py-2 px-4">Astrophotography</a>
+            <a href="observing.html" class="block py-2 px-4">NightVector</a>
+            <p class="px-4 pt-3 pb-1 text-sm opacity-70">About</p>
+            <a href="cv.html" class="block py-2 px-4">CV</a>
+            <a href="outreach.html" class="block py-2 px-4">Outreach</a>
+            <a href="poster.html" class="block py-2 px-4">Poster</a>
+        </div>
+    </nav>
+
+    <main class="flex-grow px-2 py-6 sm:px-4 lg:px-6 2xl:px-8">
+        <section class="neon-shell mx-auto w-full max-w-none rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col gap-5 border-b border-cyan-300/20 pb-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-white md:text-5xl">NightVector</h1>
+                </div>
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div class="panel rounded-lg p-3">
+                        <p class="mono text-[10px] uppercase tracking-widest text-slate-400">Scale</p>
+                        <p id="stat-scale" class="mono text-xl font-bold text-cyan-300">0.47"</p>
+                    </div>
+                    <div class="panel rounded-lg p-3">
+                        <p class="mono text-[10px] uppercase tracking-widest text-slate-400">FOV</p>
+                        <p id="stat-fov" class="mono text-xl font-bold text-green-300">30x17'</p>
+                    </div>
+                    <div class="panel rounded-lg p-3">
+                        <p class="mono text-[10px] uppercase tracking-widest text-slate-400">Speed</p>
+                        <p id="stat-fratio" class="mono text-xl font-bold text-fuchsia-300">f/6.3</p>
+                    </div>
+                    <div class="panel rounded-lg p-3">
+                        <p class="mono text-[10px] uppercase tracking-widest text-slate-400">Mode</p>
+                        <p id="stat-mode" class="mono text-xl font-bold text-amber-200">DSO</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="planner-grid mt-5 grid grid-cols-1 gap-4 2xl:grid-cols-[360px_minmax(640px,1fr)_460px]">
+                <aside class="space-y-4">
+                    <section class="panel rounded-xl p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Planner Profile</h2>
+                        <div class="mt-4 space-y-3">
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Active profile</span>
+                                <select id="planner-profile-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm"></select>
+                            </label>
+                            <input id="planner-profile-name" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Planner profile name">
+                            <div class="grid grid-cols-3 gap-2">
+                                <button id="new-planner-profile" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">New</button>
+                                <button id="save-planner-profile" class="neon-button rounded-md px-2 py-2 mono text-[10px] font-bold">Save</button>
+                                <button id="delete-planner-profile" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">Delete</button>
+                            </div>
+                            <div class="border-t border-cyan-300/20 pt-3">
+                                <label class="block">
+                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Observing program</span>
+                                    <select id="observing-program-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm"></select>
+                                </label>
+                                <input id="observing-program-name" class="input-dark mt-2 w-full rounded-md px-3 py-2 text-xs" placeholder="Program name">
+                                <textarea id="observing-program-notes" class="input-dark mt-2 h-16 w-full resize-none rounded-md p-3 text-xs" placeholder="Long-term project notes"></textarea>
+                                <div class="mt-2 grid grid-cols-3 gap-2">
+                                    <button id="new-observing-program" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">New</button>
+                                    <button id="save-observing-program" class="neon-button rounded-md px-2 py-2 mono text-[10px] font-bold">Save</button>
+                                    <button id="delete-observing-program" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">Delete</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 border-t border-cyan-300/20 pt-3">
+                                <button id="export-planner-profile" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">Export JSON</button>
+                                <label class="ghost-button cursor-pointer rounded-md px-2 py-2 text-center mono text-[10px] font-bold">Import JSON<input id="import-planner-profile" class="sr-only" type="file" accept="application/json,.json"></label>
+                            </div>
+                            <p id="planner-profile-status" class="mono text-[11px] text-cyan-100">Profiles and programs are saved in this browser.</p>
+                        </div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Rig Profile</h2>
+                        <div class="mt-4 space-y-3">
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Saved profile</span>
+                                <select id="rig-profile-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm"></select>
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Reducer</span>
+                                <select id="reducer-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm">
+                                    <option value="0.63">C8 reducer / f/6.3</option>
+                                    <option value="1">Native C8 / f/10</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Sky brightness</span>
+                                <select id="sky-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm">
+                                    <option value="suburban">Suburban / Bortle 5-6</option>
+                                    <option value="urban">Urban / Bortle 7-8</option>
+                                    <option value="dark">Dark / Bortle 2-4</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Plan duration</span>
+                                <select id="duration-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm">
+                                    <option value="2">2 hours</option>
+                                    <option value="3" selected>3 hours</option>
+                                    <option value="4">4 hours</option>
+                                    <option value="6">6 hours</option>
+                                </select>
+                            </label>
+                            <label class="flex items-center justify-between rounded-md border border-cyan-300/20 bg-slate-950/40 px-3 py-2">
+                                <span class="mono text-xs text-slate-300">Dither DSO plans</span>
+                                <input id="dither-toggle" type="checkbox" checked class="h-4 w-4 accent-cyan-300">
+                            </label>
+                            <details>
+                                <summary class="cursor-pointer mono text-xs font-bold uppercase tracking-[0.16em] text-fuchsia-200">Create Rig Profile</summary>
+                                <div class="mt-3 space-y-2">
+                                    <input id="rig-name" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Profile name">
+                                    <input id="rig-telescope" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Telescope">
+                                    <input id="rig-camera" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Camera">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="rig-aperture" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.1" placeholder="Aperture mm">
+                                        <input id="rig-focal" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="1" placeholder="Focal length mm">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="rig-reducer" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.01" placeholder="Reducer 1.0">
+                                        <input id="rig-pixel" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.01" placeholder="Pixel um">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="rig-sensor-w" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="1" placeholder="Sensor width px">
+                                        <input id="rig-sensor-h" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="1" placeholder="Sensor height px">
+                                    </div>
+                                    <button id="save-rig-profile" class="neon-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Save Rig Profile</button>
+                                    <button id="delete-rig-profile" class="ghost-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Delete Selected Custom Profile</button>
+                                    <p id="rig-profile-status" class="mono text-[11px] text-cyan-100">Profiles are saved in this browser.</p>
+                                </div>
+                            </details>
+                        </div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Mode</h2>
+                        <div id="mode-buttons" class="mt-4 flex flex-wrap gap-2">
+                            <button class="chip active rounded-md px-3 py-2 mono text-xs font-bold" data-mode="dso">DSO</button>
+                            <button class="chip rounded-md px-3 py-2 mono text-xs font-bold" data-mode="photometry">Photometry</button>
+                            <button class="chip rounded-md px-3 py-2 mono text-xs font-bold" data-mode="eclipse">Eclipse</button>
+                        </div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Site & Nights</h2>
+                        <div class="mt-4 space-y-3">
+                            <input id="site-query" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Location, e.g. Lubbock, TX">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="resolve-site" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Resolve</button>
+                                <button id="use-gps" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Use GPS</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input id="site-lat" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.0001" placeholder="Latitude">
+                                <input id="site-lon" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.0001" placeholder="Longitude">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="block">
+                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Start</span>
+                                    <input id="plan-start" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" type="date">
+                                </label>
+                                <label class="block">
+                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">End</span>
+                                    <input id="plan-end" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" type="date">
+                                </label>
+                            </div>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Minimum altitude</span>
+                                <input id="min-altitude" class="w-full accent-cyan-300" type="range" min="15" max="70" value="35">
+                                <span id="min-altitude-label" class="mono text-xs text-cyan-100">35 deg</span>
+                            </label>
+                            <button id="build-suggestions" class="neon-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Build Multi-Night Suggestions</button>
+                            <p id="site-status" class="mono text-[11px] text-green-100">Set an observing site to score altitude windows.</p>
+                        </div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Filters</h2>
+                        <input id="search-input" class="input-dark mt-4 w-full rounded-md px-3 py-2 text-sm" placeholder="Search targets">
+                        <div id="type-buttons" class="mt-3 flex flex-wrap gap-2"></div>
+                        <select id="sort-select" class="input-dark mt-3 w-full rounded-md px-3 py-2 text-sm">
+                            <option value="score">Planner score</option>
+                            <option value="name">Name</option>
+                            <option value="mag">Magnitude</option>
+                            <option value="size">Apparent size</option>
+                        </select>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <details>
+                            <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-amber-200">Add Target</summary>
+                            <div class="mt-4 space-y-3">
+                                <input id="new-target-name" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Target name">
+                                <button id="lookup-target" class="ghost-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Lookup Online Archives</button>
+                                <div id="archive-results" class="hidden rounded-md border border-cyan-300/20 bg-slate-950/40 p-3 text-xs text-slate-300"></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="new-target-ra" class="input-dark rounded-md px-3 py-2 text-xs" placeholder="RA 13:29:52.7">
+                                    <input id="new-target-dec" class="input-dark rounded-md px-3 py-2 text-xs" placeholder="Dec +47:11:43">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="new-target-mag" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.1" placeholder="Mag">
+                                    <input id="new-target-size" class="input-dark rounded-md px-3 py-2 text-xs" type="number" step="0.1" placeholder="Size arcmin">
+                                </div>
+                                <select id="new-target-type" class="input-dark w-full rounded-md px-3 py-2 text-xs">
+                                    <option>Galaxy</option>
+                                    <option>Planetary Nebula</option>
+                                    <option>Emission Nebula</option>
+                                    <option>Globular Cluster</option>
+                                    <option>Open Cluster</option>
+                                    <option>Supernova Remnant</option>
+                                    <option>Eclipsing Binary</option>
+                                    <option>Variable Star</option>
+                                    <option>Delta Scuti</option>
+                                    <option>RR Lyrae Variable</option>
+                                    <option>Cepheid Variable</option>
+                                    <option>Contact Binary</option>
+                                    <option>Cataclysmic Variable</option>
+                                    <option>Rotational Variable</option>
+                                    <option>Mira Variable</option>
+                                    <option>Semi-Regular Variable</option>
+                                    <option>Other</option>
+                                </select>
+                                <select id="new-target-mode" class="input-dark w-full rounded-md px-3 py-2 text-xs">
+                                    <option value="dso">DSO imaging</option>
+                                    <option value="photometry">Photometry</option>
+                                    <option value="eclipse">Eclipse timing</option>
+                                    <option value="dso,photometry">DSO + photometry</option>
+                                    <option value="photometry,eclipse">Photometry + eclipse</option>
+                                </select>
+                                <input id="new-target-season" class="input-dark w-full rounded-md px-3 py-2 text-xs" placeholder="Season">
+                                <textarea id="new-target-notes" class="input-dark h-20 w-full resize-none rounded-md p-3 text-xs" placeholder="Notes"></textarea>
+                                <button id="add-target" class="neon-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Add to Target List</button>
+                                <button id="clear-custom-targets" class="ghost-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Clear Custom Targets</button>
+                                <button id="restore-default-targets" class="ghost-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Restore Default Targets</button>
+                                <p id="add-target-status" class="mono text-[11px] text-cyan-100">Custom targets are saved in this browser.</p>
+                            </div>
+                        </details>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Session Vault</h2>
+                                <p class="mono mt-1 text-[10px] uppercase tracking-widest text-amber-100">Local staging</p>
+                            </div>
+                            <button id="clear-files" class="ghost-button rounded-md px-2 py-1 mono text-[10px] font-bold">Clear</button>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <label class="col-span-2 block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Target name</span>
+                                <input id="vault-target-name" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" placeholder="e.g. M51, RR Lyrae, NGC 7331">
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Frame type</span>
+                                <select id="frame-kind" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs">
+                                    <option value="Lights">Lights</option>
+                                    <option value="Flats L">Flats L</option>
+                                    <option value="Flats R">Flats R</option>
+                                    <option value="Flats G">Flats G</option>
+                                    <option value="Flats B">Flats B</option>
+                                    <option value="Darks">Darks</option>
+                                    <option value="Bias">Bias</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Session date</span>
+                                <input id="session-date" type="date" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs">
+                            </label>
+                        </div>
+                        <label id="fits-drop-zone" class="mt-3 block cursor-pointer rounded-lg border border-dashed border-cyan-300/30 bg-slate-950/40 p-4 text-center hover:border-green-300/60">
+                            <span class="mono block text-xs text-cyan-100">Drop session files here</span>
+                            <span class="mt-1 block text-xs text-slate-500">or click to choose an observing-night directory</span>
+                            <input id="directory-input" type="file" multiple webkitdirectory directory class="sr-only">
+                        </label>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-2">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Files</p>
+                                <p id="vault-count" class="mono text-lg font-bold text-green-200">0</p>
+                            </div>
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-2">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Size</p>
+                                <p id="vault-size" class="mono text-lg font-bold text-fuchsia-200">0 MB</p>
+                            </div>
+                        </div>
+                        <div id="vault-groups" class="mt-3 space-y-1"></div>
+                        <div class="mt-3 space-y-2">
+                            <input id="cloud-endpoint" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" placeholder="Cloudflare Worker URL">
+                            <input id="upload-token" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" type="password" placeholder="Upload token">
+                        </div>
+                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button id="upload-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Upload Cloud</button>
+                            <button id="download-manifest" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Inventory</button>
+                        </div>
+                        <div class="upload-progress mt-3 h-3 rounded-full">
+                            <span id="upload-progress-bar"></span>
+                        </div>
+                        <p id="upload-detail" class="mt-2 truncate mono text-[11px] text-slate-300">Upload queue idle.</p>
+                        <p id="vault-status" class="mt-3 mono text-[11px] text-green-100">Local: no files staged.</p>
+                        <p id="cloud-status" class="mt-2 mono text-[11px] text-cyan-100">Backend: Cloudflare R2 Worker ready to configure.</p>
+                        <p class="mt-3 text-xs leading-5 text-slate-400">Stages FITS, XISF, SER, common videos, JPG/PNG/TIFF, and RAW files. Cloud upload starts only when you press Upload Cloud.</p>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <details>
+                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Cloud Inventory</summary>
+                        <input id="cloud-prefix" class="input-dark mt-4 w-full rounded-md px-3 py-2 mono text-xs" placeholder="Prefix, e.g. 2026-05-29/M51">
+                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button id="list-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">View Cloud</button>
+                            <button id="download-cloud-listed" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Download Listed</button>
+                        </div>
+                        <p id="cloud-inventory-status" class="mt-3 mono text-[11px] text-cyan-100">No cloud inventory loaded.</p>
+                        <div class="upload-progress mt-3 h-2 rounded-full">
+                            <span id="download-progress-bar"></span>
+                        </div>
+                        <div id="cloud-inventory-list" class="scroll-soft mt-3 max-h-60 space-y-2 overflow-auto pr-1"></div>
+                        </details>
+                    </section>
+                </aside>
+
+                <section class="space-y-4">
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex flex-col gap-3 border-b border-cyan-300/20 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Target Queue</h2>
+                                <p id="result-count" class="mono mt-1 text-xs text-slate-400">0 targets</p>
+                            </div>
+                            <button id="export-list" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Export Target CSV</button>
+                        </div>
+                        <div id="target-list" class="scroll-soft mt-4 max-h-[520px] space-y-3 overflow-auto pr-1"></div>
+                    </section>
+
+                    <section class="panel overflow-hidden rounded-xl">
+                        <div class="field-grid relative aspect-[16/7]">
+                            <div class="fov-frame absolute left-[8%] top-[8%] h-[84%] w-[84%] rounded-sm"></div>
+                            <div id="target-ellipse" class="target-ellipse absolute rounded-full"></div>
+                            <div class="absolute left-3 top-3 rounded bg-slate-950/70 px-2 py-1 mono text-[10px] text-cyan-200">ATR585M FRAME</div>
+                            <div class="absolute bottom-3 right-3 rounded bg-slate-950/70 px-2 py-1 mono text-[10px] text-green-200">C8 FOV</div>
+                        </div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Exposure Plan</h2>
+                            <span id="plan-total" class="mono text-xs text-slate-400"></span>
+                        </div>
+                        <div class="mt-4 flex flex-col gap-3 border-b border-cyan-300/20 pb-4 sm:flex-row sm:items-end sm:justify-between">
+                            <fieldset>
+                                <legend class="mono text-[10px] uppercase tracking-widest text-slate-400">Plan filters</legend>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    <label class="flex items-center gap-2 rounded-md border border-cyan-300/20 bg-slate-950/40 px-3 py-2 mono text-xs text-cyan-100"><input class="exposure-filter h-4 w-4 accent-cyan-300" type="checkbox" value="L" checked> L</label>
+                                    <label class="flex items-center gap-2 rounded-md border border-red-300/20 bg-slate-950/40 px-3 py-2 mono text-xs text-red-100"><input class="exposure-filter h-4 w-4 accent-red-300" type="checkbox" value="R" checked> R</label>
+                                    <label class="flex items-center gap-2 rounded-md border border-green-300/20 bg-slate-950/40 px-3 py-2 mono text-xs text-green-100"><input class="exposure-filter h-4 w-4 accent-green-300" type="checkbox" value="G" checked> G</label>
+                                    <label class="flex items-center gap-2 rounded-md border border-blue-300/20 bg-slate-950/40 px-3 py-2 mono text-xs text-blue-100"><input class="exposure-filter h-4 w-4 accent-blue-300" type="checkbox" value="B" checked> B</label>
+                                </div>
+                            </fieldset>
+                            <div class="flex flex-col gap-2">
+                                <button id="generate-exposure-plan" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Generate Exposure Plan</button>
+                                <button id="save-exposure-plan" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Save Plan to Program</button>
+                            </div>
+                        </div>
+                        <div id="plan-lines" class="mt-4 space-y-2"></div>
+                        <div id="plan-warning" class="mt-4 rounded-md border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-5 text-amber-100"></div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Saved Program Plans</h2>
+                            <span id="saved-plan-count" class="mono text-xs text-slate-400">0 plans</span>
+                        </div>
+                        <p id="saved-plan-status" class="mono mt-3 text-[11px] text-cyan-100">Save a generated plan to track long-term progress.</p>
+                        <div id="saved-plan-list" class="mt-3 space-y-3"></div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <details>
+                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">CMOS Settings</summary>
+                        <div id="camera-settings" class="mt-4 space-y-2"></div>
+                        <p id="camera-settings-note" class="mt-3 text-xs leading-5 text-slate-300"></p>
+                        </details>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <details>
+                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">APT Export</summary>
+                        <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button id="copy-goto" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Copy GoTo++</button>
+                            <button id="download-plan" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Download Plan</button>
+                        </div>
+                        <textarea id="apt-output" class="input-dark mt-3 h-32 w-full resize-none rounded-md p-3 mono text-xs" readonly></textarea>
+                        </details>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                    <details>
+                    <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Suggested Targets</summary>
+                    <div class="mt-4 flex flex-col gap-3 border-b border-cyan-300/20 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p id="suggestion-count" class="mono mt-1 text-xs text-slate-400">No plan built yet</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="export-suggestions" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Export CSV</button>
+                        </div>
+                    </div>
+                        <div id="suggested-list" class="scroll-soft mt-4 max-h-[520px] space-y-3 overflow-auto pr-1"></div>
+                    </details>
+                    </section>
+                </section>
+
+                <aside class="space-y-4">
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Observing Weather</h2>
+                            <button id="refresh-weather" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Refresh Weather</button>
+                        </div>
+                        <div id="weather-summary" class="mt-4 rounded-md border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-5 text-amber-100">
+                            Set an observing site to load the five-day forecast.
+                        </div>
+                        <div id="five-day-weather" class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1"></div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p id="detail-type" class="mono text-xs uppercase tracking-[0.24em] text-fuchsia-200">Galaxy</p>
+                                <h2 id="detail-name" class="mt-1 text-2xl font-extrabold text-white">M51</h2>
+                            </div>
+                            <div id="fit-badge" class="rounded-md border border-green-300/40 px-2 py-1 mono text-xs text-green-200">Fits</div>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-3">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-400">RA / Dec</p>
+                                <p id="detail-coords" class="mono mt-1 text-sm text-cyan-100"></p>
+                            </div>
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-3">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-400">Mag / Size</p>
+                                <p id="detail-size" class="mono mt-1 text-sm text-cyan-100"></p>
+                            </div>
+                        </div>
+                        <p id="detail-notes" class="mt-4 text-sm leading-6 text-slate-300"></p>
+                    </section>
+
+                    <section id="lightcurve-card" class="panel rounded-xl p-4">
+                        <details>
+                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Light Curve</summary>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span id="lc-class" class="mono text-xs text-slate-400">Variable</span>
+                        </div>
+                        <div class="mt-4 rounded-md border border-cyan-300/20 bg-slate-950/50 p-2">
+                            <svg id="lightcurve-svg" viewBox="0 0 320 130" class="h-36 w-full" role="img" aria-label="Idealized variable star light curve">
+                                <defs>
+                                    <linearGradient id="lc-gradient" x1="0%" x2="100%" y1="0%" y2="0%">
+                                        <stop offset="0%" stop-color="#00e5ff" />
+                                        <stop offset="52%" stop-color="#e44cff" />
+                                        <stop offset="100%" stop-color="#48ff9b" />
+                                    </linearGradient>
+                                </defs>
+                                <g stroke="rgba(152,168,200,0.18)" stroke-width="1">
+                                    <line x1="28" y1="18" x2="28" y2="108"></line>
+                                    <line x1="28" y1="108" x2="306" y2="108"></line>
+                                    <line x1="28" y1="63" x2="306" y2="63" stroke-dasharray="3 6"></line>
+                                </g>
+                                <path id="lightcurve-path" d="" fill="none" stroke="url(#lc-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-2">
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-2">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Period</p>
+                                <p id="lc-period" class="mono text-sm font-bold text-cyan-100"></p>
+                            </div>
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-2">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Amp</p>
+                                <p id="lc-amplitude" class="mono text-sm font-bold text-fuchsia-100"></p>
+                            </div>
+                            <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-2">
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Cadence</p>
+                                <p id="lc-cadence" class="mono text-sm font-bold text-green-100"></p>
+                            </div>
+                        </div>
+                        <p id="lc-notes" class="mt-3 text-xs leading-5 text-slate-300"></p>
+                        </details>
+                    </section>
+
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-navy p-4 text-center text-white">
+        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
+        <p>Contact: nic5153mcclure@gmail.com</p>
+    </footer>
+
+    <script>
+        const defaultRigProfiles = [
+            {
+                id: 'c8-atr585m',
+                name: 'C8 + ATR585M',
+                telescope: 'Classic Celestron C8',
+                camera: 'ToupTek ATR585M cooled mono',
+                aperture: 203.2,
+                nativeFocalLength: 2032,
+                reducer: 0.63,
+                pixelSize: 2.9,
+                sensorWidthPx: 3840,
+                sensorHeightPx: 2160,
+                sensorWidthMm: 11.2,
+                sensorHeightMm: 6.3,
+                guideFocalLength: 120,
+                guidePixelSize: 2.9,
+                filters: 'LRGB'
+            }
+        ];
+        const DEFAULT_WORKER_URL = 'https://observing-vault.nic5153mcclure.workers.dev';
+        const cameraPresets = {
+            lcg: {
+                label: 'LCG',
+                mode: 'Low Conversion Gain',
+                gain: 100,
+                offset: 30,
+                bitDepth: 'RAW 12-bit',
+                readNoise: '2.74 e-',
+                fullWell: '38.9 ke-',
+                target: 'Peak stars < 70%, median sky clear of left edge'
+            },
+            hcg: {
+                label: 'HCG',
+                mode: 'High Conversion Gain',
+                gain: 100,
+                offset: 30,
+                bitDepth: 'RAW 12-bit',
+                readNoise: '0.79 e-',
+                fullWell: '4.1 ke-',
+                target: 'Faint signal efficiency; watch bright-star saturation'
+            },
+            hdr: {
+                label: 'HDR',
+                mode: 'HDR',
+                gain: 100,
+                offset: 30,
+                bitDepth: '16-bit HDR',
+                readNoise: 'camera HDR mode',
+                fullWell: 'dynamic range priority',
+                target: 'Photometry and bright fields; preserve headroom'
+            }
+        };
+
+        const defaultTargets = [
+            { id: 'm51', name: 'M51 Whirlpool', type: 'Galaxy', mode: ['dso'], ra: '13:29:52.7', dec: '+47:11:43', mag: 8.4, size: 11.2, season: 'Spring', score: 96, notes: 'Compact galaxy pair with strong luminance detail. Excellent match for the reduced C8 field.' },
+            { id: 'm101', name: 'M101 Pinwheel', type: 'Galaxy', mode: ['dso'], ra: '14:03:12.6', dec: '+54:20:57', mag: 7.9, size: 28.8, season: 'Spring', score: 84, notes: 'Large and low surface brightness. Fits tightly at f/6.3; prioritize luminance and dark skies.' },
+            { id: 'm57', name: 'M57 Ring Nebula', type: 'Planetary Nebula', mode: ['dso'], ra: '18:53:35.1', dec: '+33:01:45', mag: 8.8, size: 1.4, season: 'Summer', score: 92, notes: 'Bright compact target. Shorter subs protect the core while the C8 scale resolves structure.' },
+            { id: 'm27', name: 'M27 Dumbbell', type: 'Planetary Nebula', mode: ['dso'], ra: '19:59:36.3', dec: '+22:43:16', mag: 7.4, size: 8.0, season: 'Summer', score: 90, notes: 'Strong signal and good apparent size for LRGB. Add extra luminance for faint outer structure.' },
+            { id: 'ngc7331', name: 'NGC 7331', type: 'Galaxy', mode: ['dso'], ra: '22:37:04.1', dec: '+34:24:56', mag: 9.5, size: 10.5, season: 'Autumn', score: 88, notes: 'Needle-like galaxy with nearby companions. A strong late-season C8 target.' },
+            { id: 'ngc891', name: 'NGC 891', type: 'Galaxy', mode: ['dso'], ra: '02:22:33.4', dec: '+42:20:57', mag: 10.1, size: 13.5, season: 'Autumn', score: 86, notes: 'Edge-on galaxy with dust lane. Benefits from steady seeing and longer luminance blocks.' },
+            { id: 'm13', name: 'M13 Hercules Cluster', type: 'Globular Cluster', mode: ['dso'], ra: '16:41:41.2', dec: '+36:27:36', mag: 5.8, size: 20.0, season: 'Summer', score: 89, notes: 'Bright cluster. Use shorter subs to preserve star color and avoid crowding saturation.' },
+            { id: 'm92', name: 'M92', type: 'Globular Cluster', mode: ['dso'], ra: '17:17:07.4', dec: '+43:08:11', mag: 6.4, size: 14.0, season: 'Summer', score: 82, notes: 'Compact globular with a bright core. Good fallback when M13 is past prime.' },
+            { id: 'ngc2392', name: 'NGC 2392', type: 'Planetary Nebula', mode: ['dso'], ra: '07:29:10.8', dec: '+20:54:42', mag: 9.2, size: 0.8, season: 'Winter', score: 78, notes: 'Tiny high-surface-brightness nebula. Use lucky-style shorter luminance if seeing cooperates.' },
+            { id: 'm1', name: 'M1 Crab Nebula', type: 'Supernova Remnant', mode: ['dso'], ra: '05:34:31.9', dec: '+22:00:52', mag: 8.4, size: 6.0, season: 'Winter', score: 85, notes: 'Small enough for the C8 field. Luminance carries filament structure; RGB can be modest.' },
+            { id: 'algol', name: 'Algol', type: 'Eclipsing Binary', mode: ['photometry', 'eclipse'], ra: '03:08:10.1', dec: '+40:57:20', mag: 2.1, size: 0.1, season: 'Autumn', score: 93, notes: 'Very bright eclipsing binary. Use short exposures, defocus if needed, and keep cadence stable.' },
+            { id: 'beta-lyr', name: 'Beta Lyrae', type: 'Eclipsing Binary', mode: ['photometry', 'eclipse'], ra: '18:50:04.8', dec: '+33:21:46', mag: 3.5, size: 0.1, season: 'Summer', score: 87, notes: 'Continuous eclipsing binary. Use a consistent filter and avoid saturation.' },
+            { id: 'delta-cep', name: 'Delta Cephei', type: 'Cepheid Variable', mode: ['photometry'], ra: '22:29:10.3', dec: '+58:24:54', mag: 3.9, size: 0.1, season: 'Autumn', score: 84, notes: 'Bright Cepheid. Use short L or green-filter cadence and comparison stars in the same field.' },
+            { id: 'rr-lyr', name: 'RR Lyrae', type: 'RR Lyrae Variable', mode: ['photometry'], ra: '19:25:27.9', dec: '+42:47:04', mag: 7.1, size: 0.1, season: 'Summer', score: 91, notes: 'Fast variable. Cadence matters more than deep exposures; binning can improve SNR.' },
+            { id: 'w-uma', name: 'W Ursae Majoris', type: 'Contact Binary', mode: ['photometry', 'eclipse'], ra: '09:43:45.5', dec: '+55:57:09', mag: 7.8, size: 0.1, season: 'Spring', score: 82, notes: 'Classic short-period contact binary. Good for complete light-curve practice.' }
+        ];
+
+        function loadCustomTargets() {
+            try {
+                return JSON.parse(localStorage.getItem('observingCustomTargets') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function loadRigProfiles() {
+            try {
+                return JSON.parse(localStorage.getItem('observingRigProfiles') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveRigProfiles() {
+            localStorage.setItem('observingRigProfiles', JSON.stringify(state.customRigProfiles));
+        }
+
+        function rigProfiles() {
+            return [...defaultRigProfiles, ...state.customRigProfiles];
+        }
+
+        function selectedRig() {
+            return rigProfiles().find(profile => profile.id === state.rigId) || defaultRigProfiles[0];
+        }
+
+        function saveCustomTargets() {
+            localStorage.setItem('observingCustomTargets', JSON.stringify(state.customTargets));
+        }
+
+        function loadHiddenTargetIds() {
+            try {
+                return JSON.parse(localStorage.getItem('observingHiddenTargetIds') || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveHiddenTargetIds() {
+            localStorage.setItem('observingHiddenTargetIds', JSON.stringify(state.hiddenTargetIds));
+        }
+
+        function uniqueId(prefix) {
+            return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        }
+
+        function createObservingProgram(name = 'General Program') {
+            return {
+                id: uniqueId('program'),
+                name,
+                notes: '',
+                createdAt: new Date().toISOString(),
+                plans: []
+            };
+        }
+
+        function createPlannerProfile(name = 'My Planner') {
+            const program = createObservingProgram();
+            return {
+                id: uniqueId('planner'),
+                name,
+                createdAt: new Date().toISOString(),
+                activeProgramId: program.id,
+                settings: {},
+                programs: [program]
+            };
+        }
+
+        function loadPlannerProfiles() {
+            try {
+                const profiles = JSON.parse(localStorage.getItem('observingPlannerProfiles') || '[]');
+                if (Array.isArray(profiles) && profiles.length) return profiles;
+            } catch {}
+            const profile = createPlannerProfile();
+            localStorage.setItem('observingPlannerProfiles', JSON.stringify([profile]));
+            localStorage.setItem('observingPlannerProfileId', profile.id);
+            return [profile];
+        }
+
+        function savePlannerProfiles() {
+            localStorage.setItem('observingPlannerProfiles', JSON.stringify(state.plannerProfiles));
+            localStorage.setItem('observingPlannerProfileId', state.activePlannerProfileId);
+        }
+
+        function activePlannerProfile() {
+            return state.plannerProfiles.find(profile => profile.id === state.activePlannerProfileId) || state.plannerProfiles[0];
+        }
+
+        function activeObservingProgram() {
+            const profile = activePlannerProfile();
+            return profile?.programs?.find(program => program.id === profile.activeProgramId) || profile?.programs?.[0];
+        }
+
+        function allTargets() {
+            return [...defaultTargets, ...state.customTargets].filter(target => !state.hiddenTargetIds.includes(target.id));
+        }
+
+        const state = {
+            mode: 'dso',
+            type: 'All',
+            selectedId: 'm51',
+            reducer: 0.63,
+            sky: 'suburban',
+            duration: 3,
+            dither: true,
+            search: '',
+            sort: 'score',
+            files: [],
+            cloudObjects: [],
+            customTargets: loadCustomTargets(),
+            hiddenTargetIds: loadHiddenTargetIds(),
+            customRigProfiles: loadRigProfiles(),
+            rigId: localStorage.getItem('observingRigId') || 'c8-atr585m',
+            plannerProfiles: loadPlannerProfiles(),
+            activePlannerProfileId: localStorage.getItem('observingPlannerProfileId') || '',
+            exposureFilters: ['L', 'R', 'G', 'B'],
+            generatedPlan: null,
+            suggestions: [],
+            weather: null
+        };
+
+        const els = {
+            rigProfileSelect: document.getElementById('rig-profile-select'),
+            reducer: document.getElementById('reducer-select'),
+            sky: document.getElementById('sky-select'),
+            duration: document.getElementById('duration-select'),
+            dither: document.getElementById('dither-toggle'),
+            search: document.getElementById('search-input'),
+            sort: document.getElementById('sort-select'),
+            typeButtons: document.getElementById('type-buttons'),
+            modeButtons: document.getElementById('mode-buttons'),
+            targetList: document.getElementById('target-list'),
+            resultCount: document.getElementById('result-count'),
+            detailName: document.getElementById('detail-name'),
+            detailType: document.getElementById('detail-type'),
+            detailCoords: document.getElementById('detail-coords'),
+            detailSize: document.getElementById('detail-size'),
+            detailNotes: document.getElementById('detail-notes'),
+            statScale: document.getElementById('stat-scale'),
+            statFov: document.getElementById('stat-fov'),
+            statFratio: document.getElementById('stat-fratio'),
+            statMode: document.getElementById('stat-mode'),
+            targetEllipse: document.getElementById('target-ellipse'),
+            fitBadge: document.getElementById('fit-badge'),
+            planLines: document.getElementById('plan-lines'),
+            planTotal: document.getElementById('plan-total'),
+            planWarning: document.getElementById('plan-warning'),
+            aptOutput: document.getElementById('apt-output'),
+            cameraSettings: document.getElementById('camera-settings'),
+            cameraSettingsNote: document.getElementById('camera-settings-note')
+        };
+        els.rigName = document.getElementById('rig-name');
+        els.rigTelescope = document.getElementById('rig-telescope');
+        els.rigCamera = document.getElementById('rig-camera');
+        els.rigAperture = document.getElementById('rig-aperture');
+        els.rigFocal = document.getElementById('rig-focal');
+        els.rigReducer = document.getElementById('rig-reducer');
+        els.rigPixel = document.getElementById('rig-pixel');
+        els.rigSensorW = document.getElementById('rig-sensor-w');
+        els.rigSensorH = document.getElementById('rig-sensor-h');
+        els.rigProfileStatus = document.getElementById('rig-profile-status');
+        els.plannerProfileSelect = document.getElementById('planner-profile-select');
+        els.plannerProfileName = document.getElementById('planner-profile-name');
+        els.observingProgramSelect = document.getElementById('observing-program-select');
+        els.observingProgramName = document.getElementById('observing-program-name');
+        els.observingProgramNotes = document.getElementById('observing-program-notes');
+        els.plannerProfileStatus = document.getElementById('planner-profile-status');
+        els.importPlannerProfile = document.getElementById('import-planner-profile');
+        els.savedPlanList = document.getElementById('saved-plan-list');
+        els.savedPlanCount = document.getElementById('saved-plan-count');
+        els.savedPlanStatus = document.getElementById('saved-plan-status');
+        els.exposureFilters = Array.from(document.querySelectorAll('.exposure-filter'));
+        els.generateExposurePlan = document.getElementById('generate-exposure-plan');
+        els.siteQuery = document.getElementById('site-query');
+        els.siteLat = document.getElementById('site-lat');
+        els.siteLon = document.getElementById('site-lon');
+        els.planStart = document.getElementById('plan-start');
+        els.planEnd = document.getElementById('plan-end');
+        els.minAltitude = document.getElementById('min-altitude');
+        els.minAltitudeLabel = document.getElementById('min-altitude-label');
+        els.siteStatus = document.getElementById('site-status');
+        els.suggestedList = document.getElementById('suggested-list');
+        els.suggestionCount = document.getElementById('suggestion-count');
+        els.weatherSummary = document.getElementById('weather-summary');
+        els.fiveDayWeather = document.getElementById('five-day-weather');
+        els.lightcurveCard = document.getElementById('lightcurve-card');
+        els.lcClass = document.getElementById('lc-class');
+        els.lcPath = document.getElementById('lightcurve-path');
+        els.lcPeriod = document.getElementById('lc-period');
+        els.lcAmplitude = document.getElementById('lc-amplitude');
+        els.lcCadence = document.getElementById('lc-cadence');
+        els.lcNotes = document.getElementById('lc-notes');
+        els.newTargetName = document.getElementById('new-target-name');
+        els.newTargetRa = document.getElementById('new-target-ra');
+        els.newTargetDec = document.getElementById('new-target-dec');
+        els.newTargetMag = document.getElementById('new-target-mag');
+        els.newTargetSize = document.getElementById('new-target-size');
+        els.newTargetType = document.getElementById('new-target-type');
+        els.newTargetMode = document.getElementById('new-target-mode');
+        els.newTargetSeason = document.getElementById('new-target-season');
+        els.newTargetNotes = document.getElementById('new-target-notes');
+        els.addTargetStatus = document.getElementById('add-target-status');
+        els.archiveResults = document.getElementById('archive-results');
+        els.frameKind = document.getElementById('frame-kind');
+        els.vaultTargetName = document.getElementById('vault-target-name');
+        els.sessionDate = document.getElementById('session-date');
+        els.directoryInput = document.getElementById('directory-input');
+        els.fitsDropZone = document.getElementById('fits-drop-zone');
+        els.vaultCount = document.getElementById('vault-count');
+        els.vaultSize = document.getElementById('vault-size');
+        els.vaultGroups = document.getElementById('vault-groups');
+        els.vaultStatus = document.getElementById('vault-status');
+        els.cloudEndpoint = document.getElementById('cloud-endpoint');
+        els.uploadToken = document.getElementById('upload-token');
+        els.cloudStatus = document.getElementById('cloud-status');
+        els.uploadProgressBar = document.getElementById('upload-progress-bar');
+        els.uploadDetail = document.getElementById('upload-detail');
+        els.cloudPrefix = document.getElementById('cloud-prefix');
+        els.cloudInventoryStatus = document.getElementById('cloud-inventory-status');
+        els.cloudInventoryList = document.getElementById('cloud-inventory-list');
+        els.downloadProgressBar = document.getElementById('download-progress-bar');
+        els.cloudEndpoint.value = localStorage.getItem('observingCloudEndpoint') || DEFAULT_WORKER_URL;
+        els.vaultTargetName.value = localStorage.getItem('observingVaultTargetName') || '';
+        els.cloudPrefix.value = localStorage.getItem('observingCloudPrefix') || '';
+        const storedSite = JSON.parse(localStorage.getItem('observingSite') || 'null');
+        if (storedSite) {
+            els.siteQuery.value = storedSite.name || '';
+            els.siteLat.value = Number(storedSite.lat).toFixed(5);
+            els.siteLon.value = Number(storedSite.lon).toFixed(5);
+        }
+        if (!els.planStart.value) {
+            const today = new Date();
+            const end = new Date();
+            end.setDate(today.getDate() + 6);
+            els.planStart.value = toDateInput(today);
+            els.planEnd.value = toDateInput(end);
+        }
+
+        function profile() {
+            const rig = selectedRig();
+            const focal = rig.nativeFocalLength * state.reducer;
+            const scale = 206.265 * rig.pixelSize / focal;
+            const fovW = scale * rig.sensorWidthPx / 60;
+            const fovH = scale * rig.sensorHeightPx / 60;
+            return {
+                focal,
+                ratio: focal / rig.aperture,
+                scale,
+                fovW,
+                fovH,
+                guideScale: rig.guideFocalLength && rig.guidePixelSize ? 206.265 * rig.guidePixelSize / rig.guideFocalLength : null
+            };
+        }
+
+        function filterExposureSeconds(baseSeconds, filter) {
+            const multiplier = { L: 1, R: 1.15, G: 1.15, B: 1.35 }[filter] || 1;
+            return roundExposure(baseSeconds * multiplier);
+        }
+
+        function planSignature(target) {
+            return [
+                target.id,
+                state.mode,
+                state.rigId,
+                state.reducer,
+                state.sky,
+                state.duration,
+                state.dither,
+                state.exposureFilters.join(',')
+            ].join('|');
+        }
+
+        function exposurePlan(target, filters) {
+            const hours = state.duration;
+            if (state.mode === 'photometry') {
+                const preset = target.mag < 7 ? cameraPresets.hdr : cameraPresets.lcg;
+                const baseExp = pointSourceExposure(target, 'photometry');
+                const count = Math.max(40, Math.floor((hours * 3600) / (baseExp + 8) / filters.length));
+                return {
+                    warning: `Generated for ${target.name}: ${target.type}, mag ${target.mag}, using ${filters.join('/')}. Instrumental photometry with LRGB is useful for relative work. Use one consistent filter for the cleanest cadence, or a standard photometric filter later if calibrated magnitudes are required.`,
+                    lines: filters.map(filter => ({ filter, exp: filterExposureSeconds(baseExp, filter), count, bin: target.mag < 5 ? '2x2' : '1x1', preset, pause: 3 }))
+                };
+            }
+            if (state.mode === 'eclipse') {
+                const preset = target.mag < 8 ? cameraPresets.hdr : cameraPresets.lcg;
+                const baseExp = pointSourceExposure(target, 'eclipse');
+                const count = Math.max(45, Math.floor((hours * 3600) / (baseExp + 5) / filters.length));
+                return {
+                    warning: `Generated for ${target.name}: ${target.type}, mag ${target.mag}, using ${filters.join('/')}. Keep cadence steady across ingress, minimum, and egress. A single filter is usually best for eclipse timing. Dithering is disabled for these plans.`,
+                    lines: filters.map(filter => ({ filter, exp: filterExposureSeconds(baseExp, filter), count, bin: target.mag < 5 ? '2x2' : '1x1', preset, pause: 2 }))
+                };
+            }
+
+            const baseExp = dsoExposure(target);
+            const hasLuminance = filters.includes('L');
+            const colorCount = filters.filter(filter => filter !== 'L').length;
+            const brightField = target.type.includes('Globular') || target.mag < 7;
+            const lPreset = brightField ? cameraPresets.lcg : cameraPresets.hcg;
+            const rgbPreset = cameraPresets.lcg;
+            const lines = filters.map(filter => {
+                const exp = filterExposureSeconds(baseExp, filter);
+                const weight = hasLuminance && colorCount
+                    ? filter === 'L' ? 0.46 : 0.54 / colorCount
+                    : 1 / filters.length;
+                const pause = filter === 'L' ? state.dither ? 12 : 4 : 6;
+                return {
+                    filter,
+                    exp,
+                    count: Math.max(4, Math.floor((hours * 3600 * weight) / (exp + pause))),
+                    bin: '1x1',
+                    preset: filter === 'L' ? lPreset : rgbPreset,
+                    pause
+                };
+            });
+            return {
+                warning: target.size > profile().fovH ? `Generated for ${target.name}: ${target.type}, integrated mag ${target.mag}, using ${filters.join('/')}. Target is larger than the short side of the frame. Expect tight framing or plan a mosaic. Confirm with a test sub.` : `Generated for ${target.name}: ${target.type}, integrated mag ${target.mag}, using ${filters.join('/')}. Estimate uses apparent size, f/${profile().ratio.toFixed(1)}, and sky brightness. Confirm with a test sub: sky background should clear the left edge, while bright cores and stars stay below saturation.`,
+                lines
+            };
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function roundExposure(seconds) {
+            if (seconds <= 10) return Math.max(1, Math.round(seconds));
+            if (seconds <= 60) return Math.round(seconds / 5) * 5;
+            return Math.round(seconds / 15) * 15;
+        }
+
+        function extendedSurfaceBrightness(target) {
+            const mag = Number.isFinite(target.mag) ? target.mag : 12;
+            const diameterArcmin = Math.max(Number(target.size) || 1, 0.5);
+            const areaArcmin2 = Math.PI * Math.pow(diameterArcmin / 2, 2);
+            return mag + 2.5 * Math.log10(Math.max(areaArcmin2, 1));
+        }
+
+        function dsoExposure(target) {
+            const p = profile();
+            const skyMultiplier = { urban: 0.75, suburban: 1.0, dark: 1.45 }[state.sky] || 1.0;
+            const focalRatioMultiplier = Math.pow(p.ratio / 6.3, 2);
+            const sb = extendedSurfaceBrightness(target);
+
+            // Calibrated so M51-like surface brightness at f/6.3 gives about 60s from suburban skies.
+            const referenceSurfaceBrightness = 13.4;
+            const raw = 60 * Math.pow(10, 0.4 * (sb - referenceSurfaceBrightness)) * skyMultiplier * focalRatioMultiplier;
+
+            let min = 30;
+            let max = 180;
+            if (target.type.includes('Globular') || target.type.includes('Open Cluster')) {
+                min = 15;
+                max = 75;
+            } else if (target.type.includes('Planetary')) {
+                min = 20;
+                max = 120;
+            } else if (target.type.includes('Nebula') || target.type.includes('Supernova Remnant')) {
+                min = 60;
+                max = 240;
+            } else if (target.type.includes('Galaxy')) {
+                min = 45;
+                max = 180;
+            }
+
+            return roundExposure(clamp(raw, min, max));
+        }
+
+        function pointSourceExposure(target, purpose) {
+            const p = profile();
+            const mag = Number.isFinite(target.mag) ? target.mag : 10;
+            const focalRatioMultiplier = Math.pow(p.ratio / 6.3, 2);
+            const referenceMag = purpose === 'eclipse' ? 8 : 9;
+            const referenceSeconds = purpose === 'eclipse' ? 12 : 20;
+            const raw = referenceSeconds * Math.pow(10, 0.4 * (mag - referenceMag)) * focalRatioMultiplier;
+            const min = mag < 5 ? 0.5 : 2;
+            const max = purpose === 'eclipse' ? 45 : 90;
+            return roundExposure(clamp(raw, min, max));
+        }
+
+        function filteredTargets() {
+            const term = state.search.toLowerCase();
+            return allTargets()
+                .filter(target => target.mode.includes(state.mode))
+                .filter(target => state.type === 'All' || target.type === state.type)
+                .filter(target => !term || `${target.name} ${target.type} ${target.season}`.toLowerCase().includes(term))
+                .sort((a, b) => {
+                    if (state.sort === 'name') return a.name.localeCompare(b.name);
+                    if (state.sort === 'mag') return a.mag - b.mag;
+                    if (state.sort === 'size') return b.size - a.size;
+                    return b.score - a.score;
+                });
+        }
+
+        function targetTypes() {
+            return ['All', ...new Set(allTargets().filter(t => t.mode.includes(state.mode)).map(t => t.type))];
+        }
+
+        function renderTypeButtons() {
+            els.typeButtons.innerHTML = '';
+            targetTypes().forEach(type => {
+                const button = document.createElement('button');
+                button.className = `chip rounded-md px-3 py-2 mono text-xs font-bold ${state.type === type ? 'active' : ''}`;
+                button.textContent = type;
+                button.addEventListener('click', () => {
+                    state.type = type;
+                    const list = filteredTargets();
+                    if (list.length && !list.some(t => t.id === state.selectedId)) state.selectedId = list[0].id;
+                    render();
+                });
+                els.typeButtons.appendChild(button);
+            });
+        }
+
+        function renderTargets(list) {
+            els.targetList.innerHTML = '';
+            els.resultCount.textContent = `${list.length} target${list.length === 1 ? '' : 's'}`;
+            list.forEach(target => {
+                const row = document.createElement('div');
+                row.className = `target-row w-full rounded-lg p-3 text-left ${target.id === state.selectedId ? 'active' : ''}`;
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <button class="min-w-0 flex-1 text-left" data-action="select">
+                            <p class="text-lg font-bold text-white">${target.name}</p>
+                            <p class="mono mt-1 text-xs uppercase tracking-widest text-slate-400">${target.type} / ${target.season}</p>
+                        </button>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <span class="mono rounded border border-cyan-300/30 px-2 py-1 text-xs text-cyan-200">${target.score}</span>
+                            <button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold" title="Remove from queue" data-action="remove">Remove</button>
+                        </div>
+                    </div>
+                    <div class="mt-3 grid grid-cols-3 gap-2">
+                        <div class="meter h-1.5 rounded"><span class="block h-full rounded" style="width:${Math.min(100, target.score)}%"></span></div>
+                        <p class="mono text-xs text-slate-400">mag ${target.mag}</p>
+                        <p class="mono text-right text-xs text-slate-400">${target.size}'</p>
+                    </div>
+                `;
+                row.querySelector('[data-action="select"]').addEventListener('click', () => {
+                    state.selectedId = target.id;
+                    render();
+                });
+                row.querySelector('[data-action="remove"]').addEventListener('click', event => {
+                    event.stopPropagation();
+                    removeTarget(target.id);
+                });
+                els.targetList.appendChild(row);
+            });
+        }
+
+        function removeTarget(targetId) {
+            const customBefore = state.customTargets.length;
+            state.customTargets = state.customTargets.filter(target => target.id !== targetId);
+            if (state.customTargets.length !== customBefore) {
+                saveCustomTargets();
+            } else if (!state.hiddenTargetIds.includes(targetId)) {
+                state.hiddenTargetIds.push(targetId);
+                saveHiddenTargetIds();
+            }
+            const list = filteredTargets();
+            state.selectedId = list[0]?.id || '';
+            render();
+        }
+
+        function renderDetail(target) {
+            const p = profile();
+            const plan = state.generatedPlan?.signature === planSignature(target) ? state.generatedPlan.plan : null;
+            const fit = target.size < Math.min(p.fovW, p.fovH) * 0.88;
+            const ellipseW = Math.min(76, Math.max(5, target.size / p.fovW * 84));
+            const ellipseH = Math.min(76, Math.max(5, target.size / p.fovH * 84));
+
+            els.detailName.textContent = target.name;
+            els.detailType.textContent = target.type;
+            els.detailCoords.textContent = `${target.ra} / ${target.dec}`;
+            els.detailSize.textContent = `${target.mag} / ${target.size}'`;
+            els.detailNotes.textContent = target.notes;
+            els.fitBadge.textContent = fit ? 'Fits frame' : 'Mosaic flag';
+            els.fitBadge.className = fit
+                ? 'rounded-md border border-green-300/40 px-2 py-1 mono text-xs text-green-200'
+                : 'rounded-md border border-amber-300/50 px-2 py-1 mono text-xs text-amber-100';
+            els.targetEllipse.style.width = `${ellipseW}%`;
+            els.targetEllipse.style.height = `${ellipseH}%`;
+            els.targetEllipse.style.left = `${50 - ellipseW / 2}%`;
+            els.targetEllipse.style.top = `${50 - ellipseH / 2}%`;
+
+            els.planLines.innerHTML = '';
+            if (!plan) {
+                els.planTotal.textContent = '';
+                els.planLines.innerHTML = '<p class="mono rounded-md border border-cyan-300/20 bg-slate-950/40 p-3 text-xs text-slate-300">Choose filters, then generate an exposure plan for the selected target.</p>';
+                els.planWarning.textContent = `Ready to calculate from ${target.name}: ${target.type}, mag ${target.mag}.`;
+                els.cameraSettings.innerHTML = '';
+                els.cameraSettingsNote.textContent = 'Generate an exposure plan to calculate CMOS starting settings.';
+                els.aptOutput.value = '';
+                if (!els.vaultTargetName.value.trim()) {
+                    els.vaultTargetName.placeholder = `Selected planner target: ${target.name}`;
+                }
+                renderLightcurve(target);
+                return;
+            }
+            const totalSeconds = plan.lines.reduce((sum, line) => sum + line.exp * line.count, 0);
+            plan.lines.forEach(line => {
+                const div = document.createElement('div');
+                div.className = 'grid grid-cols-[44px_1fr_auto] items-center gap-3 rounded-md border border-slate-500/20 bg-slate-950/40 p-3';
+                div.innerHTML = `
+                    <span class="mono rounded bg-cyan-300/10 px-2 py-1 text-center text-sm font-bold text-cyan-200">${line.filter}</span>
+                    <span class="mono text-xs text-slate-300">${line.count} frames / ${line.bin} / ${line.preset.label} gain ${line.preset.gain} offset ${line.preset.offset}</span>
+                    <span class="mono text-right text-xs font-bold text-green-200">${line.exp}s exp</span>
+                `;
+                els.planLines.appendChild(div);
+            });
+            renderCameraSettings(plan);
+            els.planTotal.textContent = `${(totalSeconds / 3600).toFixed(1)}h light`;
+            els.planWarning.textContent = plan.warning;
+            els.aptOutput.value = aptText(target, plan);
+            if (!els.vaultTargetName.value.trim()) {
+                els.vaultTargetName.placeholder = `Selected planner target: ${target.name}`;
+            }
+            renderLightcurve(target);
+        }
+
+        function generateExposurePlan() {
+            state.exposureFilters = els.exposureFilters.filter(input => input.checked).map(input => input.value);
+            const target = allTargets().find(item => item.id === state.selectedId);
+            if (!target) {
+                els.planWarning.textContent = 'Select a target before generating an exposure plan.';
+                return;
+            }
+            if (!state.exposureFilters.length) {
+                els.planWarning.textContent = 'Select at least one filter before generating an exposure plan.';
+                return;
+            }
+            state.generatedPlan = {
+                signature: planSignature(target),
+                plan: exposurePlan(target, state.exposureFilters)
+            };
+            renderDetail(target);
+        }
+
+        function renderCameraSettings(plan) {
+            const unique = [];
+            plan.lines.forEach(line => {
+                if (!unique.some(item => item.label === line.preset.label)) unique.push(line.preset);
+            });
+            els.cameraSettings.innerHTML = '';
+            unique.forEach(preset => {
+                const row = document.createElement('div');
+                row.className = 'rounded-md border border-slate-500/20 bg-slate-950/40 p-3';
+                row.innerHTML = `
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="mono text-sm font-bold text-cyan-100">${preset.label} / ${preset.mode}</p>
+                        <p class="mono text-xs text-slate-400">gain ${preset.gain} / offset ${preset.offset}</p>
+                    </div>
+                    <p class="mono mt-2 text-[11px] text-slate-400">${preset.bitDepth} / read noise ${preset.readNoise} / full well ${preset.fullWell}</p>
+                    <p class="mt-2 text-xs text-slate-300">${preset.target}</p>
+                `;
+                els.cameraSettings.appendChild(row);
+            });
+            els.cameraSettingsNote.textContent = 'Use these as starting points. Final exposure time should be confirmed with a short test sub: keep the sky histogram off the left edge and avoid saturating comparison stars or target cores.';
+        }
+
+        function variabilityProfile(target) {
+            const type = `${target.type} ${target.name}`.toLowerCase();
+            if (type.includes('delta scuti') || type.includes('δ scuti') || type.includes('dwarf cepheid')) {
+                return { cls: 'Delta Scuti', period: '0.02-0.25 d', amp: '0.003-0.9 mag', cadence: '20-90 s', shape: 'multi-sine', notes: 'Short-period p-mode pulsator. Use high cadence, avoid saturation, and keep comparison stars in the frame.' };
+            }
+            if (type.includes('rr lyrae')) {
+                return { cls: 'RR Lyrae', period: '0.2-1.0 d', amp: '0.2-1.5 mag', cadence: '30-120 s', shape: 'saw', notes: 'Asymmetric pulsation with fast rise and slower decline. Capture long continuous runs for phase coverage.' };
+            }
+            if (type.includes('cepheid')) {
+                return { cls: 'Cepheid', period: '1-70 d', amp: '0.1-2.0 mag', cadence: '2-10 min', shape: 'cepheid', notes: 'Longer-period radial pulsator. Night-to-night consistency matters more than sub-minute cadence.' };
+            }
+            if (type.includes('contact') || type.includes('w ursae') || type.includes('eclipsing') || type.includes('algol') || type.includes('beta lyrae')) {
+                return { cls: target.type || 'Eclipsing Binary', period: 'hours-days', amp: '0.1-3 mag', cadence: '15-90 s', shape: 'eclipse', notes: 'Prioritize ingress, minimum, egress, and baseline on both sides. Do not dither during event timing.' };
+            }
+            if (type.includes('cataclysmic') || type.includes('cv')) {
+                return { cls: 'Cataclysmic Variable', period: '0.05-0.5 d', amp: '0.1-6 mag', cadence: '10-60 s', shape: 'flicker', notes: 'Use rapid cadence and expect flickering or outburst behavior. Saturation risk can change through the night.' };
+            }
+            if (type.includes('mira')) {
+                return { cls: 'Mira', period: '80-1000 d', amp: '2.5-10 mag', cadence: 'daily-weekly', shape: 'slow', notes: 'Large-amplitude long-period variable. Single-night cadence is less important than repeat visits.' };
+            }
+            if (type.includes('semi-regular') || type.includes('semiregular')) {
+                return { cls: 'Semi-Regular Variable', period: '20-2000 d', amp: '0.1-2 mag', cadence: 'daily-weekly', shape: 'semi', notes: 'Track over many nights. Expect cycle-to-cycle changes rather than a perfectly repeating waveform.' };
+            }
+            if (type.includes('rotational')) {
+                return { cls: 'Rotational Variable', period: 'hours-weeks', amp: '0.01-0.3 mag', cadence: '1-5 min', shape: 'sine', notes: 'Low-amplitude modulation from spots or shape. Stable comparison stars and repeatability matter.' };
+            }
+            if (target.mode?.includes('photometry')) {
+                return { cls: 'Generic Variable', period: 'unknown', amp: 'measure', cadence: '30-120 s', shape: 'sine', notes: 'Start with a high-cadence exploratory run, then refine exposure and cadence after checking scatter and saturation.' };
+            }
+            return null;
+        }
+
+        function lightcurveY(profile, phase) {
+            if (profile.shape === 'eclipse') {
+                const primary = Math.exp(-Math.pow((phase - 0.32) / 0.045, 2));
+                const secondary = 0.42 * Math.exp(-Math.pow((phase - 0.76) / 0.065, 2));
+                return 0.35 + primary * 0.45 + secondary * 0.22 + Math.sin(phase * Math.PI * 4) * 0.025;
+            }
+            if (profile.shape === 'saw') {
+                const p = (phase + 0.12) % 1;
+                return p < 0.18 ? 0.82 - p * 2.9 : 0.30 + (p - 0.18) * 0.46;
+            }
+            if (profile.shape === 'cepheid') {
+                return 0.52 + 0.28 * Math.sin(Math.PI * 2 * phase - 0.8) + 0.08 * Math.sin(Math.PI * 4 * phase + 1.1);
+            }
+            if (profile.shape === 'multi-sine') {
+                return 0.50 + 0.22 * Math.sin(Math.PI * 2 * phase) + 0.09 * Math.sin(Math.PI * 8 * phase + 0.7);
+            }
+            if (profile.shape === 'flicker') {
+                return 0.50 + 0.18 * Math.sin(Math.PI * 2 * phase) + 0.08 * Math.sin(Math.PI * 17 * phase) + 0.04 * Math.sin(Math.PI * 43 * phase);
+            }
+            if (profile.shape === 'slow') {
+                return 0.52 + 0.34 * Math.sin(Math.PI * 2 * phase - 1.0);
+            }
+            if (profile.shape === 'semi') {
+                return 0.52 + 0.20 * Math.sin(Math.PI * 2 * phase) + 0.12 * Math.sin(Math.PI * 3.3 * phase + 1.5);
+            }
+            return 0.50 + 0.24 * Math.sin(Math.PI * 2 * phase);
+        }
+
+        function renderLightcurve(target) {
+            const profile = variabilityProfile(target);
+            if (!profile) {
+                els.lightcurveCard.style.display = 'none';
+                return;
+            }
+            els.lightcurveCard.style.display = '';
+            const points = [];
+            for (let i = 0; i <= 96; i += 1) {
+                const phase = i / 96;
+                const x = 28 + phase * 278;
+                const y = 18 + lightcurveY(profile, phase) * 90;
+                points.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
+            }
+            els.lcPath.setAttribute('d', points.join(' '));
+            els.lcClass.textContent = profile.cls;
+            els.lcPeriod.textContent = profile.period;
+            els.lcAmplitude.textContent = profile.amp;
+            els.lcCadence.textContent = profile.cadence;
+            els.lcNotes.textContent = profile.notes;
+        }
+
+        function aptText(target, plan) {
+            const rig = selectedRig();
+            const goto = `#GoTo++ Auto Blind ${target.ra} ${target.dec} ${target.name.replace(/\s+/g, '_')}`;
+            const lines = plan.lines.map((line, index) =>
+                `${index + 1}. Light | ${line.exp}s | ${line.bin} | ${line.preset.label} ${line.preset.bitDepth} | gain ${line.preset.gain} | offset ${line.preset.offset} | pause ${line.pause}s | count ${line.count} | filter ${line.filter}`
+            );
+            return [
+                `APT session recipe: ${target.name}`,
+                `Target: ${target.name}`,
+                `RA: ${target.ra}`,
+                `Dec: ${target.dec}`,
+                `GoTo command: ${goto}`,
+                '',
+                'CCD/CMOS plan lines:',
+                ...lines,
+                '',
+                `Mode: ${state.mode}`,
+                `Rig: ${rig.telescope} x${state.reducer} + ${rig.camera} + ${rig.filters || 'filters'}`,
+                'Note: verify gain/offset names and filter wheel positions inside APT before running.'
+            ].join('\n');
+        }
+
+        function exportCsv() {
+            const rows = filteredTargets().map(t => [t.name, t.ra, t.dec, t.type, t.mag, t.size, t.season, t.notes]);
+            const csv = [['Name', 'RA', 'Dec', 'Type', 'Magnitude', 'Size_arcmin', 'Season', 'Notes'], ...rows]
+                .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(','))
+                .join('\n');
+            downloadFile('observing-targets.csv', csv, 'text/csv');
+        }
+
+        function downloadFile(filename, text, type) {
+            const blob = new Blob([text], { type });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function saveBlob(filename, blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+
+        function cloudEndpoint() {
+            return els.cloudEndpoint.value.trim().replace(/\/$/, '');
+        }
+
+        function cloudToken() {
+            return els.uploadToken.value.trim();
+        }
+
+        function defaultCloudPrefix() {
+            const target = els.vaultTargetName.value.trim() || (allTargets().find(t => t.id === state.selectedId)?.name || '');
+            const date = els.sessionDate.value || new Date().toISOString().slice(0, 10);
+            return target ? `${date}/${target.replace(/\s+/g, "_")}` : date;
+        }
+
+        function renderCloudInventory() {
+            els.cloudInventoryList.innerHTML = '';
+            if (!state.cloudObjects.length) {
+                els.cloudInventoryStatus.textContent = 'Cloud inventory is empty for that prefix.';
+                return;
+            }
+            const total = state.cloudObjects.reduce((sum, object) => sum + object.size, 0);
+            els.cloudInventoryStatus.textContent = `${state.cloudObjects.length} object${state.cloudObjects.length === 1 ? '' : 's'} / ${formatBytes(total)} listed.`;
+            state.cloudObjects.forEach(object => {
+                const row = document.createElement('div');
+                row.className = 'rounded-md border border-slate-500/20 bg-slate-950/40 p-2';
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="truncate mono text-[11px] text-cyan-100">${object.key}</p>
+                            <p class="mono mt-1 text-[10px] text-slate-500">${formatBytes(object.size)} / ${object.uploaded ? new Date(object.uploaded).toLocaleString() : 'uploaded'}</p>
+                        </div>
+                        <button class="ghost-button shrink-0 rounded px-2 py-1 mono text-[10px] font-bold" data-key="${encodeURIComponent(object.key)}">Download</button>
+                    </div>
+                `;
+                row.querySelector('button').addEventListener('click', () => downloadCloudObject(object));
+                els.cloudInventoryList.appendChild(row);
+            });
+        }
+
+        function inferTargetMode(type) {
+            const lower = String(type || '').toLowerCase();
+            if (lower.includes('eclips')) return 'photometry,eclipse';
+            if (lower.includes('delta') || lower.includes('scuti') || lower.includes('rr') || lower.includes('cepheid') || lower.includes('mira')) return 'photometry';
+            if (lower.includes('var') || lower === '*' || lower.includes('star')) return 'photometry';
+            return 'dso';
+        }
+
+        function inferTargetType(type) {
+            const lower = String(type || '').toLowerCase();
+            if (lower.includes('gal') || type === 'G') return 'Galaxy';
+            if (lower.includes('pneb') || lower.includes('planetary')) return 'Planetary Nebula';
+            if (lower.includes('cluster')) return 'Globular Cluster';
+            if (lower.includes('var')) return 'Variable Star';
+            if (lower.includes('ecl')) return 'Eclipsing Binary';
+            if (lower.includes('dscuti') || lower.includes('delta scuti') || lower.includes('dsct')) return 'Delta Scuti';
+            if (lower.includes('rr')) return 'RR Lyrae Variable';
+            if (lower.includes('cepheid')) return 'Cepheid Variable';
+            if (lower.includes('mira')) return 'Mira Variable';
+            if (type === '*') return 'Variable Star';
+            return type || 'Other';
+        }
+
+        function formatArchiveResult(data) {
+            const resolved = data.resolved || {};
+            const gaiaRows = data.gaia?.rows || [];
+            const papers = data.arxiv?.entries || [];
+            const tnsConfigured = data.tns?.configured;
+            const aliases = resolved.aliases?.slice(0, 5).join(', ') || 'none listed';
+            const gaiaText = gaiaRows.length
+                ? `${gaiaRows.length} Gaia DR3 row${gaiaRows.length === 1 ? '' : 's'} near target`
+                : 'No Gaia rows returned';
+            const paperText = papers.length
+                ? papers.map(paper => `<li><a href="${paper.id}" target="_blank" rel="noopener">${paper.title}</a></li>`).join('')
+                : '<li>No recent arXiv matches returned.</li>';
+            return `
+                <p class="mono text-cyan-100">Resolved via ${resolved.source || 'archive'}: ${resolved.commonName || resolved.objectName || resolved.queryName || ''}</p>
+                <p class="mt-1">Lookup match: ${resolved.lookupMatch || 'direct'}${resolved.matchedAlias ? ` / matched "${resolved.matchedAlias}"` : ''}</p>
+                <p class="mt-1">Type: ${resolved.objectType || 'unknown'} / RA: ${resolved.raDeg ?? 'unknown'} / Dec: ${resolved.decDeg ?? 'unknown'}</p>
+                <p class="mt-1">Aliases: ${aliases}</p>
+                <p class="mt-1">${gaiaText}</p>
+                <p class="mt-1">TNS: ${tnsConfigured ? 'configured' : 'not configured'}</p>
+                <p class="mt-2 mono text-fuchsia-100">arXiv</p>
+                <ul class="mt-1 list-disc space-y-1 pl-4">${paperText}</ul>
+            `;
+        }
+
+        async function lookupTargetOnline() {
+            const name = els.newTargetName.value.trim();
+            const endpoint = cloudEndpoint();
+            if (!name) {
+                els.addTargetStatus.textContent = 'Enter a target name before lookup.';
+                return;
+            }
+            if (!endpoint) {
+                els.addTargetStatus.textContent = 'Cloudflare endpoint is missing.';
+                return;
+            }
+            els.addTargetStatus.textContent = `Looking up ${name} in online archives...`;
+            els.archiveResults.classList.remove('hidden');
+            els.archiveResults.innerHTML = '<p class="mono text-cyan-100">Resolving aliases/spelling, then querying CDS Sesame, Gaia DR3, arXiv, and optional TNS...</p>';
+            const response = await fetch(`${endpoint}/target-info?${new URLSearchParams({ name }).toString()}`).catch(() => null);
+            if (!response) {
+                els.addTargetStatus.textContent = 'Archive lookup failed: Worker unreachable or blocked.';
+                return;
+            }
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) {
+                els.addTargetStatus.textContent = `Archive lookup failed: ${data.error || response.status}`;
+                return;
+            }
+            const resolved = data.resolved || {};
+            if (resolved.commonName || resolved.objectName) els.newTargetName.value = (resolved.commonName || resolved.objectName).trim();
+            if (resolved.jpos) {
+                const parts = resolved.jpos.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    els.newTargetRa.value = parts[0];
+                    els.newTargetDec.value = parts[1];
+                }
+            } else {
+                if (Number.isFinite(resolved.raDeg)) els.newTargetRa.value = String(resolved.raDeg);
+                if (Number.isFinite(resolved.decDeg)) els.newTargetDec.value = String(resolved.decDeg);
+            }
+            const vmag = resolved.magnitudes?.find(mag => mag.band === 'V') || resolved.magnitudes?.find(mag => mag.band === 'G');
+            if (vmag?.value && !els.newTargetMag.value) els.newTargetMag.value = vmag.value;
+            els.newTargetType.value = inferTargetType(resolved.objectType);
+            els.newTargetMode.value = inferTargetMode(resolved.objectType);
+            const paperTitles = (data.arxiv?.entries || []).map(paper => `arXiv: ${paper.title}`).join('\n');
+            els.newTargetNotes.value = [
+                `Archive lookup: ${resolved.source || 'online archives'}`,
+                resolved.spectralType ? `Spectral type: ${resolved.spectralType}` : '',
+                resolved.morphology ? `Morphology: ${resolved.morphology}` : '',
+                resolved.aliases?.length ? `Aliases: ${resolved.aliases.slice(0, 8).join(', ')}` : '',
+                paperTitles
+            ].filter(Boolean).join('\n');
+            els.archiveResults.innerHTML = formatArchiveResult(data);
+            els.addTargetStatus.textContent = 'Archive lookup complete. Review fields, then add target.';
+        }
+
+        async function listCloudObjects() {
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
+                return;
+            }
+            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            els.cloudPrefix.value = prefix;
+            localStorage.setItem('observingCloudPrefix', prefix);
+            els.cloudInventoryStatus.textContent = `Cloud: listing ${prefix || 'bucket root'}...`;
+            const params = new URLSearchParams({ prefix });
+            const response = await fetch(`${endpoint}/list?${params.toString()}`, {
+                headers: { authorization: `Bearer ${token}` }
+            }).catch(() => null);
+            if (!response) {
+                els.cloudInventoryStatus.textContent = 'Cloud: list request blocked or unreachable.';
+                return;
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) {
+                els.cloudInventoryStatus.textContent = `Cloud: list failed. ${result.error || response.status}`;
+                return;
+            }
+            state.cloudObjects = result.objects || [];
+            renderCloudInventory();
+        }
+
+        async function downloadCloudObject(object) {
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
+                return false;
+            }
+            els.cloudInventoryStatus.textContent = `Cloud: downloading ${object.key}`;
+            const params = new URLSearchParams({ key: object.key });
+            const response = await fetch(`${endpoint}/download?${params.toString()}`, {
+                headers: { authorization: `Bearer ${token}` }
+            }).catch(() => null);
+            if (!response || !response.ok) {
+                els.cloudInventoryStatus.textContent = `Cloud: download failed for ${object.key}`;
+                return false;
+            }
+            const blob = await response.blob();
+            saveBlob(object.key.split('/').pop() || 'download', blob);
+            return true;
+        }
+
+        async function downloadListedObjects() {
+            if (!state.cloudObjects.length) {
+                await listCloudObjects();
+            }
+            if (!state.cloudObjects.length) return;
+            els.downloadProgressBar.style.width = '0%';
+            for (let index = 0; index < state.cloudObjects.length; index += 1) {
+                const object = state.cloudObjects[index];
+                els.downloadProgressBar.style.width = `${Math.round((index / state.cloudObjects.length) * 100)}%`;
+                const ok = await downloadCloudObject(object);
+                if (!ok) return;
+                els.downloadProgressBar.style.width = `${Math.round(((index + 1) / state.cloudObjects.length) * 100)}%`;
+            }
+            els.cloudInventoryStatus.textContent = `Downloaded ${state.cloudObjects.length} listed object${state.cloudObjects.length === 1 ? '' : 's'}.`;
+        }
+
+        function addCustomTarget() {
+            const name = els.newTargetName.value.trim();
+            if (!name) {
+                els.addTargetStatus.textContent = 'Target name is required.';
+                return;
+            }
+            const target = {
+                id: `custom-${Date.now()}`,
+                name,
+                type: els.newTargetType.value || 'Other',
+                mode: els.newTargetMode.value.split(','),
+                ra: els.newTargetRa.value.trim() || 'unknown',
+                dec: els.newTargetDec.value.trim() || 'unknown',
+                mag: Number(els.newTargetMag.value || 12),
+                size: Number(els.newTargetSize.value || 5),
+                season: els.newTargetSeason.value.trim() || 'Custom',
+                score: 75,
+                notes: els.newTargetNotes.value.trim() || 'Custom target from observing planner.',
+                custom: true
+            };
+            state.customTargets.push(target);
+            saveCustomTargets();
+            state.mode = target.mode[0] || state.mode;
+            state.type = 'All';
+            state.selectedId = target.id;
+            els.modeButtons.querySelectorAll('button').forEach(button => {
+                button.classList.toggle('active', button.dataset.mode === state.mode);
+            });
+            els.addTargetStatus.textContent = `Added ${target.name} to local target list.`;
+            render();
+        }
+
+        function renderStats() {
+            const p = profile();
+            els.statScale.textContent = `${p.scale.toFixed(2)}"`;
+            els.statFov.textContent = `${p.fovW.toFixed(0)}x${p.fovH.toFixed(0)}'`;
+            els.statFratio.textContent = `f/${p.ratio.toFixed(1)}`;
+            els.statMode.textContent = state.mode === 'dso' ? 'DSO' : state.mode === 'photometry' ? 'PHOTO' : 'ECLIPSE';
+        }
+
+        function renderRigProfiles() {
+            els.rigProfileSelect.innerHTML = '';
+            rigProfiles().forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile.id;
+                option.textContent = profile.name;
+                els.rigProfileSelect.appendChild(option);
+            });
+            if (!rigProfiles().some(profile => profile.id === state.rigId)) {
+                state.rigId = defaultRigProfiles[0].id;
+            }
+            els.rigProfileSelect.value = state.rigId;
+            const rig = selectedRig();
+            els.reducer.innerHTML = `
+                <option value="${rig.reducer || 1}">${rig.name} default / f/${((rig.nativeFocalLength * (rig.reducer || 1)) / rig.aperture).toFixed(1)}</option>
+                <option value="1">Native / f/${(rig.nativeFocalLength / rig.aperture).toFixed(1)}</option>
+                <option value="0.63">0.63x reducer</option>
+                <option value="0.7">0.70x reducer</option>
+                <option value="0.8">0.80x reducer</option>
+            `;
+            if (![...els.reducer.options].some(option => Number(option.value) === state.reducer)) {
+                state.reducer = Number(rig.reducer || 1);
+            }
+            els.reducer.value = String(state.reducer);
+        }
+
+        function saveRigProfile() {
+            const name = els.rigName.value.trim();
+            const aperture = Number(els.rigAperture.value);
+            const focal = Number(els.rigFocal.value);
+            const pixel = Number(els.rigPixel.value);
+            const sensorW = Number(els.rigSensorW.value);
+            const sensorH = Number(els.rigSensorH.value);
+            if (!name || !aperture || !focal || !pixel || !sensorW || !sensorH) {
+                els.rigProfileStatus.textContent = 'Name, aperture, focal length, pixel size, and sensor pixels are required.';
+                return;
+            }
+            const profile = {
+                id: `rig-${Date.now()}`,
+                name,
+                telescope: els.rigTelescope.value.trim() || name,
+                camera: els.rigCamera.value.trim() || 'Custom camera',
+                aperture,
+                nativeFocalLength: focal,
+                reducer: Number(els.rigReducer.value || 1),
+                pixelSize: pixel,
+                sensorWidthPx: sensorW,
+                sensorHeightPx: sensorH,
+                guideFocalLength: null,
+                guidePixelSize: null,
+                filters: 'Custom'
+            };
+            state.customRigProfiles.push(profile);
+            state.rigId = profile.id;
+            state.reducer = profile.reducer;
+            saveRigProfiles();
+            localStorage.setItem('observingRigId', state.rigId);
+            els.rigProfileStatus.textContent = `Saved rig profile: ${profile.name}`;
+            render();
+        }
+
+        function deleteSelectedRigProfile() {
+            if (defaultRigProfiles.some(profile => profile.id === state.rigId)) {
+                els.rigProfileStatus.textContent = 'Default profile cannot be deleted.';
+                return;
+            }
+            state.customRigProfiles = state.customRigProfiles.filter(profile => profile.id !== state.rigId);
+            state.rigId = defaultRigProfiles[0].id;
+            state.reducer = defaultRigProfiles[0].reducer;
+            saveRigProfiles();
+            localStorage.setItem('observingRigId', state.rigId);
+            els.rigProfileStatus.textContent = 'Custom rig profile deleted.';
+            render();
+        }
+
+        function cloneData(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function capturePlannerSettings(profile = activePlannerProfile()) {
+            if (!profile) return;
+            profile.settings = {
+                rigId: state.rigId,
+                reducer: state.reducer,
+                sky: state.sky,
+                duration: state.duration,
+                dither: state.dither,
+                mode: state.mode,
+                exposureFilters: [...state.exposureFilters],
+                minAltitude: Number(els.minAltitude.value),
+                planStart: els.planStart.value,
+                planEnd: els.planEnd.value,
+                site: {
+                    name: els.siteQuery.value.trim(),
+                    lat: Number(els.siteLat.value),
+                    lon: Number(els.siteLon.value)
+                },
+                customTargets: cloneData(state.customTargets),
+                hiddenTargetIds: [...state.hiddenTargetIds]
+            };
+            profile.updatedAt = new Date().toISOString();
+        }
+
+        function applyPlannerSettings(profile) {
+            const settings = profile?.settings || {};
+            if (settings.rigId && rigProfiles().some(rig => rig.id === settings.rigId)) state.rigId = settings.rigId;
+            if (Number.isFinite(settings.reducer)) state.reducer = settings.reducer;
+            if (settings.sky) state.sky = settings.sky;
+            if (Number.isFinite(settings.duration)) state.duration = settings.duration;
+            if (typeof settings.dither === 'boolean') state.dither = settings.dither;
+            if (settings.mode) state.mode = settings.mode;
+            if (Array.isArray(settings.exposureFilters) && settings.exposureFilters.length) state.exposureFilters = [...settings.exposureFilters];
+            if (Array.isArray(settings.customTargets)) state.customTargets = cloneData(settings.customTargets);
+            if (Array.isArray(settings.hiddenTargetIds)) state.hiddenTargetIds = [...settings.hiddenTargetIds];
+            els.sky.value = state.sky;
+            els.duration.value = String(state.duration);
+            els.dither.checked = state.dither;
+            els.exposureFilters.forEach(input => { input.checked = state.exposureFilters.includes(input.value); });
+            if (Number.isFinite(settings.minAltitude)) {
+                els.minAltitude.value = String(settings.minAltitude);
+                els.minAltitudeLabel.textContent = `${settings.minAltitude} deg`;
+            }
+            if (settings.planStart) els.planStart.value = settings.planStart;
+            if (settings.planEnd) els.planEnd.value = settings.planEnd;
+            if (settings.site) {
+                els.siteQuery.value = settings.site.name || '';
+                els.siteLat.value = Number.isFinite(settings.site.lat) ? settings.site.lat.toFixed(5) : '';
+                els.siteLon.value = Number.isFinite(settings.site.lon) ? settings.site.lon.toFixed(5) : '';
+                localStorage.setItem('observingSite', JSON.stringify(settings.site));
+            }
+            els.modeButtons.querySelectorAll('button').forEach(button => {
+                button.classList.toggle('active', button.dataset.mode === state.mode);
+            });
+            saveCustomTargets();
+            saveHiddenTargetIds();
+            localStorage.setItem('observingRigId', state.rigId);
+            state.generatedPlan = null;
+        }
+
+        function renderPlannerProfiles() {
+            if (!state.plannerProfiles.some(profile => profile.id === state.activePlannerProfileId)) {
+                state.activePlannerProfileId = state.plannerProfiles[0]?.id || '';
+            }
+            const profile = activePlannerProfile();
+            els.plannerProfileSelect.innerHTML = '';
+            state.plannerProfiles.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                els.plannerProfileSelect.appendChild(option);
+            });
+            els.plannerProfileSelect.value = profile?.id || '';
+            els.plannerProfileName.value = profile?.name || '';
+            if (profile && (!Array.isArray(profile.programs) || !profile.programs.length)) {
+                const program = createObservingProgram();
+                profile.programs = [program];
+                profile.activeProgramId = program.id;
+            }
+            if (profile && !profile.programs.some(program => program.id === profile.activeProgramId)) {
+                profile.activeProgramId = profile.programs[0].id;
+            }
+            const program = activeObservingProgram();
+            els.observingProgramSelect.innerHTML = '';
+            (profile?.programs || []).forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                els.observingProgramSelect.appendChild(option);
+            });
+            els.observingProgramSelect.value = program?.id || '';
+            els.observingProgramName.value = program?.name || '';
+            els.observingProgramNotes.value = program?.notes || '';
+            renderSavedPlans();
+        }
+
+        function saveActivePlannerProfile() {
+            const profile = activePlannerProfile();
+            if (!profile) return;
+            profile.name = els.plannerProfileName.value.trim() || profile.name;
+            capturePlannerSettings(profile);
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Saved planner profile: ${profile.name}`;
+            renderPlannerProfiles();
+        }
+
+        function createNewPlannerProfile() {
+            const profile = createPlannerProfile(`Planner ${state.plannerProfiles.length + 1}`);
+            state.plannerProfiles.push(profile);
+            state.activePlannerProfileId = profile.id;
+            capturePlannerSettings(profile);
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Created planner profile: ${profile.name}`;
+            renderPlannerProfiles();
+        }
+
+        function deleteActivePlannerProfile() {
+            if (state.plannerProfiles.length <= 1) {
+                els.plannerProfileStatus.textContent = 'Keep at least one planner profile.';
+                return;
+            }
+            const removed = activePlannerProfile();
+            state.plannerProfiles = state.plannerProfiles.filter(profile => profile.id !== removed.id);
+            state.activePlannerProfileId = state.plannerProfiles[0].id;
+            applyPlannerSettings(activePlannerProfile());
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Deleted planner profile: ${removed.name}`;
+            render();
+        }
+
+        function saveActiveObservingProgram() {
+            const program = activeObservingProgram();
+            if (!program) return;
+            program.name = els.observingProgramName.value.trim() || program.name;
+            program.notes = els.observingProgramNotes.value.trim();
+            program.updatedAt = new Date().toISOString();
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Saved observing program: ${program.name}`;
+            renderPlannerProfiles();
+        }
+
+        function createNewObservingProgram() {
+            const profile = activePlannerProfile();
+            const program = createObservingProgram(`Program ${profile.programs.length + 1}`);
+            profile.programs.push(program);
+            profile.activeProgramId = program.id;
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Created observing program: ${program.name}`;
+            renderPlannerProfiles();
+        }
+
+        function deleteActiveObservingProgram() {
+            const profile = activePlannerProfile();
+            const program = activeObservingProgram();
+            if (profile.programs.length <= 1) {
+                els.plannerProfileStatus.textContent = 'Keep at least one observing program.';
+                return;
+            }
+            profile.programs = profile.programs.filter(item => item.id !== program.id);
+            profile.activeProgramId = profile.programs[0].id;
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Deleted observing program: ${program.name}`;
+            renderPlannerProfiles();
+        }
+
+        function saveGeneratedPlanToProgram() {
+            const target = allTargets().find(item => item.id === state.selectedId);
+            const program = activeObservingProgram();
+            if (!target || !state.generatedPlan || state.generatedPlan.signature !== planSignature(target)) {
+                els.savedPlanStatus.textContent = 'Generate a current exposure plan before saving it.';
+                return;
+            }
+            const plan = cloneData(state.generatedPlan.plan);
+            const lightHours = plan.lines.reduce((sum, line) => sum + line.exp * line.count, 0) / 3600;
+            program.plans = program.plans || [];
+            program.plans.push({
+                id: uniqueId('saved-plan'),
+                savedAt: new Date().toISOString(),
+                target: cloneData(target),
+                mode: state.mode,
+                filters: [...state.exposureFilters],
+                rigId: state.rigId,
+                reducer: state.reducer,
+                sky: state.sky,
+                duration: state.duration,
+                dither: state.dither,
+                goalHours: Number(lightHours.toFixed(1)),
+                capturedHours: 0,
+                plan,
+                apt: aptText(target, plan)
+            });
+            savePlannerProfiles();
+            els.savedPlanStatus.textContent = `Saved ${target.name} to ${program.name}.`;
+            renderSavedPlans();
+        }
+
+        function renderSavedPlans() {
+            const program = activeObservingProgram();
+            const plans = program?.plans || [];
+            els.savedPlanCount.textContent = `${plans.length} plan${plans.length === 1 ? '' : 's'}`;
+            els.savedPlanList.innerHTML = '';
+            if (!plans.length) return;
+            plans.forEach(saved => {
+                const captured = Number(saved.capturedHours || 0);
+                const goal = Math.max(Number(saved.goalHours || 0), 0.1);
+                const progress = Math.min(100, Math.round(captured / goal * 100));
+                const row = document.createElement('article');
+                row.className = 'rounded-md border border-fuchsia-300/20 bg-slate-950/40 p-3';
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-bold text-white">${escapeHtml(saved.target.name)}</p>
+                            <p class="mono mt-1 text-[10px] uppercase tracking-widest text-slate-400">${escapeHtml(saved.mode)} / ${escapeHtml(saved.filters.join('/'))}</p>
+                        </div>
+                        <span class="mono text-xs font-bold text-green-200">${progress}%</span>
+                    </div>
+                    <div class="meter mt-3 h-1.5 rounded"><span class="block h-full rounded" style="width:${progress}%"></span></div>
+                    <div class="mt-3 grid grid-cols-2 gap-2">
+                        <label class="mono text-[10px] uppercase tracking-widest text-slate-400">Captured hours<input data-field="capturedHours" class="input-dark mt-1 w-full rounded-md px-2 py-1 text-xs" type="number" min="0" step="0.1" value="${captured}"></label>
+                        <label class="mono text-[10px] uppercase tracking-widest text-slate-400">Goal hours<input data-field="goalHours" class="input-dark mt-1 w-full rounded-md px-2 py-1 text-xs" type="number" min="0.1" step="0.1" value="${goal}"></label>
+                    </div>
+                    <div class="mt-3 grid grid-cols-3 gap-2">
+                        <button data-action="load" class="neon-button rounded-md px-2 py-1 mono text-[10px] font-bold">Load</button>
+                        <button data-action="apt" class="ghost-button rounded-md px-2 py-1 mono text-[10px] font-bold">APT</button>
+                        <button data-action="remove" class="ghost-button rounded-md px-2 py-1 mono text-[10px] font-bold">Remove</button>
+                    </div>
+                `;
+                row.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('change', () => {
+                        saved[input.dataset.field] = Math.max(0, Number(input.value) || 0);
+                        savePlannerProfiles();
+                        renderSavedPlans();
+                    });
+                });
+                row.querySelector('[data-action="load"]').addEventListener('click', () => loadSavedPlan(saved));
+                row.querySelector('[data-action="apt"]').addEventListener('click', () => downloadFile(`${saved.target.name.replace(/\s+/g, '_')}_APT_plan.txt`, saved.apt, 'text/plain'));
+                row.querySelector('[data-action="remove"]').addEventListener('click', () => {
+                    program.plans = program.plans.filter(plan => plan.id !== saved.id);
+                    savePlannerProfiles();
+                    renderSavedPlans();
+                });
+                els.savedPlanList.appendChild(row);
+            });
+        }
+
+        function loadSavedPlan(saved) {
+            let target = allTargets().find(item => item.id === saved.target.id);
+            if (!target) {
+                target = { ...cloneData(saved.target), id: uniqueId('custom'), custom: true };
+                state.customTargets.push(target);
+                saveCustomTargets();
+            }
+            state.selectedId = target.id;
+            state.mode = saved.mode;
+            state.reducer = saved.reducer;
+            state.sky = saved.sky;
+            state.duration = saved.duration;
+            state.dither = saved.dither;
+            if (rigProfiles().some(rig => rig.id === saved.rigId)) state.rigId = saved.rigId;
+            state.exposureFilters = [...saved.filters];
+            els.sky.value = state.sky;
+            els.duration.value = String(state.duration);
+            els.dither.checked = state.dither;
+            els.exposureFilters.forEach(input => { input.checked = state.exposureFilters.includes(input.value); });
+            els.modeButtons.querySelectorAll('button').forEach(button => {
+                button.classList.toggle('active', button.dataset.mode === state.mode);
+            });
+            state.generatedPlan = { signature: planSignature(target), plan: cloneData(saved.plan) };
+            els.savedPlanStatus.textContent = `Loaded saved plan for ${target.name}.`;
+            render();
+        }
+
+        function exportActivePlannerProfile() {
+            saveActivePlannerProfile();
+            const profile = activePlannerProfile();
+            const payload = {
+                format: 'nightvector-planner-profile-v1',
+                exportedAt: new Date().toISOString(),
+                profile: cloneData(profile)
+            };
+            downloadFile(`${profile.name.replace(/\s+/g, '_')}_nightvector.json`, JSON.stringify(payload, null, 2), 'application/json');
+        }
+
+        function importPlannerProfile(file) {
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                try {
+                    const payload = JSON.parse(reader.result);
+                    const incoming = payload.profile || payload;
+                    if (!incoming?.name || !Array.isArray(incoming.programs)) throw new Error('Invalid NightVector planner profile');
+                    incoming.id = uniqueId('planner');
+                    incoming.name = `${incoming.name} Import`;
+                    incoming.programs = incoming.programs.map(program => ({ ...program, id: uniqueId('program'), plans: Array.isArray(program.plans) ? program.plans : [] }));
+                    incoming.activeProgramId = incoming.programs[0]?.id;
+                    if (!incoming.programs.length) {
+                        const program = createObservingProgram();
+                        incoming.programs = [program];
+                        incoming.activeProgramId = program.id;
+                    }
+                    state.plannerProfiles.push(incoming);
+                    state.activePlannerProfileId = incoming.id;
+                    applyPlannerSettings(incoming);
+                    savePlannerProfiles();
+                    els.plannerProfileStatus.textContent = `Imported planner profile: ${incoming.name}`;
+                    render();
+                } catch (error) {
+                    els.plannerProfileStatus.textContent = `Import failed: ${error.message}`;
+                }
+            });
+            reader.readAsText(file);
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+            return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+        }
+
+        function renderVault() {
+            const total = state.files.reduce((sum, file) => sum + file.size, 0);
+            const groups = state.files.reduce((acc, file) => {
+                acc[file.kind] = acc[file.kind] || { count: 0, size: 0 };
+                acc[file.kind].count += 1;
+                acc[file.kind].size += file.size;
+                return acc;
+            }, {});
+            els.vaultCount.textContent = String(state.files.length);
+            els.vaultSize.textContent = formatBytes(total);
+            els.vaultStatus.textContent = state.files.length
+                ? `Local: ${state.files.length} file${state.files.length === 1 ? '' : 's'} staged, ${formatBytes(total)}.`
+                : 'Local: no files staged.';
+            els.vaultGroups.innerHTML = '';
+            Object.entries(groups).forEach(([kind, group]) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between rounded border border-slate-500/20 bg-slate-950/40 px-2 py-1 mono text-[11px]';
+                row.innerHTML = `<span class="text-slate-300">${kind}</span><span class="text-cyan-200">${group.count} / ${formatBytes(group.size)}</span>`;
+                els.vaultGroups.appendChild(row);
+            });
+            const uploaded = state.files.filter(file => file.remoteKey).length;
+            if (state.files.length && uploaded === state.files.length) {
+                els.cloudStatus.textContent = `Cloud: ${uploaded} file${uploaded === 1 ? '' : 's'} uploaded.`;
+            }
+        }
+
+        function toDateInput(date) {
+            return date.toISOString().slice(0, 10);
+        }
+
+        function dateRange() {
+            const start = els.planStart.value ? new Date(`${els.planStart.value}T12:00:00`) : new Date();
+            const end = els.planEnd.value ? new Date(`${els.planEnd.value}T12:00:00`) : start;
+            const nights = [];
+            for (let d = new Date(start); d <= end && nights.length < 31; d.setDate(d.getDate() + 1)) {
+                nights.push(new Date(d));
+            }
+            return nights;
+        }
+
+        function parseRaDegrees(value) {
+            const text = String(value || '').trim();
+            if (!text || text === 'unknown') return NaN;
+            if (/^[+-]?\d+(\.\d+)?$/.test(text)) return Number(text);
+            const parts = text.split(/[:\s]+/).map(Number);
+            if (parts.length < 2 || parts.some(Number.isNaN)) return NaN;
+            return (parts[0] + parts[1] / 60 + (parts[2] || 0) / 3600) * 15;
+        }
+
+        function parseDecDegrees(value) {
+            const text = String(value || '').trim();
+            if (!text || text === 'unknown') return NaN;
+            if (/^[+-]?\d+(\.\d+)?$/.test(text)) return Number(text);
+            const sign = text.startsWith('-') ? -1 : 1;
+            const cleaned = text.replace(/^[+-]/, '');
+            const parts = cleaned.split(/[:\s]+/).map(Number);
+            if (parts.length < 2 || parts.some(Number.isNaN)) return NaN;
+            return sign * (parts[0] + parts[1] / 60 + (parts[2] || 0) / 3600);
+        }
+
+        function dayOfYear(date) {
+            const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+            return Math.floor((date - start) / 86400000);
+        }
+
+        function seasonalRaAtMidnight(date) {
+            return ((dayOfYear(date) + 80) / 365.25 * 360 + 180) % 360;
+        }
+
+        function angularDistanceDeg(a, b) {
+            const diff = Math.abs(((a - b + 540) % 360) - 180);
+            return diff;
+        }
+
+        function transitAltitude(latDeg, decDeg) {
+            return 90 - Math.abs(latDeg - decDeg);
+        }
+
+        function periodsForNight(date) {
+            if (!state.weather?.periods?.length) return [];
+            const start = new Date(date);
+            start.setHours(19, 0, 0, 0);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            end.setHours(5, 59, 59, 999);
+            return state.weather.periods.filter(period => {
+                const time = new Date(period.startTime);
+                return time >= start && time <= end;
+            });
+        }
+
+        function average(values) {
+            return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+        }
+
+        function summarizeWeatherNight(date) {
+            const periods = periodsForNight(date);
+            if (!periods.length) return null;
+            const clouds = periods.map(period => Number(period.cloudCover) || 0);
+            const rain = periods.map(period => Number(period.probabilityOfPrecipitation) || 0);
+            const humidity = periods.map(period => Number(period.relativeHumidity) || 0);
+            const wind = periods.map(period => Number(period.windSpeed) || 0);
+            const cloudCover = Math.round(average(clouds));
+            const precipitation = Math.round(Math.max(...rain));
+            const relativeHumidity = Math.round(average(humidity));
+            const windSpeed = Math.round(average(wind));
+            const score = Math.round(Math.max(0, Math.min(100,
+                100
+                - (cloudCover * 0.7)
+                - (precipitation * 0.65)
+                - (Math.max(0, relativeHumidity - 70) * 0.55)
+                - (Math.max(0, windSpeed - 8) * 2)
+            )));
+            const quality = score >= 70 ? 'Good' : score >= 48 ? 'Fair' : 'Poor';
+            return { score, quality, cloudCover, precipitation, relativeHumidity, windSpeed };
+        }
+
+        function weatherScoreForNight(date) {
+            if (!state.weather?.periods?.length) return { score: 50, label: 'Weather forecast unavailable' };
+            const summary = summarizeWeatherNight(date);
+            if (!summary) return { score: 50, label: 'Outside five-day forecast' };
+            return {
+                score: summary.score,
+                label: `${summary.quality} weather / cloud ${summary.cloudCover}% / rain ${summary.precipitation}% / wind ${summary.windSpeed} mph`
+            };
+        }
+
+        function renderWeatherWidget() {
+            els.fiveDayWeather.innerHTML = '';
+            if (!state.weather?.periods?.length) return;
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            Array.from({ length: 5 }, (_, offset) => {
+                const night = new Date(start);
+                night.setDate(night.getDate() + offset);
+                return night;
+            }).forEach(night => {
+                const summary = summarizeWeatherNight(night);
+                if (!summary) return;
+                const card = document.createElement('article');
+                const palette = summary.quality === 'Good'
+                    ? 'border-green-300/60 bg-green-300/10 text-green-100'
+                    : summary.quality === 'Fair'
+                        ? 'border-amber-300/50 bg-amber-300/10 text-amber-100'
+                        : 'border-rose-300/50 bg-rose-300/10 text-rose-100';
+                card.className = `rounded-md border p-3 ${palette}`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="mono text-xs font-bold uppercase">${night.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                        <span class="mono text-[10px] font-bold uppercase">${summary.quality}</span>
+                    </div>
+                    <p class="mono mt-2 text-[11px] text-slate-200">Cloud ${summary.cloudCover}%</p>
+                    <p class="mono text-[11px] text-slate-200">Rain ${summary.precipitation}%</p>
+                    <p class="mono text-[11px] text-slate-200">Humidity ${summary.relativeHumidity}%</p>
+                    <p class="mono text-[11px] text-slate-200">Wind ${summary.windSpeed} mph</p>
+                    <p class="mono mt-2 text-xs font-bold">Score ${summary.score}/100</p>
+                `;
+                els.fiveDayWeather.appendChild(card);
+            });
+        }
+
+        function scoreTargetForNight(target, night, lat) {
+            const ra = parseRaDegrees(target.ra);
+            const dec = parseDecDegrees(target.dec);
+            if (!Number.isFinite(ra) || !Number.isFinite(dec)) return null;
+            const alt = transitAltitude(lat, dec);
+            const raMatch = 100 - angularDistanceDeg(ra, seasonalRaAtMidnight(night)) / 1.8;
+            const weather = weatherScoreForNight(night);
+            const score = Math.round(Math.max(0, Math.min(100, (alt * 0.55) + (Math.max(0, raMatch) * 0.25) + (weather.score * 0.20))));
+            return { target, night: toDateInput(night), altitude: Math.round(alt), weather: weather.label, score };
+        }
+
+        function renderSuggestions() {
+            els.suggestedList.innerHTML = '';
+            if (!state.suggestions.length) {
+                els.suggestionCount.textContent = 'No suggestions yet';
+                return;
+            }
+            els.suggestionCount.textContent = `${state.suggestions.length} scored windows`;
+            state.suggestions.forEach(item => {
+                const row = document.createElement('button');
+                row.className = 'target-row w-full rounded-lg p-3 text-left';
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-lg font-bold text-white">${item.target.name}</p>
+                            <p class="mono mt-1 text-xs uppercase tracking-widest text-slate-400">${item.night} / ${item.target.type}</p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <span class="mono rounded border border-green-300/30 px-2 py-1 text-xs text-green-200">${item.score}</span>
+                            <button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold" data-action="queue">Add</button>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-300">Transit altitude ${item.altitude} deg / ${item.weather}</p>
+                `;
+                row.addEventListener('click', () => {
+                    state.mode = item.target.mode[0] || state.mode;
+                    state.selectedId = item.target.id;
+                    render();
+                });
+                row.querySelector('[data-action="queue"]').addEventListener('click', event => {
+                    event.stopPropagation();
+                    addSuggestedToQueue(item.target);
+                });
+                els.suggestedList.appendChild(row);
+            });
+        }
+
+        function addSuggestedToQueue(target) {
+            state.hiddenTargetIds = state.hiddenTargetIds.filter(id => id !== target.id);
+            saveHiddenTargetIds();
+            if (!defaultTargets.some(item => item.id === target.id) && !state.customTargets.some(item => item.id === target.id)) {
+                state.customTargets.push({ ...target, id: `custom-${Date.now()}`, custom: true });
+                saveCustomTargets();
+            }
+            state.mode = target.mode[0] || state.mode;
+            state.selectedId = target.id;
+            render();
+        }
+
+        async function resolveSite() {
+            const query = els.siteQuery.value.trim();
+            const endpoint = cloudEndpoint();
+            if (!query || !endpoint) {
+                els.siteStatus.textContent = 'Enter a location and Cloudflare endpoint.';
+                return;
+            }
+            els.siteStatus.textContent = `Resolving ${query}...`;
+            const response = await fetch(`${endpoint}/geocode?${new URLSearchParams({ q: query })}`).catch(() => null);
+            const result = response ? await response.json().catch(() => ({})) : {};
+            if (!response || !response.ok || !result.ok) {
+                els.siteStatus.textContent = `Location failed: ${result.error || 'unreachable'}`;
+                return;
+            }
+            els.siteLat.value = result.lat.toFixed(5);
+            els.siteLon.value = result.lon.toFixed(5);
+            els.siteStatus.textContent = `Resolved: ${result.name}`;
+            localStorage.setItem('observingSite', JSON.stringify({ name: result.name, lat: result.lat, lon: result.lon }));
+            await loadHourlyWeather();
+        }
+
+        async function useGps() {
+            if (!navigator.geolocation) {
+                els.siteStatus.textContent = 'GPS is not available in this browser.';
+                return;
+            }
+            els.siteStatus.textContent = 'Requesting GPS coordinates...';
+            navigator.geolocation.getCurrentPosition(async position => {
+                els.siteLat.value = position.coords.latitude.toFixed(5);
+                els.siteLon.value = position.coords.longitude.toFixed(5);
+                els.siteStatus.textContent = 'GPS coordinates loaded.';
+                localStorage.setItem('observingSite', JSON.stringify({ name: 'GPS location', lat: position.coords.latitude, lon: position.coords.longitude }));
+                await loadHourlyWeather();
+            }, () => {
+                els.siteStatus.textContent = 'GPS permission denied or unavailable.';
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        }
+
+        async function loadHourlyWeather() {
+            const lat = Number(els.siteLat.value);
+            const lon = Number(els.siteLon.value);
+            const endpoint = cloudEndpoint();
+            if (!Number.isFinite(lat) || !Number.isFinite(lon) || !endpoint) return;
+            els.weatherSummary.textContent = 'Loading hourly weather...';
+            const response = await fetch(`${endpoint}/weather?${new URLSearchParams({ lat, lon })}`).catch(() => null);
+            const result = response ? await response.json().catch(() => ({})) : {};
+            if (!response || !response.ok || !result.ok) {
+                state.weather = null;
+                els.fiveDayWeather.innerHTML = '';
+                els.weatherSummary.textContent = `Five-day weather unavailable: ${result.error || 'request failed'}.`;
+                return;
+            }
+            state.weather = result;
+            renderWeatherWidget();
+            const goodNights = Array.from({ length: 5 }, (_, offset) => {
+                const night = new Date();
+                night.setHours(0, 0, 0, 0);
+                night.setDate(night.getDate() + offset);
+                return { night, summary: summarizeWeatherNight(night) };
+            }).filter(item => item.summary?.quality === 'Good');
+            const best = goodNights.length
+                ? ` Good observing ${goodNights.map(item => item.night.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })).join(', ')}.`
+                : ' No strong observing night is currently highlighted.';
+            els.weatherSummary.textContent = `Five-day forecast loaded. Weather refreshes hourly.${best}`;
+        }
+
+        async function buildSuggestions() {
+            const lat = Number(els.siteLat.value);
+            if (!Number.isFinite(lat)) {
+                els.siteStatus.textContent = 'Set latitude/longitude before building suggestions.';
+                return;
+            }
+            await loadHourlyWeather();
+            const minAlt = Number(els.minAltitude.value);
+            const suggestions = [];
+            dateRange().forEach(night => {
+                allTargets().forEach(target => {
+                    if (!target.mode.includes(state.mode)) return;
+                    const scored = scoreTargetForNight(target, night, lat);
+                    if (scored && scored.altitude >= minAlt) suggestions.push(scored);
+                });
+            });
+            state.suggestions = suggestions.sort((a, b) => b.score - a.score).slice(0, 80);
+            renderSuggestions();
+        }
+
+        function exportSuggestionsCsv() {
+            const rows = state.suggestions.map(item => [item.night, item.target.name, item.target.ra, item.target.dec, item.target.type, item.altitude, item.weather, item.score]);
+            const csv = [['Night', 'Name', 'RA', 'Dec', 'Type', 'TransitAltitudeDeg', 'Weather', 'Score'], ...rows]
+                .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(','))
+                .join('\n');
+            downloadFile('suggested-targets.csv', csv, 'text/csv');
+        }
+
+        function inferKind(file, fallback) {
+            const path = (file.webkitRelativePath || file.name).toLowerCase();
+            const has = (...terms) => terms.some(term => path.includes(term));
+            if (has('/flat', '\\flat', 'flats')) {
+                if (has('/l/', '\\l\\', 'lum', 'luminance', 'filter_l', 'flat_l')) return 'Flats L';
+                if (has('/r/', '\\r\\', 'red', 'filter_r', 'flat_r')) return 'Flats R';
+                if (has('/g/', '\\g\\', 'green', 'filter_g', 'flat_g')) return 'Flats G';
+                if (has('/b/', '\\b\\', 'blue', 'filter_b', 'flat_b')) return 'Flats B';
+                return 'Flats';
+            }
+            if (has('/dark', '\\dark', 'darks')) return 'Darks';
+            if (has('/bias', '\\bias', 'offset')) return 'Bias';
+            if (has('/light', '\\light', 'lights')) {
+                if (has('/l/', '\\l\\', 'lum', 'luminance', 'filter_l', 'light_l')) return 'Lights L';
+                if (has('/r/', '\\r\\', 'red', 'filter_r', 'light_r')) return 'Lights R';
+                if (has('/g/', '\\g\\', 'green', 'filter_g', 'light_g')) return 'Lights G';
+                if (has('/b/', '\\b\\', 'blue', 'filter_b', 'light_b')) return 'Lights B';
+                return 'Lights';
+            }
+            return fallback;
+        }
+
+        function render() {
+            renderPlannerProfiles();
+            renderRigProfiles();
+            renderStats();
+            renderTypeButtons();
+            const list = filteredTargets();
+            if (list.length && !list.some(target => target.id === state.selectedId)) {
+                state.selectedId = list[0].id;
+            }
+            renderTargets(list);
+            const target = allTargets().find(t => t.id === state.selectedId) || list[0];
+            if (target) renderDetail(target);
+            renderVault();
+        }
+
+        els.reducer.addEventListener('change', () => {
+            state.reducer = Number(els.reducer.value);
+            render();
+        });
+        els.rigProfileSelect.addEventListener('change', () => {
+            state.rigId = els.rigProfileSelect.value;
+            state.reducer = selectedRig().reducer || 1;
+            localStorage.setItem('observingRigId', state.rigId);
+            render();
+        });
+        document.getElementById('save-rig-profile').addEventListener('click', saveRigProfile);
+        document.getElementById('delete-rig-profile').addEventListener('click', deleteSelectedRigProfile);
+        els.plannerProfileSelect.addEventListener('change', () => {
+            capturePlannerSettings(activePlannerProfile());
+            state.activePlannerProfileId = els.plannerProfileSelect.value;
+            applyPlannerSettings(activePlannerProfile());
+            savePlannerProfiles();
+            els.plannerProfileStatus.textContent = `Loaded planner profile: ${activePlannerProfile().name}`;
+            render();
+        });
+        document.getElementById('new-planner-profile').addEventListener('click', createNewPlannerProfile);
+        document.getElementById('save-planner-profile').addEventListener('click', saveActivePlannerProfile);
+        document.getElementById('delete-planner-profile').addEventListener('click', deleteActivePlannerProfile);
+        els.observingProgramSelect.addEventListener('change', () => {
+            const profile = activePlannerProfile();
+            profile.activeProgramId = els.observingProgramSelect.value;
+            savePlannerProfiles();
+            renderPlannerProfiles();
+        });
+        document.getElementById('new-observing-program').addEventListener('click', createNewObservingProgram);
+        document.getElementById('save-observing-program').addEventListener('click', saveActiveObservingProgram);
+        document.getElementById('delete-observing-program').addEventListener('click', deleteActiveObservingProgram);
+        document.getElementById('export-planner-profile').addEventListener('click', exportActivePlannerProfile);
+        els.importPlannerProfile.addEventListener('change', event => {
+            const [file] = event.target.files || [];
+            if (file) importPlannerProfile(file);
+            els.importPlannerProfile.value = '';
+        });
+        els.sky.addEventListener('change', () => {
+            state.sky = els.sky.value;
+            render();
+        });
+        els.duration.addEventListener('change', () => {
+            state.duration = Number(els.duration.value);
+            render();
+        });
+        els.dither.addEventListener('change', () => {
+            state.dither = els.dither.checked;
+            render();
+        });
+        els.exposureFilters.forEach(input => {
+            input.addEventListener('change', () => {
+                state.exposureFilters = els.exposureFilters.filter(item => item.checked).map(item => item.value);
+                render();
+            });
+        });
+        els.generateExposurePlan.addEventListener('click', generateExposurePlan);
+        document.getElementById('save-exposure-plan').addEventListener('click', saveGeneratedPlanToProgram);
+        els.search.addEventListener('input', () => {
+            state.search = els.search.value;
+            render();
+        });
+        els.sort.addEventListener('change', () => {
+            state.sort = els.sort.value;
+            render();
+        });
+        els.modeButtons.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', () => {
+                state.mode = button.dataset.mode;
+                state.type = 'All';
+                els.modeButtons.querySelectorAll('button').forEach(btn => btn.classList.toggle('active', btn === button));
+                const list = filteredTargets();
+                if (list.length) state.selectedId = list[0].id;
+                render();
+            });
+        });
+        els.minAltitude.addEventListener('input', () => {
+            els.minAltitudeLabel.textContent = `${els.minAltitude.value} deg`;
+        });
+        document.getElementById('resolve-site').addEventListener('click', resolveSite);
+        document.getElementById('use-gps').addEventListener('click', useGps);
+        document.getElementById('build-suggestions').addEventListener('click', buildSuggestions);
+        document.getElementById('export-suggestions').addEventListener('click', exportSuggestionsCsv);
+        document.getElementById('refresh-weather').addEventListener('click', loadHourlyWeather);
+        document.getElementById('export-list').addEventListener('click', exportCsv);
+        document.getElementById('lookup-target').addEventListener('click', lookupTargetOnline);
+        document.getElementById('add-target').addEventListener('click', addCustomTarget);
+        document.getElementById('clear-custom-targets').addEventListener('click', () => {
+            state.customTargets = [];
+            saveCustomTargets();
+            els.addTargetStatus.textContent = 'Custom targets cleared from this browser.';
+            const list = filteredTargets();
+            if (list.length) state.selectedId = list[0].id;
+            render();
+        });
+        document.getElementById('restore-default-targets').addEventListener('click', () => {
+            state.hiddenTargetIds = [];
+            saveHiddenTargetIds();
+            els.addTargetStatus.textContent = 'Default targets restored.';
+            const list = filteredTargets();
+            if (list.length) state.selectedId = list[0].id;
+            render();
+        });
+        document.getElementById('download-plan').addEventListener('click', () => {
+            const target = allTargets().find(t => t.id === state.selectedId);
+            if (!target || !els.aptOutput.value.trim()) {
+                els.planWarning.textContent = 'Generate an exposure plan before downloading the APT recipe.';
+                return;
+            }
+            downloadFile(`${target.name.replace(/\s+/g, '_')}_APT_plan.txt`, els.aptOutput.value, 'text/plain');
+        });
+        document.getElementById('copy-goto').addEventListener('click', async () => {
+            if (!els.aptOutput.value.trim()) {
+                els.planWarning.textContent = 'Generate an exposure plan before copying the GoTo++ command.';
+                return;
+            }
+            const firstLine = els.aptOutput.value.split('\n').find(line => line.startsWith('GoTo command:'));
+            const command = firstLine ? firstLine.replace('GoTo command: ', '') : els.aptOutput.value;
+            await navigator.clipboard.writeText(command).catch(() => {});
+        });
+        function stageFiles(fileList) {
+            const target = allTargets().find(t => t.id === state.selectedId);
+            const typedTarget = els.vaultTargetName.value.trim();
+            const sessionDate = els.sessionDate.value || new Date().toISOString().slice(0, 10);
+            const supported = /\.(fits?|fts|xisf|ser|avi|mp4|mov|mkv|jpe?g|png|tiff?|cr2|cr3|nef|arw|dng)$/i;
+            const files = Array.from(fileList || []).filter(file => supported.test(file.name) || file.type.startsWith('image/') || file.type.startsWith('video/'));
+            if (!files.length) {
+                els.vaultStatus.textContent = 'Local: no supported image, video, FITS, XISF, SER, or RAW files found.';
+                return;
+            }
+            files.forEach(file => {
+                const kind = inferKind(file, els.frameKind.value);
+                state.files.push({
+                    name: file.name,
+                    size: file.size,
+                    kind,
+                    target: typedTarget || (target ? target.name : ''),
+                    sessionDate,
+                    lastModified: new Date(file.lastModified).toISOString(),
+                    relativePath: file.webkitRelativePath || file.name,
+                    file
+                });
+            });
+            els.vaultStatus.textContent = `Local: staged ${files.length} new file${files.length === 1 ? '' : 's'}.`;
+            renderVault();
+        }
+        els.directoryInput.addEventListener('change', event => {
+            stageFiles(event.target.files);
+            els.directoryInput.value = '';
+        });
+        els.fitsDropZone.addEventListener('dragover', event => {
+            event.preventDefault();
+            els.fitsDropZone.classList.add('border-green-300/80');
+        });
+        els.fitsDropZone.addEventListener('dragleave', () => {
+            els.fitsDropZone.classList.remove('border-green-300/80');
+        });
+        els.fitsDropZone.addEventListener('drop', event => {
+            event.preventDefault();
+            els.fitsDropZone.classList.remove('border-green-300/80');
+            stageFiles(event.dataTransfer.files);
+        });
+        document.getElementById('clear-files').addEventListener('click', () => {
+            state.files = [];
+            renderVault();
+        });
+        document.getElementById('download-manifest').addEventListener('click', () => {
+            const target = allTargets().find(t => t.id === state.selectedId);
+            const rig = selectedRig();
+            const manifest = {
+                createdAt: new Date().toISOString(),
+                sessionDate: els.sessionDate.value || new Date().toISOString().slice(0, 10),
+                selectedTarget: target ? target.name : null,
+                equipment: {
+                    profile: rig.name,
+                    telescope: rig.telescope,
+                    reducer: state.reducer,
+                    camera: rig.camera,
+                    filters: rig.filters,
+                    apertureMm: rig.aperture,
+                    focalLengthMm: rig.nativeFocalLength * state.reducer,
+                    pixelSizeUm: rig.pixelSize,
+                    mount: 'Sky-Watcher Wave 100i with counterweight',
+                    guideScope: rig.guideFocalLength ? `${rig.guideFocalLength}mm guide scope` : 'not specified',
+                    guideCamera: 'not specified'
+                },
+                files: state.files.map(({ file, ...metadata }) => metadata)
+            };
+            downloadFile('observing-session-manifest.json', JSON.stringify(manifest, null, 2), 'application/json');
+        });
+        els.cloudEndpoint.addEventListener('change', () => {
+            localStorage.setItem('observingCloudEndpoint', els.cloudEndpoint.value.trim());
+        });
+        els.vaultTargetName.addEventListener('change', () => {
+            localStorage.setItem('observingVaultTargetName', els.vaultTargetName.value.trim());
+            if (!els.cloudPrefix.value.trim()) {
+                els.cloudPrefix.placeholder = defaultCloudPrefix();
+            }
+        });
+        els.sessionDate.addEventListener('change', () => {
+            if (!els.cloudPrefix.value.trim()) {
+                els.cloudPrefix.placeholder = defaultCloudPrefix();
+            }
+        });
+        els.cloudPrefix.addEventListener('change', () => {
+            localStorage.setItem('observingCloudPrefix', els.cloudPrefix.value.trim());
+        });
+        document.getElementById('list-cloud').addEventListener('click', listCloudObjects);
+        document.getElementById('download-cloud-listed').addEventListener('click', downloadListedObjects);
+        document.getElementById('upload-cloud').addEventListener('click', async () => {
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.cloudStatus.textContent = 'Cloud: enter endpoint and upload token.';
+                return;
+            }
+            const pending = state.files.filter(item => item.file && !item.remoteKey);
+            if (!pending.length) {
+                els.cloudStatus.textContent = 'Cloud: no pending FITS files.';
+                els.uploadDetail.textContent = 'Upload queue idle.';
+                els.uploadProgressBar.style.width = '100%';
+                return;
+            }
+            localStorage.setItem('observingCloudEndpoint', endpoint);
+            els.uploadProgressBar.style.width = '0%';
+            for (let index = 0; index < pending.length; index += 1) {
+                const item = pending[index];
+                const percent = Math.round((index / pending.length) * 100);
+                els.uploadProgressBar.style.width = `${percent}%`;
+                els.cloudStatus.textContent = `Cloud: uploading ${index + 1}/${pending.length}`;
+                els.uploadDetail.textContent = `${item.kind} / ${item.relativePath || item.name} / ${formatBytes(item.size)}`;
+                const params = new URLSearchParams({
+                    target: item.target || 'unknown-target',
+                    kind: item.kind,
+                    date: item.sessionDate,
+                    filename: item.name
+                });
+                let response;
+                let result = {};
+                try {
+                    response = await fetch(`${endpoint}/upload?${params.toString()}`, {
+                        method: 'POST',
+                        headers: {
+                            authorization: `Bearer ${token}`,
+                            'content-type': 'application/fits'
+                        },
+                        body: item.file
+                    });
+                    result = await response.json().catch(() => ({}));
+                } catch (error) {
+                    els.cloudStatus.textContent = `Cloud: request blocked or unreachable. Check Worker URL and CORS origin.`;
+                    els.uploadDetail.textContent = `Failed before upload: ${item.name}`;
+                    return;
+                }
+                if (!response.ok || !result.ok) {
+                    els.cloudStatus.textContent = `Cloud: upload failed for ${item.name}. ${result.error || response.status}`;
+                    els.uploadDetail.textContent = `Failed: ${item.relativePath || item.name}`;
+                    return;
+                }
+                item.remoteKey = result.key;
+                els.uploadProgressBar.style.width = `${Math.round(((index + 1) / pending.length) * 100)}%`;
+            }
+            els.uploadDetail.textContent = `Uploaded ${pending.length} file${pending.length === 1 ? '' : 's'} to Cloudflare R2.`;
+            state.cloudObjects = [];
+            els.cloudInventoryStatus.textContent = 'Cloud inventory changed. Click View Cloud to refresh.';
+            renderVault();
+        });
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active-link');
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('active-link');
+            }
+        });
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            if (link.getAttribute('href') === currentPage) {
+                link.classList.add('bg-forest');
+            }
+        });
+
+        applyPlannerSettings(activePlannerProfile());
+        render();
+        if (els.siteLat.value && els.siteLon.value) {
+            loadHourlyWeather();
+        }
+        setInterval(loadHourlyWeather, 60 * 60 * 1000);
+    </script>
+</body>
+</html>

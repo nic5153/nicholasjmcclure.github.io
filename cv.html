@@ -59,6 +59,7 @@
         }
 
     </style>
+    <link rel="stylesheet" href="files/neon-theme.css">
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
@@ -73,9 +74,9 @@
                     <button class="text-white nav-link flex items-center space-x-1">
                         <span>🔭 Science</span><span class="text-sm">▼</span>
                     </button>
-                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
-                        <a href="research.html" class="block px-4 py-2 hover:bg-gray-100">Research</a>
+                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-56 py-2 z-[70]">
                         <a href="astrophotography.html" class="block px-4 py-2 hover:bg-gray-100">Astrophotography</a>
+                        <a href="observing.html" class="block px-4 py-2 hover:bg-gray-100">NightVector</a>
                     </div>
                 </div>
                 <div class="relative group">
@@ -100,8 +101,8 @@
         <div id="mobile-menu" class="hidden md:hidden mt-2 bg-navy text-white rounded-md overflow-hidden">
             <a href="index.html" class="block py-2 px-4">Home</a>
             <p class="px-4 pt-3 pb-1 text-sm opacity-70">Science</p>
-            <a href="research.html" class="block py-2 px-4">Research</a>
             <a href="astrophotography.html" class="block py-2 px-4">Astrophotography</a>
+            <a href="observing.html" class="block py-2 px-4">NightVector</a>
             <p class="px-4 pt-3 pb-1 text-sm opacity-70">About</p>
             <a href="cv.html" class="block py-2 px-4">CV</a>
             <a href="outreach.html" class="block py-2 px-4">Outreach</a>
@@ -118,7 +119,13 @@
 
                 <h1 class="text-4xl font-bold text-navy mb-2 text-center">Nicholas J. McClure</h1>
                 <div class="text-center text-gray-600 mb-1">
-                    <p>nic5153mcclure@gmail.com</p>
+                    <p>817-608-6280 | nic5153mcclure@gmail.com</p>
+                    <p class="mt-1">
+                        <a href="http://www.linkedin.com/in/nicholas-mcclure-3a463524a" target="_blank" class="hover:text-forest">LinkedIn</a>
+                        |
+                        <a href="https://github.com/nic5153" target="_blank" class="hover:text-forest">GitHub</a>
+                        | U.S. Citizen | Clearance Eligible
+                    </p>
                 </div>
                 <div class="text-center text-gray-600 mb-4">
                     <a href="https://orcid.org/0009-0000-9626-2192" target="_blank" class="inline-flex items-center hover:text-forest">
@@ -162,23 +169,42 @@
                     </div>
 
                     <div>
-                        <h2 id="research-experience" class="text-2xl font-semibold text-forest mb-3">Research Experience</h2>
+                        <h2 id="professional-experience" class="text-2xl font-semibold text-forest mb-3">Professional Experience</h2>
                         <div class="pl-5 mb-6">
-                            <p class="font-bold text-lg">Mysterious Modulations</p>
-                            <p class="italic text-gray-600">Mar 2024–Present | Supervisor: Dr. Michael Fausnaugh</p>
+                            <p class="font-bold text-lg">Systems Engineer I</p>
+                            <p class="italic text-gray-600">Raytheon, Tucson, AZ | Beginning Jul 20, 2026</p>
+                        </div>
+                        <div class="pl-5 mb-6">
+                            <p class="font-bold text-lg">Research Assistant: Fermi-TESS Blind Search</p>
+                            <p class="italic text-gray-600">Texas Tech University, Lubbock, TX | Jan 2026-Present</p>
                             <ul class="list-disc pl-5 mt-2">
-                                <li>Performed standard CCD image reduction (bias subtraction, dark subtraction, flat field division) for photometric analysis.</li>
-                                <li>Developed Python scripts for time-series analysis of TESS light curves using polynomial detrending, Lomb–Scargle periodograms, and phase-folding.</li>
-                                <li>Analyzed periodicity to identify variability sources, including beat frequencies from blended sources.</li>
-                                <li><em>Publication in progress.</em></li>
+                                <li>Built Python and HPC workflows to process 4.9 million satellite imaging datasets for photometric extraction, light-curve generation, signal detection, and candidate screening.</li>
+                                <li>Applied source matching, background estimation, RMS/noise analysis, and quality-control methods to validate data products against external catalogs and flag potential transient events.</li>
+                                <li>Troubleshot candidate plots, summary files, and pipeline outputs by inspecting light-curve morphology, background trends, photometric scatter, and signal-quality metrics.</li>
                             </ul>
                         </div>
                         <div class="pl-5">
-                            <p class="font-bold text-lg">SkyQ</p>
-                            <p class="italic text-gray-600">May 2025–Present | Supervisor: Dr. Michael Fausnaugh</p>
+                            <p class="font-bold text-lg">Project Lead: SkyQ</p>
+                            <p class="italic text-gray-600">Texas Tech University, Lubbock, TX | Oct 2025-Present</p>
                             <ul class="list-disc pl-5 mt-2">
-                                <li>Developing a Python package to consolidate astronomical targets, compute observability (airmass, altitude), and rank targets for observing plans.</li>
-                                <li>Designed to publish nightly observing plans to the Skyview website to improve undergraduate research accessibility.</li>
+                                <li>Developed Python observational-geometry tools to evaluate target observability, timing constraints, operating windows, and priority parameters for nightly observatory scheduling.</li>
+                                <li>Designed workflows using coordinate transformations, time-window analysis, altitude and airmass calculations, and constraint filtering for automated target selection.</li>
+                                <li>Maintained Git-versioned software repositories to support modular development, validation, and technical workflows.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 id="research-experience" class="text-2xl font-semibold text-forest mb-3">Research Experience</h2>
+                        <div class="pl-5">
+                            <p class="font-bold text-lg">Project Lead: Mysterious Modulations</p>
+                            <p class="italic text-gray-600">Mar 2024-Jan 2026 | Supervisor: Dr. Michael Fausnaugh</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Performed standard CCD image reduction (bias subtraction, dark subtraction, flat-field division) for photometric analysis.</li>
+                                <li>Developed Python time-series pipelines using polynomial detrending, Lomb-Scargle periodograms, Fourier analysis, phase-folding, statistical modeling, and signal-verification methods.</li>
+                                <li>Analyzed periodicity to identify variability sources, including beat frequencies from blended sources.</li>
+                                <li>Documented and communicated results through presentations and written reports for audiences of more than 100 attendees.</li>
+                                <li><em>Publication in progress.</em></li>
                             </ul>
                         </div>
                     </div>
@@ -196,6 +222,27 @@
                         </div>
                     </div>
                     
+                    <div>
+                        <h2 id="engineering-projects" class="text-2xl font-semibold text-forest mb-3">Engineering &amp; Analysis Projects</h2>
+                        <div class="pl-5 mb-6">
+                            <p class="font-bold">Orbital Dynamics Analysis Project</p>
+                            <p class="italic text-gray-600">Python, CelesTrak, and TLE Data | Spring 2026</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Built Python tools to parse CelesTrak TLE data and extract orbital elements including inclination, RAAN, eccentricity, argument of perigee, mean anomaly, mean motion, and revolution number.</li>
+                                <li>Evaluated active-satellite orbital characteristics through statistical summaries and visualizations of orbital regimes, inclination distributions, eccentricity trends, and mean-motion behavior.</li>
+                                <li>Applied orbital mechanics, coordinate interpretation, data validation, and visualization methods to develop mission-analysis skills.</li>
+                            </ul>
+                        </div>
+                        <div class="pl-5">
+                            <p class="font-bold">Microwave Oscillator Testing</p>
+                            <p class="italic text-gray-600">Spring 2025</p>
+                            <ul class="list-disc pl-5 mt-2">
+                                <li>Developed and executed test procedures to evaluate microwave oscillator behavior, signal propagation, and circuit response using oscilloscopes and signal generators.</li>
+                                <li>Collected measurement data, documented procedures, performed post-test analysis, and troubleshot instrumentation and signal-quality issues.</li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <div>
                         <h2 id="lab-projects" class="text-2xl font-semibold text-forest mb-3">Key Laboratory Projects</h2>
                         <p class="italic text-gray-600 pl-5">Intermediate Physics Laboratory, Spring 2025</p>
@@ -230,17 +277,19 @@
                     <div>
                         <h2 id="technical-skills" class="text-2xl font-semibold text-forest mb-3">Technical Skills</h2>
                         <ul class="list-disc pl-5">
-                            <li><strong>Technical:</strong> Python (AstroPy, NumPy, SciPy, Matplotlib), LaTeX, Time-Series Analysis (Lomb–Scargle, Fourier), Signal Processing (detrending, phase-folding), CCD Photometry &amp; Image Reduction, Data Modeling, Telescope Operation</li>
-                            <li><strong>Communication:</strong> Public speaking, curriculum development, STEM outreach and education</li>
+                            <li><strong>Programming &amp; Software:</strong> Python, introductory C++, Bash, Git/GitHub, Linux/Unix, workflow automation, pipeline development, introductory STK, introductory CelesTrak/TLE data, high-performance computing, SLURM, testing, verification, validation, and data organization</li>
+                            <li><strong>Data &amp; Analysis:</strong> NumPy, SciPy, Matplotlib, Astropy, Lightkurve, Pandas, statistical modeling, time-series analysis, Fourier methods, phase-folding, signal processing, CCD photometry, and image reduction</li>
+                            <li><strong>Instrumentation:</strong> Oscilloscopes, signal generators, SR770 spectrum analyzer, antennas, RF/microwave measurements, spectrum analysis, optical instrumentation, telescope operation, and instrumentation troubleshooting</li>
+                            <li><strong>Communication:</strong> Technical report writing, test documentation, scientific presentations, laboratory instruction, public speaking, curriculum development, and STEM outreach</li>
                         </ul>
                     </div>
                     
                     <div>
                         <h2 id="teaching-outreach" class="text-2xl font-semibold text-forest mb-3">Teaching &amp; Outreach Experience</h2>
-                        <p><strong>Lab/Learning Assistant</strong>, Texas Tech University — <em>Jan 2025–Dec 2025</em></p>
+                        <p><strong>Lab/Learning Assistant</strong>, Texas Tech University - <em>Jan 2025-Dec 2025</em></p>
                         <ul class="list-disc pl-5 mt-2">
-                            <li>Facilitated instruction for Solar System and Stellar Astronomy labs.</li>
-                            <li>Assisted with observational instruction and campus observatory equipment.</li>
+                            <li>Supported laboratory instruction for more than 200 students in Solar System and Stellar Astronomy labs.</li>
+                            <li>Assisted with equipment setup, procedure execution, data collection, safety practices, observational instruction, and hardware troubleshooting.</li>
                         </ul>
 
                         <p class="mt-4"><strong>Astronights Volunteer</strong>, TTU Physics &amp; Astronomy Dept. — <em>2024–Present</em></p>
@@ -249,9 +298,9 @@
                             <li>Operated a personal telescope setup for public viewing sessions.</li>
                         </ul>
 
-                        <p class="mt-4"><strong>STEM Educator</strong>, Science Spectrum, Lubbock, TX — <em>Dec 2022–Mar 2023</em></p>
+                        <p class="mt-4"><strong>STEM Educator</strong>, Science Spectrum, Lubbock, TX - <em>Dec 2022-Mar 2024</em></p>
                         <ul class="list-disc pl-5 mt-2">
-                            <li>Delivered interactive physics and astronomy demonstrations.</li>
+                            <li>Communicated technical concepts through in-house and outreach demonstrations for groups of 30 to 200 participants.</li>
                             <li>Developed curriculum and led eclipse-outreach events (attendance 800+).</li>
                         </ul>
 

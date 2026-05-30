@@ -1,0 +1,14 @@
+{
+  "name": "observing-vault-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "create-bucket": "wrangler r2 bucket create observing-vault",
+    "set-token": "wrangler secret put UPLOAD_TOKEN"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
