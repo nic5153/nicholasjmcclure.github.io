@@ -1576,23 +1576,28 @@
 
         function inferTargetMode(type) {
             const lower = String(type || '').toLowerCase();
-            if (lower.includes('eclips')) return 'photometry,eclipse';
-            if (lower.includes('delta') || lower.includes('scuti') || lower.includes('rr') || lower.includes('cepheid') || lower.includes('mira')) return 'photometry';
+            const codes = lower.split(/\s+/);
+            if (lower.includes('eclips') || codes.includes('eb*') || codes.includes('eb')) return 'photometry,eclipse';
+            if (lower.includes('delta') || lower.includes('scuti') || codes.includes('ds*') || lower.includes('rr') || lower.includes('cepheid') || codes.includes('ce*') || lower.includes('mira')) return 'photometry';
             if (lower.includes('var') || lower === '*' || lower.includes('star')) return 'photometry';
             return 'dso';
         }
 
         function inferTargetType(type) {
             const lower = String(type || '').toLowerCase();
-            if (lower.includes('gal') || type === 'G') return 'Galaxy';
-            if (lower.includes('pneb') || lower.includes('planetary')) return 'Planetary Nebula';
-            if (lower.includes('cluster')) return 'Globular Cluster';
-            if (lower.includes('var')) return 'Variable Star';
-            if (lower.includes('ecl')) return 'Eclipsing Binary';
-            if (lower.includes('dscuti') || lower.includes('delta scuti') || lower.includes('dsct')) return 'Delta Scuti';
+            const codes = lower.split(/\s+/);
+            if (lower.includes('gal') || codes.includes('g') || codes.includes('agn') || codes.some(code => /^sy\d*$/.test(code))) return 'Galaxy';
+            if (codes.includes('pn') || lower.includes('pneb') || lower.includes('planetary')) return 'Planetary Nebula';
+            if (codes.includes('hii') || codes.includes('neb') || lower.includes('emission nebula')) return 'Emission Nebula';
+            if (codes.includes('glc') || lower.includes('globular')) return 'Globular Cluster';
+            if (codes.includes('opc') || lower.includes('open cluster')) return 'Open Cluster';
+            if (codes.includes('snr') || lower.includes('supernova remnant')) return 'Supernova Remnant';
+            if (lower.includes('ecl') || codes.includes('eb*') || codes.includes('eb')) return 'Eclipsing Binary';
+            if (lower.includes('dscuti') || lower.includes('delta scuti') || lower.includes('dsct') || codes.includes('ds*')) return 'Delta Scuti';
             if (lower.includes('rr')) return 'RR Lyrae Variable';
-            if (lower.includes('cepheid')) return 'Cepheid Variable';
+            if (lower.includes('cepheid') || codes.includes('ce*')) return 'Cepheid Variable';
             if (lower.includes('mira')) return 'Mira Variable';
+            if (lower.includes('var')) return 'Variable Star';
             if (type === '*') return 'Variable Star';
             return type || 'Other';
         }
@@ -1613,6 +1618,7 @@
                 <p class="mono text-cyan-100">Resolved via ${resolved.source || 'archive'}: ${resolved.commonName || resolved.objectName || resolved.queryName || ''}</p>
                 <p class="mt-1">Lookup match: ${resolved.lookupMatch || 'direct'}${resolved.matchedAlias ? ` / matched "${resolved.matchedAlias}"` : ''}</p>
                 <p class="mt-1">Type: ${resolved.objectType || 'unknown'} / RA: ${resolved.raDeg ?? 'unknown'} / Dec: ${resolved.decDeg ?? 'unknown'}</p>
+                <p class="mt-1">Magnitude: ${resolved.preferredMagnitude ?? 'unknown'}${resolved.preferredMagnitudeBand ? ` (${resolved.preferredMagnitudeBand})` : ''} / Size: ${resolved.angularSizeArcmin ?? 'point source or unavailable'} arcmin</p>
                 <p class="mt-1">Aliases: ${aliases}</p>
                 <p class="mt-1">${gaiaText}</p>
                 <p class="mt-1">TNS: ${tnsConfigured ? 'configured' : 'not configured'}</p>
@@ -1634,7 +1640,7 @@
             }
             els.addTargetStatus.textContent = `Looking up ${name} in online archives...`;
             els.archiveResults.classList.remove('hidden');
-            els.archiveResults.innerHTML = '<p class="mono text-cyan-100">Resolving aliases/spelling, then querying CDS Sesame, Gaia DR3, arXiv, and optional TNS...</p>';
+            els.archiveResults.innerHTML = '<p class="mono text-cyan-100">Resolving aliases/spelling, then querying SIMBAD TAP, Gaia DR3, arXiv, and optional TNS...</p>';
             const response = await fetch(`${endpoint}/target-info?${new URLSearchParams({ name }).toString()}`).catch(() => null);
             if (!response) {
                 els.addTargetStatus.textContent = 'Archive lookup failed: Worker unreachable or blocked.';
@@ -1657,10 +1663,27 @@
                 if (Number.isFinite(resolved.raDeg)) els.newTargetRa.value = String(resolved.raDeg);
                 if (Number.isFinite(resolved.decDeg)) els.newTargetDec.value = String(resolved.decDeg);
             }
-            const vmag = resolved.magnitudes?.find(mag => mag.band === 'V') || resolved.magnitudes?.find(mag => mag.band === 'G');
-            if (vmag?.value && !els.newTargetMag.value) els.newTargetMag.value = vmag.value;
-            els.newTargetType.value = inferTargetType(resolved.objectType);
-            els.newTargetMode.value = inferTargetMode(resolved.objectType);
+            const archiveType = `${resolved.objectType || ''} ${resolved.objectTypeCode || ''}`.trim();
+            const inferredType = inferTargetType(archiveType);
+            const inferredMode = inferTargetMode(archiveType);
+            const preferredMagnitude = Number(resolved.preferredMagnitude);
+            const resolverMagnitude = resolved.magnitudes?.find(mag => mag.band === 'V')
+                || resolved.magnitudes?.find(mag => mag.band === 'G')
+                || resolved.magnitudes?.find(mag => mag.band === 'B');
+            const fallbackMagnitude = Number(resolverMagnitude?.value);
+            if (Number.isFinite(preferredMagnitude)) {
+                els.newTargetMag.value = String(preferredMagnitude);
+            } else if (Number.isFinite(fallbackMagnitude)) {
+                els.newTargetMag.value = String(fallbackMagnitude);
+            }
+            const angularSize = Number(resolved.angularSizeArcmin);
+            if (Number.isFinite(angularSize) && angularSize > 0) {
+                els.newTargetSize.value = String(angularSize);
+            } else if (inferredMode.includes('photometry') || ['Variable Star', 'Eclipsing Binary', 'Delta Scuti', 'RR Lyrae Variable', 'Cepheid Variable', 'Mira Variable'].includes(inferredType)) {
+                els.newTargetSize.value = '0.1';
+            }
+            els.newTargetType.value = [...els.newTargetType.options].some(option => option.value === inferredType) ? inferredType : 'Other';
+            els.newTargetMode.value = inferredMode;
             const paperTitles = (data.arxiv?.entries || []).map(paper => `arXiv: ${paper.title}`).join('\n');
             els.newTargetNotes.value = [
                 `Archive lookup: ${resolved.source || 'online archives'}`,
@@ -1670,7 +1693,7 @@
                 paperTitles
             ].filter(Boolean).join('\n');
             els.archiveResults.innerHTML = formatArchiveResult(data);
-            els.addTargetStatus.textContent = 'Archive lookup complete. Review fields, then add target.';
+            els.addTargetStatus.textContent = 'Archive lookup complete. Magnitude, size, and object type were populated when available. Review fields, then add target.';
         }
 
         async function listCloudObjects() {

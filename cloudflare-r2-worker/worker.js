@@ -183,6 +183,86 @@ async function resolveSesame(name) {
   };
 }
 
+async function querySimbadTap(query) {
+  const body = new URLSearchParams({
+    REQUEST: "doQuery",
+    LANG: "ADQL",
+    FORMAT: "json",
+    QUERY: query
+  });
+  const response = await fetch("https://simbad.cds.unistra.fr/simbad/sim-tap/sync", {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "user-agent": "observing-vault/1.0"
+    },
+    body
+  });
+  const text = await response.text();
+  if (!response.ok) return { ok: false, error: text.slice(0, 240), rows: [] };
+  try {
+    const result = JSON.parse(text);
+    const columns = (result.metadata || []).map(column => column.name);
+    const rows = (result.data || []).map(values =>
+      Object.fromEntries(columns.map((column, index) => [column, values[index]]))
+    );
+    return { ok: true, rows };
+  } catch {
+    return { ok: false, error: "SIMBAD returned non-JSON response", rows: [] };
+  }
+}
+
+function coordinateDistanceSquared(row, raDeg, decDeg) {
+  const decScale = Math.cos(decDeg * Math.PI / 180);
+  return Math.pow((Number(row.ra) - raDeg) * decScale, 2) + Math.pow(Number(row.dec) - decDeg, 2);
+}
+
+async function querySimbadMetadata(raDeg, decDeg) {
+  if (!Number.isFinite(raDeg) || !Number.isFinite(decDeg)) return { ok: false, error: "No coordinates" };
+  const metadata = await querySimbadTap(`
+    SELECT TOP 100 oid, main_id, otype, otype_txt, galdim_majaxis, galdim_minaxis,
+      morph_type, sp_type, ra, dec
+    FROM basic
+    WHERE 1 = CONTAINS(
+      POINT('ICRS', ra, dec),
+      CIRCLE('ICRS', ${raDeg}, ${decDeg}, 0.002)
+    )
+  `);
+  if (!metadata.ok || !metadata.rows.length) return { ok: false, error: metadata.error || "No SIMBAD metadata row" };
+  const nearest = metadata.rows
+    .filter(row => Number.isFinite(Number(row.ra)) && Number.isFinite(Number(row.dec)))
+    .sort((a, b) => coordinateDistanceSquared(a, raDeg, decDeg) - coordinateDistanceSquared(b, raDeg, decDeg))[0];
+  if (!nearest) return { ok: false, error: "No coordinate-matched SIMBAD row" };
+  const fluxes = await querySimbadTap(`
+    SELECT filter, flux
+    FROM flux
+    WHERE oidref = ${Number(nearest.oid)}
+      AND filter IN ('V', 'G', 'B')
+  `);
+  const magnitudes = fluxes.ok
+    ? fluxes.rows
+      .map(row => ({ band: row.filter, value: Number(row.flux) }))
+      .filter(item => Number.isFinite(item.value))
+    : [];
+  const preferredMagnitude = ["V", "G", "B"]
+    .map(band => magnitudes.find(item => item.band === band))
+    .find(Boolean);
+  return {
+    ok: true,
+    source: "SIMBAD TAP",
+    objectName: nearest.main_id,
+    objectType: nearest.otype_txt || nearest.otype,
+    objectTypeCode: nearest.otype,
+    angularSizeArcmin: Number.isFinite(Number(nearest.galdim_majaxis)) ? Number(nearest.galdim_majaxis) : null,
+    angularMinorSizeArcmin: Number.isFinite(Number(nearest.galdim_minaxis)) ? Number(nearest.galdim_minaxis) : null,
+    morphology: nearest.morph_type || "",
+    spectralType: nearest.sp_type || "",
+    preferredMagnitude: preferredMagnitude?.value ?? null,
+    preferredMagnitudeBand: preferredMagnitude?.band || "",
+    magnitudes
+  };
+}
+
 async function queryGaia(raDeg, decDeg) {
   if (!Number.isFinite(raDeg) || !Number.isFinite(decDeg)) return { ok: false, error: "No coordinates" };
   const query = `
@@ -367,13 +447,26 @@ export default {
         resolved.matchedAlias = usedCandidate.matchedAlias;
       }
 
-      const [gaia, arxiv, tns] = await Promise.all([
+      const [simbad, gaia, arxiv, tns] = await Promise.all([
+        resolved.ok ? querySimbadMetadata(resolved.raDeg, resolved.decDeg).catch(error => ({ ok: false, error: String(error) })) : { ok: false, error: "Not resolved" },
         resolved.ok ? queryGaia(resolved.raDeg, resolved.decDeg).catch(error => ({ ok: false, error: String(error) })) : { ok: false, error: "Not resolved" },
         queryArxiv(usedCandidate?.display || name).catch(error => ({ ok: false, error: String(error), entries: [] })),
         queryTns(name, env).catch(error => ({ ok: false, error: String(error) }))
       ]);
+      if (simbad.ok) {
+        resolved.simbad = simbad;
+        resolved.objectType = simbad.objectType || resolved.objectType;
+        resolved.objectTypeCode = simbad.objectTypeCode;
+        resolved.angularSizeArcmin = simbad.angularSizeArcmin;
+        resolved.angularMinorSizeArcmin = simbad.angularMinorSizeArcmin;
+        resolved.preferredMagnitude = simbad.preferredMagnitude;
+        resolved.preferredMagnitudeBand = simbad.preferredMagnitudeBand;
+        resolved.morphology = simbad.morphology || resolved.morphology;
+        resolved.spectralType = simbad.spectralType || resolved.spectralType;
+        if (simbad.magnitudes?.length) resolved.magnitudes = simbad.magnitudes;
+      }
 
-      return json({ ok: true, candidates, resolved, gaia, arxiv, tns }, 200, env, request);
+      return json({ ok: true, candidates, resolved, simbad, gaia, arxiv, tns }, 200, env, request);
     }
 
     if (request.method === "GET" && url.pathname === "/geocode") {

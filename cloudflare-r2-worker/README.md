@@ -45,6 +45,8 @@ Do not commit the upload token. Enter it locally in the page when uploading.
 
 The upload token protects R2 upload, list, and download requests. Target lookup, location lookup, and the Open-Meteo five-day forecast remain public so the planner works without exposing the vault secret.
 
+Online target lookup resolves names through CDS Sesame and enriches the result through SIMBAD TAP. When available, NightVector automatically fills the custom-target magnitude, angular size in arcminutes, and planner object type before the target is added.
+
 ## Planner profiles
 
 `observing.html` saves planner profiles locally in the browser. Each profile can contain:
