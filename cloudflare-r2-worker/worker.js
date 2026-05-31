@@ -50,11 +50,11 @@ function requireAuth(request, env) {
   return expected && header === `Bearer ${expected}`;
 }
 
-function uploadKey(url) {
-  const target = cleanSegment(url.searchParams.get("target"), "unknown-target");
-  const kind = cleanSegment(url.searchParams.get("kind"), "Unknown");
-  const sessionDate = cleanSegment(url.searchParams.get("date"), new Date().toISOString().slice(0, 10));
-  const filename = cleanSegment(url.searchParams.get("filename"), "frame.fits");
+function uploadKey(searchParams) {
+  const target = cleanSegment(searchParams.get("target"), "unknown-target");
+  const kind = cleanSegment(searchParams.get("kind"), "Unknown");
+  const sessionDate = cleanSegment(searchParams.get("date"), new Date().toISOString().slice(0, 10));
+  const filename = cleanSegment(searchParams.get("filename"), "frame.fits");
   const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   return {
     key: `${sessionDate}/${target}/${kind}/${unique}-${filename}`,
@@ -119,7 +119,7 @@ async function presignR2Put(env, key) {
     "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
     "X-Amz-Credential": `${accessKeyId}/${credentialScope}`,
     "X-Amz-Date": amzDate,
-    "X-Amz-Expires": "3600",
+    "X-Amz-Expires": "21600",
     "X-Amz-SignedHeaders": "host"
   };
   const canonicalQuery = Object.entries(query)
@@ -193,7 +193,7 @@ const TARGET_ALIASES = {
 function normalizeTargetName(name) {
   return String(name || "")
     .toLowerCase()
-    .replace(/[’']/g, "")
+    .replace(/['\u2019]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
@@ -545,9 +545,12 @@ export default {
         }
       }
       if (usedCandidate?.display && resolved.ok) {
-        resolved.commonName = usedCandidate.display;
-        resolved.lookupMatch = usedCandidate.match;
-        resolved.matchedAlias = usedCandidate.matchedAlias;
+        resolved = {
+          ...resolved,
+          commonName: usedCandidate.display,
+          lookupMatch: usedCandidate.match,
+          matchedAlias: usedCandidate.matchedAlias
+        };
       }
 
       const [simbad, gaia, arxiv, tns] = await Promise.all([
@@ -557,16 +560,19 @@ export default {
         queryTns(name, env).catch(error => ({ ok: false, error: String(error) }))
       ]);
       if (simbad.ok) {
-        resolved.simbad = simbad;
-        resolved.objectType = simbad.objectType || resolved.objectType;
-        resolved.objectTypeCode = simbad.objectTypeCode;
-        resolved.angularSizeArcmin = simbad.angularSizeArcmin;
-        resolved.angularMinorSizeArcmin = simbad.angularMinorSizeArcmin;
-        resolved.preferredMagnitude = simbad.preferredMagnitude;
-        resolved.preferredMagnitudeBand = simbad.preferredMagnitudeBand;
-        resolved.morphology = simbad.morphology || resolved.morphology;
-        resolved.spectralType = simbad.spectralType || resolved.spectralType;
-        if (simbad.magnitudes?.length) resolved.magnitudes = simbad.magnitudes;
+        resolved = {
+          ...resolved,
+          simbad,
+          objectType: simbad.objectType || resolved.objectType,
+          objectTypeCode: simbad.objectTypeCode,
+          angularSizeArcmin: simbad.angularSizeArcmin,
+          angularMinorSizeArcmin: simbad.angularMinorSizeArcmin,
+          preferredMagnitude: simbad.preferredMagnitude,
+          preferredMagnitudeBand: simbad.preferredMagnitudeBand,
+          morphology: simbad.morphology || resolved.morphology,
+          spectralType: simbad.spectralType || resolved.spectralType,
+          magnitudes: simbad.magnitudes?.length ? simbad.magnitudes : resolved.magnitudes
+        };
       }
 
       return json({ ok: true, candidates, resolved, simbad, gaia, arxiv, tns }, 200, env, request);
@@ -593,13 +599,36 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/presign-upload") {
-      const { key } = uploadKey(url);
+      const { key } = uploadKey(url.searchParams);
       const signed = await presignR2Put(env, key);
       return json(signed, signed.ok ? 200 : 501, env, request);
     }
 
+    if (request.method === "POST" && url.pathname === "/presign-uploads") {
+      const payload = await request.json().catch(() => ({}));
+      const uploads = Array.isArray(payload.uploads) ? payload.uploads : [];
+      if (!uploads.length || uploads.length > 100) {
+        return json({ ok: false, error: "Provide between 1 and 100 uploads" }, 400, env, request);
+      }
+      const signedUploads = await Promise.all(uploads.map(async upload => {
+        const params = new URLSearchParams({
+          target: upload.target || "unknown-target",
+          kind: upload.kind || "Unknown",
+          date: upload.date || new Date().toISOString().slice(0, 10),
+          filename: upload.filename || "frame.fits"
+        });
+        const { key } = uploadKey(params);
+        return presignR2Put(env, key);
+      }));
+      const failure = signedUploads.find(upload => !upload.ok);
+      if (failure) {
+        return json(failure, 501, env, request);
+      }
+      return json({ ok: true, uploads: signedUploads }, 200, env, request);
+    }
+
     if (request.method === "POST" && url.pathname === "/upload") {
-      const { key, target, kind, sessionDate, filename } = uploadKey(url);
+      const { key, target, kind, sessionDate, filename } = uploadKey(url.searchParams);
 
       await env.OBS_BUCKET.put(key, request.body, {
         httpMetadata: {

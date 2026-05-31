@@ -2797,14 +2797,68 @@
         });
         document.getElementById('list-cloud').addEventListener('click', listCloudObjects);
         document.getElementById('download-cloud-listed').addEventListener('click', downloadListedObjects);
-        async function uploadSessionFile(item, endpoint, token, uploadMode) {
+        async function prepareDirectUploadTickets(items, endpoint, token, uploadMode) {
+            const tickets = new Map();
+            if (uploadMode === 'proxy') return { mode: 'proxy', tickets };
+            const chunkSize = 100;
+            for (let index = 0; index < items.length; index += chunkSize) {
+                const chunk = items.slice(index, index + chunkSize);
+                let response;
+                try {
+                    response = await fetch(`${endpoint}/presign-uploads`, {
+                        method: 'POST',
+                        headers: {
+                            authorization: `Bearer ${token}`,
+                            'content-type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            uploads: chunk.map(item => ({
+                                target: item.target || 'unknown-target',
+                                kind: item.kind,
+                                date: item.sessionDate,
+                                filename: item.name
+                            }))
+                        })
+                    });
+                } catch {
+                    throw new Error('batch upload preparation blocked or unreachable; check Worker URL');
+                }
+                const result = await response.json().catch(() => ({}));
+                if (response.status === 501) return { mode: 'proxy', tickets: new Map() };
+                if (response.status === 404) return { mode: 'legacy', tickets: new Map() };
+                if (!response.ok || !result.ok || !Array.isArray(result.uploads)) {
+                    throw new Error(result.error || `batch upload preparation returned HTTP ${response.status}`);
+                }
+                result.uploads.forEach((ticket, chunkIndex) => tickets.set(chunk[chunkIndex], ticket));
+                els.cloudStatus.textContent = `Cloud: prepared direct R2 tickets ${Math.min(index + chunk.length, items.length)}/${items.length}`;
+            }
+            return { mode: 'batch', tickets };
+        }
+
+        async function uploadSessionFile(item, endpoint, token, directState, directTicket) {
             const params = new URLSearchParams({
                 target: item.target || 'unknown-target',
                 kind: item.kind,
                 date: item.sessionDate,
                 filename: item.name
             });
-            if (uploadMode !== 'proxy') {
+            if (directState === 'batch') {
+                let directResponse;
+                try {
+                    directResponse = await fetch(directTicket.url, {
+                        method: 'PUT',
+                        body: item.file
+                    });
+                } catch {
+                    throw new Error('direct R2 upload blocked; configure bucket CORS or select Worker proxy');
+                }
+                if (!directResponse.ok) {
+                    throw new Error(`direct R2 upload returned HTTP ${directResponse.status}`);
+                }
+                item.remoteKey = directTicket.key;
+                return 'direct R2';
+            }
+            if (directState === 'legacy') {
                 let signedResponse;
                 try {
                     signedResponse = await fetch(`${endpoint}/presign-upload?${params.toString()}`, {
@@ -2874,15 +2928,27 @@
             els.uploadProgressBar.style.width = '0%';
             const uploadMode = els.uploadMode.value;
             const concurrency = Math.max(1, Math.min(24, Number(els.uploadConcurrency.value) || 12));
+            els.cloudStatus.textContent = 'Cloud: preparing optimized upload batch...';
+            let direct;
+            try {
+                direct = await prepareDirectUploadTickets(pending, endpoint, token, uploadMode);
+            } catch (error) {
+                els.cloudStatus.textContent = `Cloud: upload preparation failed. ${error.message}`;
+                return;
+            }
             let nextIndex = 0;
             let completed = 0;
+            let completedBytes = 0;
             let active = 0;
             let failure = null;
+            const startedAt = Date.now();
             const routes = { 'direct R2': 0, 'Worker proxy': 0 };
             const updateUploadProgress = item => {
                 els.uploadProgressBar.style.width = `${Math.round((completed / pending.length) * 100)}%`;
                 const routeSummary = routes['direct R2'] ? ' / direct R2' : routes['Worker proxy'] ? ' / Worker proxy' : '';
-                els.cloudStatus.textContent = `Cloud: uploaded ${completed}/${pending.length} / ${active} active${routeSummary}`;
+                const elapsedSeconds = Math.max((Date.now() - startedAt) / 1000, 0.1);
+                const rate = completedBytes / 1024 / 1024 / elapsedSeconds;
+                els.cloudStatus.textContent = `Cloud: uploaded ${completed}/${pending.length} / ${active} active${routeSummary} / ${rate.toFixed(1)} MB/s`;
                 if (item) els.uploadDetail.textContent = `${item.kind} / ${item.relativePath || item.name} / ${formatBytes(item.size)}`;
             };
             const uploadWorker = async () => {
@@ -2894,9 +2960,10 @@
                     active += 1;
                     updateUploadProgress(item);
                     try {
-                        const route = await uploadSessionFile(item, endpoint, token, uploadMode);
+                        const route = await uploadSessionFile(item, endpoint, token, direct.mode, direct.tickets.get(item));
                         routes[route] += 1;
                         completed += 1;
+                        completedBytes += item.size;
                     } catch (error) {
                         failure = { item, error };
                     } finally {
