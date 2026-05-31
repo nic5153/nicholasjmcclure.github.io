@@ -47,6 +47,52 @@ The upload token protects R2 upload, list, and download requests. Target lookup,
 
 Online target lookup resolves names through CDS Sesame and enriches the result through SIMBAD TAP. When available, NightVector automatically fills the custom-target magnitude, angular size in arcminutes, and planner object type before the target is added.
 
+## Upload performance
+
+NightVector supports two upload routes:
+
+- `Direct R2 / auto fallback`: recommended for large sessions. The Worker issues a one-hour presigned URL for each object, then the browser uploads the file directly to R2.
+- `Worker proxy / compatibility`: the original route. The Worker streams each request body into R2 and requires no S3 credentials or bucket CORS rule.
+
+Use `12 files` in parallel for a large session. Try `16` or `24` on a fast connection if the browser and network remain responsive. Reduce the setting if uploads become less stable. Cloudflare Free accounts limit an individual Worker request body to 100 MB, so the direct R2 route is also the preferred route for individual files above that Worker request limit.
+
+### Enable direct R2 uploads
+
+1. Open **Storage & databases** > **R2 object storage**.
+2. Select **Manage R2 API Tokens**.
+3. Create an account API token with **Object Read & Write** access scoped to the `observing-vault` bucket.
+4. Copy the **Access Key ID** and **Secret Access Key**. The secret is shown only once.
+5. Open **Compute** > **Workers & Pages** > **observing-vault** > **Settings**.
+6. Add these Worker variables and secrets:
+
+   | Variable | Type | Value |
+   | --- | --- | --- |
+   | `R2_ACCOUNT_ID` | Text | Cloudflare account ID |
+   | `R2_BUCKET_NAME` | Text | `observing-vault` |
+   | `R2_ACCESS_KEY_ID` | Secret | R2 token Access Key ID |
+   | `R2_SECRET_ACCESS_KEY` | Secret | R2 token Secret Access Key |
+
+7. Redeploy the Worker code.
+8. Open **Storage & databases** > **R2 object storage** > **observing-vault** > **Settings** > **CORS Policy** and add:
+
+   ```json
+   [
+     {
+       "AllowedOrigins": [
+         "https://nic5153.github.io",
+         "http://localhost:8020",
+         "http://127.0.0.1:8020"
+       ],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["*"],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+Use the GitHub Pages origin for the permanent site. Add a different local-server origin only when its port changes. Keep the R2 API credentials in Worker secrets; do not enter them in `observing.html`.
+
 ## Planner profiles
 
 `observing.html` saves planner profiles locally in the browser. Each profile can contain:

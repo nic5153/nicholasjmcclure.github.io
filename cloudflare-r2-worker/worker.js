@@ -50,6 +50,109 @@ function requireAuth(request, env) {
   return expected && header === `Bearer ${expected}`;
 }
 
+function uploadKey(url) {
+  const target = cleanSegment(url.searchParams.get("target"), "unknown-target");
+  const kind = cleanSegment(url.searchParams.get("kind"), "Unknown");
+  const sessionDate = cleanSegment(url.searchParams.get("date"), new Date().toISOString().slice(0, 10));
+  const filename = cleanSegment(url.searchParams.get("filename"), "frame.fits");
+  const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+  return {
+    key: `${sessionDate}/${target}/${kind}/${unique}-${filename}`,
+    target,
+    kind,
+    sessionDate,
+    filename
+  };
+}
+
+function awsEncode(value) {
+  return encodeURIComponent(value).replace(/[!'()*]/g, character =>
+    `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
+function encodeR2Key(value) {
+  return String(value).split("/").map(awsEncode).join("/");
+}
+
+function hex(buffer) {
+  return Array.from(new Uint8Array(buffer))
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sha256(value) {
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+}
+
+async function hmac(key, value) {
+  const rawKey = typeof key === "string" ? new TextEncoder().encode(key) : key;
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    rawKey,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  return crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(value));
+}
+
+async function presignR2Put(env, key) {
+  const accountId = String(env.R2_ACCOUNT_ID || "").trim();
+  const bucket = String(env.R2_BUCKET_NAME || "").trim();
+  const accessKeyId = String(env.R2_ACCESS_KEY_ID || "").trim();
+  const secretAccessKey = String(env.R2_SECRET_ACCESS_KEY || "").trim();
+  if (!accountId || !bucket || !accessKeyId || !secretAccessKey) {
+    return { ok: false, error: "Direct R2 upload is not configured" };
+  }
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const dateStamp = amzDate.slice(0, 8);
+  const region = "auto";
+  const service = "s3";
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const host = `${bucket}.${accountId}.r2.cloudflarestorage.com`;
+  const canonicalUri = `/${encodeR2Key(key)}`;
+  const query = {
+    "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+    "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
+    "X-Amz-Credential": `${accessKeyId}/${credentialScope}`,
+    "X-Amz-Date": amzDate,
+    "X-Amz-Expires": "3600",
+    "X-Amz-SignedHeaders": "host"
+  };
+  const canonicalQuery = Object.entries(query)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, value]) => `${awsEncode(name)}=${awsEncode(value)}`)
+    .join("&");
+  const canonicalRequest = [
+    "PUT",
+    canonicalUri,
+    canonicalQuery,
+    `host:${host}\n`,
+    "host",
+    "UNSIGNED-PAYLOAD"
+  ].join("\n");
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    hex(await sha256(canonicalRequest))
+  ].join("\n");
+  const dateKey = await hmac(`AWS4${secretAccessKey}`, dateStamp);
+  const regionKey = await hmac(dateKey, region);
+  const serviceKey = await hmac(regionKey, service);
+  const signingKey = await hmac(serviceKey, "aws4_request");
+  const signature = hex(await hmac(signingKey, stringToSign));
+
+  return {
+    ok: true,
+    key,
+    url: `https://${host}${canonicalUri}?${canonicalQuery}&X-Amz-Signature=${signature}`
+  };
+}
+
 const TARGET_ALIASES = {
   "m1": { sesame: "M 1", display: "M1 Crab Nebula" },
   "crab": { sesame: "M 1", display: "M1 Crab Nebula" },
@@ -489,12 +592,14 @@ export default {
       return unauthorized(env, request);
     }
 
+    if (request.method === "GET" && url.pathname === "/presign-upload") {
+      const { key } = uploadKey(url);
+      const signed = await presignR2Put(env, key);
+      return json(signed, signed.ok ? 200 : 501, env, request);
+    }
+
     if (request.method === "POST" && url.pathname === "/upload") {
-      const target = cleanSegment(url.searchParams.get("target"), "unknown-target");
-      const kind = cleanSegment(url.searchParams.get("kind"), "Unknown");
-      const sessionDate = cleanSegment(url.searchParams.get("date"), new Date().toISOString().slice(0, 10));
-      const filename = cleanSegment(url.searchParams.get("filename"), "frame.fits");
-      const key = `${sessionDate}/${target}/${kind}/${Date.now()}-${filename}`;
+      const { key, target, kind, sessionDate, filename } = uploadKey(url);
 
       await env.OBS_BUCKET.put(key, request.body, {
         httpMetadata: {

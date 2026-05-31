@@ -565,6 +565,26 @@
                         <div class="mt-3 space-y-2">
                             <input id="cloud-endpoint" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" placeholder="Cloudflare Worker URL">
                             <input id="upload-token" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" type="password" placeholder="Upload token">
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <label class="block">
+                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Upload route</span>
+                                    <select id="upload-mode" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
+                                        <option value="auto" selected>Direct R2 / auto fallback</option>
+                                        <option value="proxy">Worker proxy / compatibility</option>
+                                    </select>
+                                </label>
+                                <label class="block">
+                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Parallel uploads</span>
+                                    <select id="upload-concurrency" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
+                                        <option value="1">1 file / compatibility</option>
+                                        <option value="4">4 files</option>
+                                        <option value="8">8 files</option>
+                                        <option value="12" selected>12 files / recommended</option>
+                                        <option value="16">16 files / very fast</option>
+                                        <option value="24">24 files / aggressive</option>
+                                    </select>
+                                </label>
+                            </div>
                         </div>
                         <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <button id="upload-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Upload Cloud</button>
@@ -1057,6 +1077,8 @@
         els.vaultStatus = document.getElementById('vault-status');
         els.cloudEndpoint = document.getElementById('cloud-endpoint');
         els.uploadToken = document.getElementById('upload-token');
+        els.uploadMode = document.getElementById('upload-mode');
+        els.uploadConcurrency = document.getElementById('upload-concurrency');
         els.cloudStatus = document.getElementById('cloud-status');
         els.uploadProgressBar = document.getElementById('upload-progress-bar');
         els.uploadDetail = document.getElementById('upload-detail');
@@ -1065,6 +1087,8 @@
         els.cloudInventoryList = document.getElementById('cloud-inventory-list');
         els.downloadProgressBar = document.getElementById('download-progress-bar');
         els.cloudEndpoint.value = localStorage.getItem('observingCloudEndpoint') || DEFAULT_WORKER_URL;
+        els.uploadMode.value = localStorage.getItem('observingUploadMode') || 'auto';
+        els.uploadConcurrency.value = localStorage.getItem('observingUploadConcurrency') || '12';
         els.vaultTargetName.value = localStorage.getItem('observingVaultTargetName') || '';
         els.cloudPrefix.value = localStorage.getItem('observingCloudPrefix') || '';
         const storedSite = JSON.parse(localStorage.getItem('observingSite') || 'null');
@@ -2751,6 +2775,12 @@
         els.cloudEndpoint.addEventListener('change', () => {
             localStorage.setItem('observingCloudEndpoint', els.cloudEndpoint.value.trim());
         });
+        els.uploadMode.addEventListener('change', () => {
+            localStorage.setItem('observingUploadMode', els.uploadMode.value);
+        });
+        els.uploadConcurrency.addEventListener('change', () => {
+            localStorage.setItem('observingUploadConcurrency', els.uploadConcurrency.value);
+        });
         els.vaultTargetName.addEventListener('change', () => {
             localStorage.setItem('observingVaultTargetName', els.vaultTargetName.value.trim());
             if (!els.cloudPrefix.value.trim()) {
@@ -2767,6 +2797,65 @@
         });
         document.getElementById('list-cloud').addEventListener('click', listCloudObjects);
         document.getElementById('download-cloud-listed').addEventListener('click', downloadListedObjects);
+        async function uploadSessionFile(item, endpoint, token, uploadMode) {
+            const params = new URLSearchParams({
+                target: item.target || 'unknown-target',
+                kind: item.kind,
+                date: item.sessionDate,
+                filename: item.name
+            });
+            if (uploadMode !== 'proxy') {
+                let signedResponse;
+                try {
+                    signedResponse = await fetch(`${endpoint}/presign-upload?${params.toString()}`, {
+                        headers: { authorization: `Bearer ${token}` }
+                    });
+                } catch {
+                    throw new Error('presigned upload request blocked or unreachable; check Worker URL');
+                }
+                const signed = await signedResponse.json().catch(() => ({}));
+                if (signedResponse.ok && signed.ok && signed.url) {
+                    let directResponse;
+                    try {
+                        directResponse = await fetch(signed.url, {
+                            method: 'PUT',
+                            body: item.file
+                        });
+                    } catch {
+                        throw new Error('direct R2 upload blocked; configure bucket CORS or select Worker proxy');
+                    }
+                    if (!directResponse.ok) {
+                        throw new Error(`direct R2 upload returned HTTP ${directResponse.status}`);
+                    }
+                    item.remoteKey = signed.key;
+                    return 'direct R2';
+                }
+                if (signedResponse.status !== 501) {
+                    throw new Error(signed.error || `presigned upload returned HTTP ${signedResponse.status}`);
+                }
+            }
+
+            let response;
+            try {
+                response = await fetch(`${endpoint}/upload?${params.toString()}`, {
+                    method: 'POST',
+                    headers: {
+                        authorization: `Bearer ${token}`,
+                        'content-type': item.file.type || 'application/fits'
+                    },
+                    body: item.file
+                });
+            } catch {
+                throw new Error('request blocked or unreachable; check Worker URL and CORS origin');
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) {
+                throw new Error(result.error || `HTTP ${response.status}`);
+            }
+            item.remoteKey = result.key;
+            return 'Worker proxy';
+        }
+
         document.getElementById('upload-cloud').addEventListener('click', async () => {
             const endpoint = cloudEndpoint();
             const token = cloudToken();
@@ -2783,42 +2872,45 @@
             }
             localStorage.setItem('observingCloudEndpoint', endpoint);
             els.uploadProgressBar.style.width = '0%';
-            for (let index = 0; index < pending.length; index += 1) {
-                const item = pending[index];
-                const percent = Math.round((index / pending.length) * 100);
-                els.uploadProgressBar.style.width = `${percent}%`;
-                els.cloudStatus.textContent = `Cloud: uploading ${index + 1}/${pending.length}`;
-                els.uploadDetail.textContent = `${item.kind} / ${item.relativePath || item.name} / ${formatBytes(item.size)}`;
-                const params = new URLSearchParams({
-                    target: item.target || 'unknown-target',
-                    kind: item.kind,
-                    date: item.sessionDate,
-                    filename: item.name
-                });
-                let response;
-                let result = {};
-                try {
-                    response = await fetch(`${endpoint}/upload?${params.toString()}`, {
-                        method: 'POST',
-                        headers: {
-                            authorization: `Bearer ${token}`,
-                            'content-type': 'application/fits'
-                        },
-                        body: item.file
-                    });
-                    result = await response.json().catch(() => ({}));
-                } catch (error) {
-                    els.cloudStatus.textContent = `Cloud: request blocked or unreachable. Check Worker URL and CORS origin.`;
-                    els.uploadDetail.textContent = `Failed before upload: ${item.name}`;
-                    return;
+            const uploadMode = els.uploadMode.value;
+            const concurrency = Math.max(1, Math.min(24, Number(els.uploadConcurrency.value) || 12));
+            let nextIndex = 0;
+            let completed = 0;
+            let active = 0;
+            let failure = null;
+            const routes = { 'direct R2': 0, 'Worker proxy': 0 };
+            const updateUploadProgress = item => {
+                els.uploadProgressBar.style.width = `${Math.round((completed / pending.length) * 100)}%`;
+                const routeSummary = routes['direct R2'] ? ' / direct R2' : routes['Worker proxy'] ? ' / Worker proxy' : '';
+                els.cloudStatus.textContent = `Cloud: uploaded ${completed}/${pending.length} / ${active} active${routeSummary}`;
+                if (item) els.uploadDetail.textContent = `${item.kind} / ${item.relativePath || item.name} / ${formatBytes(item.size)}`;
+            };
+            const uploadWorker = async () => {
+                while (!failure) {
+                    const index = nextIndex;
+                    nextIndex += 1;
+                    if (index >= pending.length) return;
+                    const item = pending[index];
+                    active += 1;
+                    updateUploadProgress(item);
+                    try {
+                        const route = await uploadSessionFile(item, endpoint, token, uploadMode);
+                        routes[route] += 1;
+                        completed += 1;
+                    } catch (error) {
+                        failure = { item, error };
+                    } finally {
+                        active -= 1;
+                        updateUploadProgress(item);
+                    }
                 }
-                if (!response.ok || !result.ok) {
-                    els.cloudStatus.textContent = `Cloud: upload failed for ${item.name}. ${result.error || response.status}`;
-                    els.uploadDetail.textContent = `Failed: ${item.relativePath || item.name}`;
-                    return;
-                }
-                item.remoteKey = result.key;
-                els.uploadProgressBar.style.width = `${Math.round(((index + 1) / pending.length) * 100)}%`;
+            };
+            await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, () => uploadWorker()));
+            if (failure) {
+                els.cloudStatus.textContent = `Cloud: upload failed for ${failure.item.name}. ${failure.error.message}`;
+                els.uploadDetail.textContent = `Failed: ${failure.item.relativePath || failure.item.name}`;
+                renderVault();
+                return;
             }
             els.uploadDetail.textContent = `Uploaded ${pending.length} file${pending.length === 1 ? '' : 's'} to Cloudflare R2.`;
             state.cloudObjects = [];
