@@ -95,16 +95,18 @@ Use the GitHub Pages origin for the permanent site. Add a different local-server
 
 ## Planner profiles
 
-`observing.html` saves planner profiles locally in the browser. Each profile can contain:
+`observing.html` saves planner profiles locally in the browser and can sync the complete planner bundle to D1 for use across devices. Each profile can contain:
 
 - Rig, site, observing mode, date range, altitude, filter, duration, and dithering preferences.
 - Multiple named observing programs.
 - Saved exposure-plan snapshots with target metadata, APT exports, integration goals, and captured-hours progress.
 - JSON export and import for backups or sharing.
 
-## Prepare D1 for cloud profile sync
+Use **Sync Cloud** on the device with the current planner data. On another device, enter the same Worker endpoint and upload token in **Session Vault**, then use **Load Cloud**. Loading from D1 preserves the previous local state in browser storage before replacing it.
 
-Local planner profiles work without D1. D1 prepares the structured cloud database for a later authenticated multi-user sync layer. FITS uploads remain in R2.
+## Enable D1 cloud profile sync
+
+Local planner profiles work without D1. Binding D1 enables authenticated cross-device cloud backup and restore. FITS uploads remain in R2.
 
 ### Dashboard setup
 

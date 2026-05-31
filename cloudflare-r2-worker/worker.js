@@ -50,6 +50,14 @@ function requireAuth(request, env) {
   return expected && header === `Bearer ${expected}`;
 }
 
+function plannerOwnerId(env) {
+  return cleanSegment(env.PLANNER_OWNER_ID || "primary-owner", "primary-owner");
+}
+
+function plannerBundleId(env) {
+  return `${plannerOwnerId(env)}-bundle`;
+}
+
 function uploadKey(searchParams) {
   const target = cleanSegment(searchParams.get("target"), "unknown-target");
   const kind = cleanSegment(searchParams.get("kind"), "Unknown");
@@ -596,6 +604,52 @@ export default {
 
     if (!requireAuth(request, env)) {
       return unauthorized(env, request);
+    }
+
+    if (request.method === "GET" && url.pathname === "/planner-sync") {
+      if (!env.PLANNER_DB) {
+        return json({ ok: false, error: "Planner D1 binding is not configured" }, 501, env, request);
+      }
+      const row = await env.PLANNER_DB
+        .prepare("SELECT profile_json, updated_at FROM planner_profiles WHERE id = ?1 AND owner_id = ?2")
+        .bind(plannerBundleId(env), plannerOwnerId(env))
+        .first();
+      if (!row) {
+        return json({ ok: true, exists: false }, 200, env, request);
+      }
+      return json({
+        ok: true,
+        exists: true,
+        updatedAt: row.updated_at,
+        bundle: JSON.parse(row.profile_json)
+      }, 200, env, request);
+    }
+
+    if (request.method === "POST" && url.pathname === "/planner-sync") {
+      if (!env.PLANNER_DB) {
+        return json({ ok: false, error: "Planner D1 binding is not configured" }, 501, env, request);
+      }
+      const payload = await request.json().catch(() => ({}));
+      const bundle = payload.bundle;
+      if (!bundle || !Array.isArray(bundle.plannerProfiles) || !bundle.plannerProfiles.length) {
+        return json({ ok: false, error: "Invalid planner profile bundle" }, 400, env, request);
+      }
+      const profileJson = JSON.stringify(bundle);
+      if (profileJson.length > 2_000_000) {
+        return json({ ok: false, error: "Planner profile bundle is too large" }, 413, env, request);
+      }
+      await env.PLANNER_DB
+        .prepare(`
+          INSERT INTO planner_profiles (id, owner_id, name, profile_json, created_at, updated_at)
+          VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT(id) DO UPDATE SET
+            name = excluded.name,
+            profile_json = excluded.profile_json,
+            updated_at = CURRENT_TIMESTAMP
+        `)
+        .bind(plannerBundleId(env), plannerOwnerId(env), "NightVector Cloud Bundle", profileJson)
+        .run();
+      return json({ ok: true, updatedAt: new Date().toISOString() }, 200, env, request);
     }
 
     if (request.method === "GET" && url.pathname === "/presign-upload") {

@@ -347,7 +347,11 @@
                                 <button id="export-planner-profile" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">Export JSON</button>
                                 <label class="ghost-button cursor-pointer rounded-md px-2 py-2 text-center mono text-[10px] font-bold">Import JSON<input id="import-planner-profile" class="sr-only" type="file" accept="application/json,.json"></label>
                             </div>
-                            <p id="planner-profile-status" class="mono text-[11px] text-cyan-100">Profiles and programs are saved in this browser.</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="sync-planner-cloud" class="neon-button rounded-md px-2 py-2 mono text-[10px] font-bold">Sync Cloud</button>
+                                <button id="load-planner-cloud" class="ghost-button rounded-md px-2 py-2 mono text-[10px] font-bold">Load Cloud</button>
+                            </div>
+                            <p id="planner-profile-status" class="mono text-[11px] text-cyan-100">Saved locally. Use Sync Cloud for other devices.</p>
                         </div>
                     </section>
 
@@ -1567,6 +1571,100 @@
             return els.uploadToken.value.trim();
         }
 
+        function plannerCloudBundle() {
+            capturePlannerSettings(activePlannerProfile());
+            savePlannerProfiles();
+            saveRigProfiles();
+            return {
+                format: 'nightvector-cloud-bundle-v1',
+                savedAt: new Date().toISOString(),
+                plannerProfiles: cloneData(state.plannerProfiles),
+                activePlannerProfileId: state.activePlannerProfileId,
+                customRigProfiles: cloneData(state.customRigProfiles),
+                rigId: state.rigId,
+                customTargets: cloneData(state.customTargets),
+                hiddenTargetIds: [...state.hiddenTargetIds]
+            };
+        }
+
+        async function syncPlannerCloud() {
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.plannerProfileStatus.textContent = 'Enter the Cloud Endpoint and Upload token in Session Vault first.';
+                return;
+            }
+            els.plannerProfileStatus.textContent = 'Syncing planner profiles to D1...';
+            let response;
+            try {
+                response = await fetch(`${endpoint}/planner-sync`, {
+                    method: 'POST',
+                    headers: {
+                        authorization: `Bearer ${token}`,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({ bundle: plannerCloudBundle() })
+                });
+            } catch {
+                els.plannerProfileStatus.textContent = 'Cloud sync request could not reach the Worker.';
+                return;
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) {
+                els.plannerProfileStatus.textContent = `Cloud sync failed: ${result.error || `HTTP ${response.status}`}`;
+                return;
+            }
+            els.plannerProfileStatus.textContent = 'Planner profiles synced to D1. Other devices can use Load Cloud.';
+        }
+
+        async function loadPlannerCloud() {
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.plannerProfileStatus.textContent = 'Enter the Cloud Endpoint and Upload token in Session Vault first.';
+                return;
+            }
+            els.plannerProfileStatus.textContent = 'Loading planner profiles from D1...';
+            let response;
+            try {
+                response = await fetch(`${endpoint}/planner-sync`, {
+                    headers: { authorization: `Bearer ${token}` }
+                });
+            } catch {
+                els.plannerProfileStatus.textContent = 'Cloud load request could not reach the Worker.';
+                return;
+            }
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) {
+                els.plannerProfileStatus.textContent = `Cloud load failed: ${result.error || `HTTP ${response.status}`}`;
+                return;
+            }
+            if (!result.exists) {
+                els.plannerProfileStatus.textContent = 'No cloud planner backup exists yet. Use Sync Cloud on the source device.';
+                return;
+            }
+            const bundle = result.bundle;
+            if (!Array.isArray(bundle?.plannerProfiles) || !bundle.plannerProfiles.length) {
+                els.plannerProfileStatus.textContent = 'Cloud planner backup is invalid.';
+                return;
+            }
+            localStorage.setItem('observingPlannerBundleBeforeCloudLoad', JSON.stringify(plannerCloudBundle()));
+            state.plannerProfiles = cloneData(bundle.plannerProfiles);
+            state.activePlannerProfileId = bundle.activePlannerProfileId || state.plannerProfiles[0].id;
+            state.customRigProfiles = Array.isArray(bundle.customRigProfiles) ? cloneData(bundle.customRigProfiles) : [];
+            state.rigId = bundle.rigId || state.rigId;
+            state.customTargets = Array.isArray(bundle.customTargets) ? cloneData(bundle.customTargets) : [];
+            state.hiddenTargetIds = Array.isArray(bundle.hiddenTargetIds) ? [...bundle.hiddenTargetIds] : [];
+            savePlannerProfiles();
+            saveRigProfiles();
+            saveCustomTargets();
+            saveHiddenTargetIds();
+            localStorage.setItem('observingRigId', state.rigId);
+            applyPlannerSettings(activePlannerProfile());
+            render();
+            els.plannerProfileStatus.textContent = `Loaded cloud planner backup from ${result.updatedAt || 'D1'}.`;
+        }
+
         function defaultCloudPrefix() {
             const target = els.vaultTargetName.value.trim() || (allTargets().find(t => t.id === state.selectedId)?.name || '');
             const date = els.sessionDate.value || new Date().toISOString().slice(0, 10);
@@ -2615,6 +2713,8 @@
         document.getElementById('save-observing-program').addEventListener('click', saveActiveObservingProgram);
         document.getElementById('delete-observing-program').addEventListener('click', deleteActiveObservingProgram);
         document.getElementById('export-planner-profile').addEventListener('click', exportActivePlannerProfile);
+        document.getElementById('sync-planner-cloud').addEventListener('click', syncPlannerCloud);
+        document.getElementById('load-planner-cloud').addEventListener('click', loadPlannerCloud);
         els.importPlannerProfile.addEventListener('change', event => {
             const [file] = event.target.files || [];
             if (file) importPlannerProfile(file);
