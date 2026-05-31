@@ -526,7 +526,7 @@
                                 <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Session Vault</h2>
                                 <p class="mono mt-1 text-[10px] uppercase tracking-widest text-amber-100">Local staging</p>
                             </div>
-                            <button id="clear-files" class="ghost-button rounded-md px-2 py-1 mono text-[10px] font-bold">Clear</button>
+                            <button id="clear-files" class="ghost-button rounded-md px-2 py-1 mono text-[10px] font-bold">Clear Staged</button>
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-2">
                             <label class="col-span-2 block">
@@ -2856,6 +2856,10 @@
         });
         document.getElementById('clear-files').addEventListener('click', () => {
             state.files = [];
+            els.directoryInput.value = '';
+            els.uploadProgressBar.style.width = '0%';
+            els.uploadDetail.textContent = 'Upload queue idle.';
+            els.cloudStatus.textContent = 'Cloud: staged queue cleared.';
             renderVault();
         });
         document.getElementById('download-manifest').addEventListener('click', () => {
@@ -3090,6 +3094,7 @@
                 return;
             }
             els.uploadDetail.textContent = `Uploaded ${pending.length} file${pending.length === 1 ? '' : 's'} to Cloudflare R2.`;
+            state.files = state.files.filter(item => !item.remoteKey);
             state.cloudObjects = [];
             els.cloudInventoryStatus.textContent = 'Cloud inventory changed. Click View Cloud to refresh.';
             renderVault();
