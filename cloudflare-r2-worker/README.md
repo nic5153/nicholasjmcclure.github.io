@@ -95,6 +95,26 @@ Use the GitHub Pages origin for the permanent site. Add a different local-server
 
 Cloud Inventory follows R2 continuation cursors until every matching object has been listed. R2 may return fewer than 1,000 objects on a page even when additional objects exist.
 
+## Calibration library
+
+Select `Calibration library / FITS auto-detect` in Session Vault before staging calibration frames. NightVector reads FITS headers locally in the browser and extracts available values for:
+
+- Capture date
+- Frame type and filter
+- Camera temperature
+- Gain and offset
+- Exposure time
+- Binning
+- Camera and telescope
+
+Calibration uploads use separate R2 paths such as:
+
+```text
+calibration/Flats L/2026-05-31/C8_ATR585M/gain-252_offset-20_temp--10C_exp-2s_bin-1x1_filter-L/
+```
+
+Multiple flat sessions remain distinct by capture date and settings. Missing FITS values are stored as `unknown` instead of blocking upload.
+
 ## Planner profiles
 
 `observing.html` saves planner profiles locally in the browser and can sync the complete planner bundle to D1 for use across devices. Each profile can contain:

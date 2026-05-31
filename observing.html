@@ -530,19 +530,37 @@
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-2">
                             <label class="col-span-2 block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Upload collection</span>
+                                <select id="vault-collection" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs">
+                                    <option value="session">Observing session</option>
+                                    <option value="calibration">Calibration library / FITS auto-detect</option>
+                                </select>
+                            </label>
+                            <label class="col-span-2 block">
                                 <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Target name</span>
                                 <input id="vault-target-name" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" placeholder="e.g. M51, RR Lyrae, NGC 7331">
                             </label>
                             <label class="block">
                                 <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Frame type</span>
                                 <select id="frame-kind" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs">
-                                    <option value="Lights">Lights</option>
-                                    <option value="Flats L">Flats L</option>
-                                    <option value="Flats R">Flats R</option>
-                                    <option value="Flats G">Flats G</option>
-                                    <option value="Flats B">Flats B</option>
-                                    <option value="Darks">Darks</option>
-                                    <option value="Bias">Bias</option>
+                                    <option value="Auto" selected>Auto-detect / recommended</option>
+                                    <optgroup label="Science frames">
+                                        <option value="Lights">Lights / unfiltered</option>
+                                        <option value="Lights L">Lights L / luminance</option>
+                                        <option value="Lights R">Lights R / red</option>
+                                        <option value="Lights G">Lights G / green</option>
+                                        <option value="Lights B">Lights B / blue</option>
+                                    </optgroup>
+                                    <optgroup label="Calibration frames">
+                                        <option value="Flats">Flats / unfiltered</option>
+                                        <option value="Flats L">Flats L / luminance</option>
+                                        <option value="Flats R">Flats R / red</option>
+                                        <option value="Flats G">Flats G / green</option>
+                                        <option value="Flats B">Flats B / blue</option>
+                                        <option value="Dark Flats">Dark flats</option>
+                                        <option value="Darks">Darks</option>
+                                        <option value="Bias">Bias / offset</option>
+                                    </optgroup>
                                 </select>
                             </label>
                             <label class="block">
@@ -566,6 +584,10 @@
                             </div>
                         </div>
                         <div id="vault-groups" class="mt-3 space-y-1"></div>
+                        <div id="calibration-summary" class="mt-3 hidden rounded-md border border-green-300/20 bg-slate-950/40 p-2">
+                            <p class="mono text-[10px] uppercase tracking-widest text-green-200">Calibration FITS metadata</p>
+                            <p id="calibration-summary-text" class="mt-1 text-xs leading-5 text-slate-400">Choose Calibration library, then stage FITS files to read their headers locally.</p>
+                        </div>
                         <div class="mt-3 space-y-2">
                             <input id="cloud-endpoint" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" placeholder="Cloudflare Worker URL">
                             <input id="upload-token" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" type="password" placeholder="Upload token">
@@ -1071,6 +1093,7 @@
         els.addTargetStatus = document.getElementById('add-target-status');
         els.archiveResults = document.getElementById('archive-results');
         els.frameKind = document.getElementById('frame-kind');
+        els.vaultCollection = document.getElementById('vault-collection');
         els.vaultTargetName = document.getElementById('vault-target-name');
         els.sessionDate = document.getElementById('session-date');
         els.directoryInput = document.getElementById('directory-input');
@@ -1078,6 +1101,8 @@
         els.vaultCount = document.getElementById('vault-count');
         els.vaultSize = document.getElementById('vault-size');
         els.vaultGroups = document.getElementById('vault-groups');
+        els.calibrationSummary = document.getElementById('calibration-summary');
+        els.calibrationSummaryText = document.getElementById('calibration-summary-text');
         els.vaultStatus = document.getElementById('vault-status');
         els.cloudEndpoint = document.getElementById('cloud-endpoint');
         els.uploadToken = document.getElementById('upload-token');
@@ -1091,6 +1116,7 @@
         els.cloudInventoryList = document.getElementById('cloud-inventory-list');
         els.downloadProgressBar = document.getElementById('download-progress-bar');
         els.cloudEndpoint.value = localStorage.getItem('observingCloudEndpoint') || DEFAULT_WORKER_URL;
+        els.vaultCollection.value = localStorage.getItem('observingVaultCollection') || 'session';
         els.uploadMode.value = localStorage.getItem('observingUploadMode') || 'auto';
         els.uploadConcurrency.value = localStorage.getItem('observingUploadConcurrency') || '12';
         els.vaultTargetName.value = localStorage.getItem('observingVaultTargetName') || '';
@@ -2339,12 +2365,31 @@
             return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
         }
 
+        function calibrationValue(value, suffix = '') {
+            return value === null || value === undefined || value === '' ? '?' : `${value}${suffix}`;
+        }
+
+        function calibrationSettingsLabel(file) {
+            const meta = file.calibration || {};
+            return [
+                `gain ${calibrationValue(meta.gain)}`,
+                `offset ${calibrationValue(meta.offset)}`,
+                `temp ${calibrationValue(meta.temperature, 'C')}`,
+                `exp ${calibrationValue(meta.exposure, 's')}`,
+                `bin ${calibrationValue(meta.binning)}`,
+                `filter ${calibrationValue(meta.filter)}`
+            ].join(' / ');
+        }
+
         function renderVault() {
             const total = state.files.reduce((sum, file) => sum + file.size, 0);
             const groups = state.files.reduce((acc, file) => {
-                acc[file.kind] = acc[file.kind] || { count: 0, size: 0 };
-                acc[file.kind].count += 1;
-                acc[file.kind].size += file.size;
+                const label = file.collection === 'calibration'
+                    ? `${file.kind} / ${file.sessionDate} / ${calibrationSettingsLabel(file)}`
+                    : file.kind;
+                acc[label] = acc[label] || { count: 0, size: 0 };
+                acc[label].count += 1;
+                acc[label].size += file.size;
                 return acc;
             }, {});
             els.vaultCount.textContent = String(state.files.length);
@@ -2359,6 +2404,15 @@
                 row.innerHTML = `<span class="text-slate-300">${kind}</span><span class="text-cyan-200">${group.count} / ${formatBytes(group.size)}</span>`;
                 els.vaultGroups.appendChild(row);
             });
+            const calibrationFiles = state.files.filter(file => file.collection === 'calibration');
+            els.calibrationSummary.classList.toggle('hidden', els.vaultCollection.value !== 'calibration' && !calibrationFiles.length);
+            if (calibrationFiles.length) {
+                const parsed = calibrationFiles.filter(file => file.calibration?.headerParsed).length;
+                const distinct = new Set(calibrationFiles.map(file => `${file.kind}/${file.sessionDate}/${calibrationSettingsLabel(file)}`)).size;
+                els.calibrationSummaryText.textContent = `${parsed}/${calibrationFiles.length} FITS headers parsed locally / ${distinct} distinct calibration set${distinct === 1 ? '' : 's'}. Missing values remain marked ?.`;
+            } else {
+                els.calibrationSummaryText.textContent = 'Choose Calibration library, then stage FITS files to read their headers locally.';
+            }
             const uploaded = state.files.filter(file => file.remoteKey).length;
             if (state.files.length && uploaded === state.files.length) {
                 els.cloudStatus.textContent = `Cloud: ${uploaded} file${uploaded === 1 ? '' : 's'} uploaded.`;
@@ -2655,24 +2709,28 @@
 
         function inferKind(file, fallback, relativePath = '') {
             const path = (relativePath || file.webkitRelativePath || file.name).toLowerCase();
-            const has = (...terms) => terms.some(term => path.includes(term));
-            if (has('/flat', '\\flat', 'flats')) {
-                if (has('/l/', '\\l\\', 'lum', 'luminance', 'filter_l', 'flat_l')) return 'Flats L';
-                if (has('/r/', '\\r\\', 'red', 'filter_r', 'flat_r')) return 'Flats R';
-                if (has('/g/', '\\g\\', 'green', 'filter_g', 'flat_g')) return 'Flats G';
-                if (has('/b/', '\\b\\', 'blue', 'filter_b', 'flat_b')) return 'Flats B';
-                return 'Flats';
+            const tokens = path.split(/[^a-z0-9]+/).filter(Boolean);
+            const hasToken = (...terms) => terms.some(term => tokens.includes(term));
+            const defaultKind = fallback === 'Auto' ? 'Unknown' : fallback;
+            const filter = hasToken('l', 'lum', 'luminance')
+                ? 'L'
+                : hasToken('r', 'red')
+                    ? 'R'
+                    : hasToken('g', 'green')
+                        ? 'G'
+                        : hasToken('b', 'blue')
+                            ? 'B'
+                            : '';
+            if (hasToken('darkflat', 'darkflats') || hasToken('dark', 'darks') && hasToken('flat', 'flats')) return 'Dark Flats';
+            if (hasToken('flat', 'flats')) {
+                return filter ? `Flats ${filter}` : 'Flats';
             }
-            if (has('/dark', '\\dark', 'darks')) return 'Darks';
-            if (has('/bias', '\\bias', 'offset')) return 'Bias';
-            if (has('/light', '\\light', 'lights')) {
-                if (has('/l/', '\\l\\', 'lum', 'luminance', 'filter_l', 'light_l')) return 'Lights L';
-                if (has('/r/', '\\r\\', 'red', 'filter_r', 'light_r')) return 'Lights R';
-                if (has('/g/', '\\g\\', 'green', 'filter_g', 'light_g')) return 'Lights G';
-                if (has('/b/', '\\b\\', 'blue', 'filter_b', 'light_b')) return 'Lights B';
-                return 'Lights';
+            if (hasToken('dark', 'darks')) return 'Darks';
+            if (hasToken('bias', 'offset')) return 'Bias';
+            if (hasToken('light', 'lights')) {
+                return filter ? `Lights ${filter}` : 'Lights';
             }
-            return fallback;
+            return defaultKind;
         }
 
         function render() {
@@ -2812,10 +2870,87 @@
             const command = firstLine ? firstLine.replace('GoTo command: ', '') : els.aptOutput.value;
             await navigator.clipboard.writeText(command).catch(() => {});
         });
-        function stageFiles(fileList) {
+        function fitsValue(raw) {
+            const value = String(raw || '').trim();
+            if (value.startsWith("'")) {
+                const match = value.match(/^'((?:[^']|'')*)'/);
+                return match ? match[1].replaceAll("''", "'").trim() : value.slice(1).trim();
+            }
+            const plain = value.split('/')[0].trim();
+            if (plain === 'T') return true;
+            if (plain === 'F') return false;
+            const number = Number(plain);
+            return plain && Number.isFinite(number) ? number : plain;
+        }
+
+        async function readFitsHeader(file) {
+            if (!/\.(fits?|fts)$/i.test(file.name)) return null;
+            const header = {};
+            const maxBlocks = Math.min(Math.ceil(file.size / 2880), 64);
+            for (let block = 0; block < maxBlocks; block += 1) {
+                const text = await file.slice(block * 2880, (block + 1) * 2880).text();
+                for (let index = 0; index + 80 <= text.length; index += 80) {
+                    const card = text.slice(index, index + 80);
+                    const keyword = card.slice(0, 8).trim();
+                    if (keyword === 'END') return Object.keys(header).length ? header : null;
+                    if (!keyword || card[8] !== '=') continue;
+                    header[keyword] = fitsValue(card.slice(10));
+                }
+            }
+            return Object.keys(header).length ? header : null;
+        }
+
+        function firstFitsHeader(header, ...keywords) {
+            return keywords.map(keyword => header?.[keyword]).find(value => value !== undefined && value !== null && value !== '');
+        }
+
+        function normalizeFitsFilter(value, fallback = '') {
+            const filter = String(value || fallback || '').trim().toLowerCase();
+            if (['l', 'lum', 'luminance', 'clear'].includes(filter)) return 'L';
+            if (['r', 'red'].includes(filter)) return 'R';
+            if (['g', 'green'].includes(filter)) return 'G';
+            if (['b', 'blue'].includes(filter)) return 'B';
+            return String(value || fallback || '').trim();
+        }
+
+        function filterFromKind(kind) {
+            const match = String(kind || '').match(/\b([LRGB])$/);
+            return match ? match[1] : '';
+        }
+
+        function calibrationKind(header, fallback) {
+            const imageType = String(firstFitsHeader(header, 'IMAGETYP', 'FRAME', 'FRAMETYP') || '').toLowerCase();
+            const filter = normalizeFitsFilter(firstFitsHeader(header, 'FILTER'), filterFromKind(fallback));
+            if (imageType.includes('dark flat') || imageType.includes('darkflat') || fallback === 'Dark Flats') return 'Dark Flats';
+            if (imageType.includes('flat') || fallback.startsWith('Flats')) return filter ? `Flats ${filter}` : 'Flats';
+            if (imageType.includes('dark') || fallback === 'Darks') return 'Darks';
+            if (imageType.includes('bias') || imageType.includes('offset') || fallback === 'Bias') return 'Bias';
+            return fallback === 'Auto' ? 'Unknown' : fallback;
+        }
+
+        function calibrationMetadata(header, kind, sessionDate) {
+            const binning = firstFitsHeader(header, 'BINNING')
+                || [firstFitsHeader(header, 'XBINNING'), firstFitsHeader(header, 'YBINNING')].filter(Boolean).join('x');
+            const dateObs = String(firstFitsHeader(header, 'DATE-OBS', 'DATE') || '');
+            return {
+                headerParsed: Boolean(header),
+                date: /^\d{4}-\d{2}-\d{2}/.test(dateObs) ? dateObs.slice(0, 10) : sessionDate,
+                temperature: firstFitsHeader(header, 'CCD-TEMP', 'CCD_TEMP', 'SET-TEMP', 'SET_TEMP', 'TEMP'),
+                gain: firstFitsHeader(header, 'GAIN', 'EGAIN'),
+                offset: firstFitsHeader(header, 'OFFSET', 'BLKLEVEL'),
+                exposure: firstFitsHeader(header, 'EXPTIME', 'EXPOSURE'),
+                binning: binning || '',
+                filter: normalizeFitsFilter(firstFitsHeader(header, 'FILTER'), filterFromKind(kind)),
+                camera: firstFitsHeader(header, 'INSTRUME', 'CAMERA') || selectedRig().camera,
+                telescope: firstFitsHeader(header, 'TELESCOP') || selectedRig().telescope
+            };
+        }
+
+        async function stageFiles(fileList) {
             const target = allTargets().find(t => t.id === state.selectedId);
             const typedTarget = els.vaultTargetName.value.trim();
             const sessionDate = els.sessionDate.value || new Date().toISOString().slice(0, 10);
+            const collection = els.vaultCollection.value;
             const supported = /\.(fits?|fts|xisf|ser|avi|mp4|mov|mkv|jpe?g|png|tiff?|cr2|cr3|nef|arw|dng)$/i;
             const files = Array.from(fileList || [])
                 .map(item => item.file ? item : { file: item, relativePath: item.webkitRelativePath || item.name })
@@ -2824,14 +2959,30 @@
                 els.vaultStatus.textContent = 'Local: no supported image, video, FITS, XISF, SER, or RAW files found.';
                 return;
             }
-            files.forEach(({ file, relativePath }) => {
-                const kind = inferKind(file, els.frameKind.value, relativePath);
+            els.vaultStatus.textContent = collection === 'calibration'
+                ? `Local: reading FITS headers for ${files.length} staged file${files.length === 1 ? '' : 's'}...`
+                : `Local: staging ${files.length} file${files.length === 1 ? '' : 's'}...`;
+            const staged = await Promise.all(files.map(async ({ file, relativePath }) => {
+                const header = collection === 'calibration' ? await readFitsHeader(file).catch(() => null) : null;
+                const inferredKind = inferKind(file, els.frameKind.value, relativePath);
+                const kind = collection === 'calibration' ? calibrationKind(header, inferredKind) : inferredKind;
+                const calibration = collection === 'calibration' ? calibrationMetadata(header, kind, sessionDate) : null;
+                return {
+                    file,
+                    relativePath,
+                    kind,
+                    calibration
+                };
+            }));
+            staged.forEach(({ file, relativePath, kind, calibration }) => {
                 state.files.push({
                     name: file.name,
                     size: file.size,
                     kind,
+                    collection,
+                    calibration,
                     target: typedTarget || (target ? target.name : ''),
-                    sessionDate,
+                    sessionDate: calibration?.date || sessionDate,
                     lastModified: new Date(file.lastModified).toISOString(),
                     relativePath: relativePath || file.webkitRelativePath || file.name,
                     file
@@ -2879,8 +3030,8 @@
             return nested.flat();
         }
 
-        els.directoryInput.addEventListener('change', event => {
-            stageFiles(event.target.files);
+        els.directoryInput.addEventListener('change', async event => {
+            await stageFiles(event.target.files);
             els.directoryInput.value = '';
         });
         els.fitsDropZone.addEventListener('dragover', event => {
@@ -2895,7 +3046,7 @@
             els.fitsDropZone.classList.remove('border-green-300/80');
             els.vaultStatus.textContent = 'Local: reading dropped files and directories...';
             try {
-                stageFiles(await droppedFiles(event.dataTransfer));
+                await stageFiles(await droppedFiles(event.dataTransfer));
             } catch {
                 els.vaultStatus.textContent = 'Local: could not read the dropped directory. Use the directory picker instead.';
             }
@@ -2934,6 +3085,10 @@
         });
         els.cloudEndpoint.addEventListener('change', () => {
             localStorage.setItem('observingCloudEndpoint', els.cloudEndpoint.value.trim());
+        });
+        els.vaultCollection.addEventListener('change', () => {
+            localStorage.setItem('observingVaultCollection', els.vaultCollection.value);
+            renderVault();
         });
         els.uploadMode.addEventListener('change', () => {
             localStorage.setItem('observingUploadMode', els.uploadMode.value);
@@ -2976,7 +3131,15 @@
                                 target: item.target || 'unknown-target',
                                 kind: item.kind,
                                 date: item.sessionDate,
-                                filename: item.name
+                                filename: item.name,
+                                collection: item.collection || 'session',
+                                rig: selectedRig().name,
+                                temperature: item.calibration?.temperature ?? '',
+                                gain: item.calibration?.gain ?? '',
+                                offset: item.calibration?.offset ?? '',
+                                exposure: item.calibration?.exposure ?? '',
+                                binning: item.calibration?.binning ?? '',
+                                filter: item.calibration?.filter ?? ''
                             }))
                         })
                     });
@@ -3000,7 +3163,15 @@
                 target: item.target || 'unknown-target',
                 kind: item.kind,
                 date: item.sessionDate,
-                filename: item.name
+                filename: item.name,
+                collection: item.collection || 'session',
+                rig: selectedRig().name,
+                temperature: item.calibration?.temperature ?? '',
+                gain: item.calibration?.gain ?? '',
+                offset: item.calibration?.offset ?? '',
+                exposure: item.calibration?.exposure ?? '',
+                binning: item.calibration?.binning ?? '',
+                filter: item.calibration?.filter ?? ''
             });
             if (directState === 'batch') {
                 let directResponse;

@@ -63,13 +63,33 @@ function uploadKey(searchParams) {
   const kind = cleanSegment(searchParams.get("kind"), "Unknown");
   const sessionDate = cleanSegment(searchParams.get("date"), new Date().toISOString().slice(0, 10));
   const filename = cleanSegment(searchParams.get("filename"), "frame.fits");
+  const collection = cleanSegment(searchParams.get("collection"), "session").toLowerCase();
+  const rig = cleanSegment(searchParams.get("rig"), "unknown-rig");
+  const temperature = cleanSegment(searchParams.get("temperature"), "unknown");
+  const gain = cleanSegment(searchParams.get("gain"), "unknown");
+  const offset = cleanSegment(searchParams.get("offset"), "unknown");
+  const exposure = cleanSegment(searchParams.get("exposure"), "unknown");
+  const binning = cleanSegment(searchParams.get("binning"), "unknown");
+  const filter = cleanSegment(searchParams.get("filter"), "unknown");
   const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+  const calibrationSettings = `gain-${gain}_offset-${offset}_temp-${temperature}C_exp-${exposure}s_bin-${binning}_filter-${filter}`;
+  const folder = collection === "calibration"
+    ? `calibration/${kind}/${sessionDate}/${rig}/${calibrationSettings}`
+    : `${sessionDate}/${target}/${kind}`;
   return {
-    key: `${sessionDate}/${target}/${kind}/${unique}-${filename}`,
+    key: `${folder}/${unique}-${filename}`,
     target,
     kind,
     sessionDate,
-    filename
+    filename,
+    collection,
+    rig,
+    temperature,
+    gain,
+    offset,
+    exposure,
+    binning,
+    filter
   };
 }
 
@@ -669,7 +689,15 @@ export default {
           target: upload.target || "unknown-target",
           kind: upload.kind || "Unknown",
           date: upload.date || new Date().toISOString().slice(0, 10),
-          filename: upload.filename || "frame.fits"
+          filename: upload.filename || "frame.fits",
+          collection: upload.collection || "session",
+          rig: upload.rig || "unknown-rig",
+          temperature: upload.temperature ?? "unknown",
+          gain: upload.gain ?? "unknown",
+          offset: upload.offset ?? "unknown",
+          exposure: upload.exposure ?? "unknown",
+          binning: upload.binning ?? "unknown",
+          filter: upload.filter || "unknown"
         });
         const { key } = uploadKey(params);
         return presignR2Put(env, key);
@@ -682,7 +710,7 @@ export default {
     }
 
     if (request.method === "POST" && url.pathname === "/upload") {
-      const { key, target, kind, sessionDate, filename } = uploadKey(url.searchParams);
+      const { key, target, kind, sessionDate, filename, collection, rig, temperature, gain, offset, exposure, binning, filter } = uploadKey(url.searchParams);
 
       await env.OBS_BUCKET.put(key, request.body, {
         httpMetadata: {
@@ -692,7 +720,15 @@ export default {
           target,
           kind,
           sessionDate,
-          originalFilename: filename
+          originalFilename: filename,
+          collection,
+          rig,
+          temperature,
+          gain,
+          offset,
+          exposure,
+          binning,
+          filter
         }
       });
 
