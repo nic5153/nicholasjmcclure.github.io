@@ -93,6 +93,8 @@ Use `12 files` in parallel for a large session. Try `16` or `24` on a fast conne
 
 Use the GitHub Pages origin for the permanent site. Add a different local-server origin only when its port changes. Keep the R2 API credentials in Worker secrets; do not enter them in `observing.html`.
 
+Cloud Inventory follows R2 continuation cursors until every matching object has been listed. R2 may return fewer than 1,000 objects on a page even when additional objects exist.
+
 ## Planner profiles
 
 `observing.html` saves planner profiles locally in the browser and can sync the complete planner bundle to D1 for use across devices. Each profile can contain:

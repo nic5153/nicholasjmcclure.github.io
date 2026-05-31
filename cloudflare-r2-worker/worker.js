@@ -701,9 +701,17 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/list") {
       const prefix = url.searchParams.get("prefix") || "";
-      const list = await env.OBS_BUCKET.list({ prefix, limit: 1000 });
+      const cursor = url.searchParams.get("cursor") || undefined;
+      const list = await env.OBS_BUCKET.list({
+        prefix,
+        cursor,
+        limit: 1000,
+        include: ["customMetadata"]
+      });
       return json({
         ok: true,
+        truncated: list.truncated,
+        cursor: list.cursor,
         objects: list.objects.map(object => ({
           key: object.key,
           size: object.size,

@@ -1829,20 +1829,30 @@
             els.cloudPrefix.value = prefix;
             localStorage.setItem('observingCloudPrefix', prefix);
             els.cloudInventoryStatus.textContent = `Cloud: listing ${prefix || 'bucket root'}...`;
-            const params = new URLSearchParams({ prefix });
-            const response = await fetch(`${endpoint}/list?${params.toString()}`, {
-                headers: { authorization: `Bearer ${token}` }
-            }).catch(() => null);
-            if (!response) {
-                els.cloudInventoryStatus.textContent = 'Cloud: list request blocked or unreachable.';
-                return;
-            }
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok) {
-                els.cloudInventoryStatus.textContent = `Cloud: list failed. ${result.error || response.status}`;
-                return;
-            }
-            state.cloudObjects = result.objects || [];
+            const objects = [];
+            let cursor = '';
+            let page = 0;
+            do {
+                const params = new URLSearchParams({ prefix });
+                if (cursor) params.set('cursor', cursor);
+                const response = await fetch(`${endpoint}/list?${params.toString()}`, {
+                    headers: { authorization: `Bearer ${token}` }
+                }).catch(() => null);
+                if (!response) {
+                    els.cloudInventoryStatus.textContent = 'Cloud: list request blocked or unreachable.';
+                    return;
+                }
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || !result.ok) {
+                    els.cloudInventoryStatus.textContent = `Cloud: list failed. ${result.error || response.status}`;
+                    return;
+                }
+                objects.push(...(result.objects || []));
+                page += 1;
+                cursor = result.truncated && result.cursor ? result.cursor : '';
+                els.cloudInventoryStatus.textContent = `Cloud: listed ${objects.length} object${objects.length === 1 ? '' : 's'} across ${page} page${page === 1 ? '' : 's'}...`;
+            } while (cursor);
+            state.cloudObjects = objects;
             renderCloudInventory();
         }
 
