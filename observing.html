@@ -2653,8 +2653,8 @@
             downloadFile('suggested-targets.csv', csv, 'text/csv');
         }
 
-        function inferKind(file, fallback) {
-            const path = (file.webkitRelativePath || file.name).toLowerCase();
+        function inferKind(file, fallback, relativePath = '') {
+            const path = (relativePath || file.webkitRelativePath || file.name).toLowerCase();
             const has = (...terms) => terms.some(term => path.includes(term));
             if (has('/flat', '\\flat', 'flats')) {
                 if (has('/l/', '\\l\\', 'lum', 'luminance', 'filter_l', 'flat_l')) return 'Flats L';
@@ -2817,13 +2817,15 @@
             const typedTarget = els.vaultTargetName.value.trim();
             const sessionDate = els.sessionDate.value || new Date().toISOString().slice(0, 10);
             const supported = /\.(fits?|fts|xisf|ser|avi|mp4|mov|mkv|jpe?g|png|tiff?|cr2|cr3|nef|arw|dng)$/i;
-            const files = Array.from(fileList || []).filter(file => supported.test(file.name) || file.type.startsWith('image/') || file.type.startsWith('video/'));
+            const files = Array.from(fileList || [])
+                .map(item => item.file ? item : { file: item, relativePath: item.webkitRelativePath || item.name })
+                .filter(item => supported.test(item.file.name) || item.file.type.startsWith('image/') || item.file.type.startsWith('video/'));
             if (!files.length) {
                 els.vaultStatus.textContent = 'Local: no supported image, video, FITS, XISF, SER, or RAW files found.';
                 return;
             }
-            files.forEach(file => {
-                const kind = inferKind(file, els.frameKind.value);
+            files.forEach(({ file, relativePath }) => {
+                const kind = inferKind(file, els.frameKind.value, relativePath);
                 state.files.push({
                     name: file.name,
                     size: file.size,
@@ -2831,13 +2833,52 @@
                     target: typedTarget || (target ? target.name : ''),
                     sessionDate,
                     lastModified: new Date(file.lastModified).toISOString(),
-                    relativePath: file.webkitRelativePath || file.name,
+                    relativePath: relativePath || file.webkitRelativePath || file.name,
                     file
                 });
             });
             els.vaultStatus.textContent = `Local: staged ${files.length} new file${files.length === 1 ? '' : 's'}.`;
             renderVault();
         }
+
+        function fileFromEntry(entry, relativePath) {
+            return new Promise((resolve, reject) => {
+                entry.file(
+                    file => resolve({ file, relativePath: `${relativePath}${file.name}` }),
+                    reject
+                );
+            });
+        }
+
+        function readDirectoryEntries(reader) {
+            return new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        }
+
+        async function filesFromEntry(entry, relativePath = '') {
+            if (entry.isFile) return [await fileFromEntry(entry, relativePath)];
+            if (!entry.isDirectory) return [];
+            const directoryPath = `${relativePath}${entry.name}/`;
+            const reader = entry.createReader();
+            const entries = [];
+            while (true) {
+                const batch = await readDirectoryEntries(reader);
+                if (!batch.length) break;
+                entries.push(...batch);
+            }
+            const nested = await Promise.all(entries.map(item => filesFromEntry(item, directoryPath)));
+            return nested.flat();
+        }
+
+        async function droppedFiles(dataTransfer) {
+            const items = Array.from(dataTransfer.items || []);
+            const entries = items
+                .map(item => item.webkitGetAsEntry ? item.webkitGetAsEntry() : null)
+                .filter(Boolean);
+            if (!entries.length) return Array.from(dataTransfer.files || []);
+            const nested = await Promise.all(entries.map(entry => filesFromEntry(entry)));
+            return nested.flat();
+        }
+
         els.directoryInput.addEventListener('change', event => {
             stageFiles(event.target.files);
             els.directoryInput.value = '';
@@ -2849,10 +2890,15 @@
         els.fitsDropZone.addEventListener('dragleave', () => {
             els.fitsDropZone.classList.remove('border-green-300/80');
         });
-        els.fitsDropZone.addEventListener('drop', event => {
+        els.fitsDropZone.addEventListener('drop', async event => {
             event.preventDefault();
             els.fitsDropZone.classList.remove('border-green-300/80');
-            stageFiles(event.dataTransfer.files);
+            els.vaultStatus.textContent = 'Local: reading dropped files and directories...';
+            try {
+                stageFiles(await droppedFiles(event.dataTransfer));
+            } catch {
+                els.vaultStatus.textContent = 'Local: could not read the dropped directory. Use the directory picker instead.';
+            }
         });
         document.getElementById('clear-files').addEventListener('click', () => {
             state.files = [];
