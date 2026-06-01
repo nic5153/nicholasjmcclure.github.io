@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NightVector Exoplanet Transits - Nicholas J. McClure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void: #05030b;
+            --panel: rgba(9, 13, 31, 0.86);
+            --cyan: #00e5ff;
+            --green: #48ff9b;
+            --magenta: #e44cff;
+            --violet: #7c4dff;
+            --amber: #ffd166;
+            --text: #eef7ff;
+            --muted: #98a8c8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            font-family: Inter, sans-serif;
+            background:
+                radial-gradient(circle at 16% 8%, rgba(124, 77, 255, 0.24), transparent 30%),
+                radial-gradient(circle at 88% 10%, rgba(0, 229, 255, 0.18), transparent 28%),
+                radial-gradient(circle at 70% 86%, rgba(72, 255, 155, 0.12), transparent 34%),
+                var(--void);
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(228, 76, 255, 0.05) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, transparent, black 12%, black 78%, transparent);
+        }
+        nav, main, footer { position: relative; z-index: 1; }
+        .mono { font-family: "Space Mono", monospace; }
+        .bg-navy { background: rgba(2, 5, 18, 0.95); }
+        .nav-link:hover { color: var(--green); }
+        .neon-shell {
+            border: 1px solid rgba(0, 229, 255, 0.28);
+            background: linear-gradient(145deg, rgba(8, 13, 32, 0.95), rgba(10, 6, 28, 0.9));
+            box-shadow: 0 0 32px rgba(0, 229, 255, 0.12), inset 0 0 30px rgba(124, 77, 255, 0.08);
+        }
+        .panel {
+            border: 1px solid rgba(0, 229, 255, 0.18);
+            background: var(--panel);
+            box-shadow: inset 0 0 24px rgba(0, 229, 255, 0.04);
+        }
+        .input-dark {
+            color: var(--text);
+            background: rgba(2, 6, 23, 0.78);
+            border: 1px solid rgba(0, 229, 255, 0.24);
+        }
+        .input-dark:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(72, 255, 155, 0.12);
+        }
+        .neon-button {
+            color: #031018;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            box-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+        }
+        .ghost-button {
+            color: var(--text);
+            border: 1px solid rgba(228, 76, 255, 0.42);
+            background: rgba(228, 76, 255, 0.08);
+        }
+        .neon-button:hover, .ghost-button:hover { transform: translateY(-1px); }
+        .chip {
+            color: var(--muted);
+            border: 1px solid rgba(0, 229, 255, 0.22);
+            background: rgba(3, 7, 18, 0.58);
+        }
+        .chip:hover, .chip.active {
+            color: #07101c;
+            border-color: transparent;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+        }
+        .stat {
+            border: 1px solid rgba(152, 168, 200, 0.18);
+            background: rgba(3, 7, 18, 0.48);
+        }
+        .event-row {
+            border: 1px solid rgba(152, 168, 200, 0.16);
+            background: rgba(5, 8, 22, 0.62);
+        }
+        .event-row.active { border-color: rgba(72, 255, 155, 0.7); }
+        .scroll-soft { scrollbar-width: thin; scrollbar-color: rgba(0, 229, 255, 0.7) rgba(5, 7, 17, 0.7); }
+        .meter { background: rgba(152, 168, 200, 0.16); }
+        .meter span { background: linear-gradient(90deg, var(--magenta), var(--cyan), var(--green)); }
+        svg text { font-family: "Space Mono", monospace; }
+    </style>
+</head>
+<body class="flex min-h-screen flex-col">
+    <nav class="bg-navy sticky top-0 z-50 border-b border-cyan-300/20 p-4 shadow-md">
+        <div class="mx-auto flex max-w-none items-center justify-between">
+            <a href="index.html" class="text-xl font-bold text-white md:text-2xl">Nicholas J. McClure</a>
+            <div class="flex items-center gap-4 text-sm">
+                <a href="index.html" class="nav-link text-white">Home</a>
+                <a href="observing.html" class="nav-link text-white">NightVector</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow px-2 py-5 sm:px-4 lg:px-6">
+        <section class="neon-shell mx-auto w-full rounded-xl p-4 md:p-6">
+            <header class="flex flex-col gap-4 border-b border-cyan-300/20 pb-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="mono text-[10px] uppercase tracking-[0.24em] text-green-200">NightVector workspace</p>
+                    <h1 class="mt-2 text-3xl font-extrabold text-white md:text-5xl">Exoplanet Transits</h1>
+                </div>
+                <div class="panel rounded-md px-3 py-2">
+                    <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Current UTC</p>
+                    <p id="utc-clock" class="mono mt-1 text-sm font-bold text-cyan-100"></p>
+                </div>
+            </header>
+
+            <nav class="mt-4 flex flex-wrap gap-2" aria-label="NightVector workspaces">
+                <a href="observing.html?mode=dso" class="chip rounded-md px-3 py-2 mono text-xs font-bold">DSO Planner</a>
+                <a href="exoplanets.html" class="chip active rounded-md px-3 py-2 mono text-xs font-bold">Exoplanet Transits</a>
+                <a href="observing.html?mode=eclipse" class="chip rounded-md px-3 py-2 mono text-xs font-bold">Eclipsing Binaries</a>
+                <a href="observing.html?mode=photometry" class="chip rounded-md px-3 py-2 mono text-xs font-bold">Variable Stars</a>
+            </nav>
+
+            <div class="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_390px]">
+                <aside class="space-y-4">
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Archive Lookup</h2>
+                        <label class="mt-4 block">
+                            <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Planet or host star</span>
+                            <input id="planet-query" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-sm" value="TOI-2109 b" placeholder="e.g. TOI-2109 b, WASP-12 b">
+                        </label>
+                        <button id="lookup-planet" class="neon-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Lookup NASA Archive</button>
+                        <label id="archive-result-wrap" class="mt-3 hidden block">
+                            <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Matched archive row</span>
+                            <select id="archive-results" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-xs"></select>
+                        </label>
+                        <p id="lookup-status" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Ready to query the NASA Exoplanet Archive.</p>
+                        <input id="cloud-endpoint" class="input-dark mt-3 w-full rounded-md px-3 py-2 mono text-[11px]" placeholder="Cloudflare Worker URL">
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Observation Setup</h2>
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Filter</span>
+                                <select id="plan-filter" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs">
+                                    <option value="L">Luminance</option>
+                                    <option value="R">Red</option>
+                                    <option value="G">Green</option>
+                                    <option value="B">Blue</option>
+                                </select>
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Readout pause</span>
+                                <input id="readout-seconds" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" type="number" min="0" max="30" step="1" value="4">
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Pre-baseline min</span>
+                                <input id="pre-baseline" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" type="number" min="10" max="180" step="5" value="45">
+                            </label>
+                            <label class="block">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Post-baseline min</span>
+                                <input id="post-baseline" class="input-dark mt-1 w-full rounded-md px-2 py-2 text-xs" type="number" min="10" max="180" step="5" value="45">
+                            </label>
+                        </div>
+                        <button id="generate-plan" class="neon-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Generate Exposure Plan</button>
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Transit Queue</h2>
+                            <button id="queue-current" class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Add</button>
+                        </div>
+                        <div id="transit-queue" class="mt-3 space-y-2"></div>
+                    </section>
+                </aside>
+
+                <section class="space-y-4">
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Selected planet</p>
+                                <h2 id="planet-name" class="mt-1 text-2xl font-bold text-white">No transit selected</h2>
+                                <p id="coordinates" class="mono mt-1 text-xs text-cyan-100">RA / Dec unavailable</p>
+                            </div>
+                            <label class="block min-w-[250px]">
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Predicted transit event</span>
+                                <select id="event-select" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-xs"></select>
+                            </label>
+                        </div>
+                        <div id="contact-grid" class="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5"></div>
+                        <p id="phase-status" class="mono mt-3 text-xs text-green-100">Lookup a target to calculate current phase.</p>
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Transit Flux Timeline</h2>
+                            <span id="timeline-depth" class="mono text-xs text-fuchsia-100"></span>
+                        </div>
+                        <svg id="timeline-svg" class="mt-3 h-[230px] w-full" viewBox="0 0 900 230" role="img" aria-label="Predicted transit light curve with current-time marker">
+                            <defs>
+                                <linearGradient id="flux-gradient" x1="0" x2="1">
+                                    <stop offset="0%" stop-color="#e44cff"></stop>
+                                    <stop offset="50%" stop-color="#00e5ff"></stop>
+                                    <stop offset="100%" stop-color="#48ff9b"></stop>
+                                </linearGradient>
+                            </defs>
+                            <g stroke="rgba(152,168,200,0.22)" stroke-width="1">
+                                <line x1="50" y1="30" x2="50" y2="185"></line>
+                                <line x1="50" y1="185" x2="875" y2="185"></line>
+                                <line x1="50" y1="76" x2="875" y2="76" stroke-dasharray="4 7"></line>
+                                <line x1="50" y1="145" x2="875" y2="145" stroke-dasharray="4 7"></line>
+                            </g>
+                            <path id="flux-path" fill="none" stroke="url(#flux-gradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <line id="now-line" x1="50" x2="50" y1="24" y2="188" stroke="#ffd166" stroke-width="3"></line>
+                            <circle id="now-dot" cx="50" cy="76" r="7" fill="#ffd166" stroke="#05030b" stroke-width="3"></circle>
+                            <text x="12" y="80" fill="#98a8c8" font-size="12">1.0</text>
+                            <text id="flux-floor-label" x="12" y="149" fill="#98a8c8" font-size="12"></text>
+                            <text x="50" y="214" fill="#98a8c8" font-size="11">baseline</text>
+                            <text id="timeline-mid-label" x="450" y="214" text-anchor="middle" fill="#98a8c8" font-size="11">midpoint</text>
+                            <text x="875" y="214" text-anchor="end" fill="#98a8c8" font-size="11">baseline</text>
+                        </svg>
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Line Of Sight</h2>
+                            <span id="geometry-label" class="mono text-xs text-cyan-100"></span>
+                        </div>
+                        <svg class="mt-3 h-[230px] w-full" viewBox="0 0 900 230" role="img" aria-label="Line-of-sight diagram of planet transiting host star">
+                            <defs>
+                                <radialGradient id="star-gradient">
+                                    <stop offset="0%" stop-color="#fff2ad"></stop>
+                                    <stop offset="72%" stop-color="#ffd166"></stop>
+                                    <stop offset="100%" stop-color="#f28544"></stop>
+                                </radialGradient>
+                            </defs>
+                            <line x1="70" y1="115" x2="830" y2="115" stroke="rgba(0,229,255,0.22)" stroke-width="2" stroke-dasharray="6 9"></line>
+                            <circle cx="450" cy="115" r="82" fill="url(#star-gradient)" stroke="#ffd166" stroke-width="3"></circle>
+                            <line id="transit-chord" x1="340" x2="560" y1="115" y2="115" stroke="#48ff9b" stroke-width="3" stroke-dasharray="7 6"></line>
+                            <circle id="planet-disc" cx="300" cy="115" r="12" fill="#05030b" stroke="#e44cff" stroke-width="3"></circle>
+                            <text x="450" y="119" text-anchor="middle" fill="#5d3817" font-size="14">HOST STAR</text>
+                            <text x="70" y="43" fill="#98a8c8" font-size="12">observer line of sight</text>
+                            <text id="planet-disc-label" x="300" y="166" text-anchor="middle" fill="#e44cff" font-size="12">planet</text>
+                        </svg>
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Transit Exposure Plan</h2>
+                            <span id="plan-total" class="mono text-xs text-cyan-100"></span>
+                        </div>
+                        <div id="exposure-plan" class="mt-4 space-y-2">
+                            <p class="mono text-xs text-slate-400">Lookup a target and generate a plan.</p>
+                        </div>
+                        <p id="plan-note" class="mt-3 text-xs leading-5 text-amber-100"></p>
+                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button id="copy-goto" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Copy GoTo++</button>
+                            <button id="download-plan" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Download APT Plan</button>
+                        </div>
+                        <textarea id="apt-output" class="input-dark mt-3 h-36 w-full resize-none rounded-md p-3 mono text-xs" readonly></textarea>
+                    </section>
+                </section>
+
+                <aside class="space-y-4">
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Flux Statistics</h2>
+                        <div id="flux-stats" class="mt-3 grid grid-cols-2 gap-2"></div>
+                    </section>
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Planet Parameters</h2>
+                        <dl id="planet-stats" class="mt-3 space-y-2 text-xs"></dl>
+                    </section>
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">Host Star</h2>
+                        <dl id="star-stats" class="mt-3 space-y-2 text-xs"></dl>
+                    </section>
+                    <section class="panel rounded-lg p-4">
+                        <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-amber-200">Upcoming Events</h2>
+                        <div id="upcoming-events" class="scroll-soft mt-3 max-h-[360px] space-y-2 overflow-auto pr-1"></div>
+                    </section>
+                    <section class="panel rounded-lg p-4">
+                        <p class="text-xs leading-5 text-slate-300">Predictions extrapolate the published archive ephemeris. Confirm timing before an observing run, especially when the TTV flag is set or uncertainty has grown across many orbital cycles.</p>
+                        <a href="https://exoplanetarchive.ipac.caltech.edu/" target="_blank" rel="noopener" class="mono mt-3 inline-block text-xs text-green-200">NASA Exoplanet Archive</a>
+                    </section>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-navy border-t border-cyan-300/20 p-4 text-center text-xs text-slate-400">
+        <p>NightVector transit planning workspace</p>
+    </footer>
+
+    <script>
+        const DEFAULT_WORKER_URL = 'https://observing-vault.nic5153mcclure.workers.dev';
+        const state = {
+            planet: null,
+            events: [],
+            selectedEventIndex: 0,
+            plan: null,
+            queue: loadQueue()
+        };
+        const els = Object.fromEntries([...document.querySelectorAll('[id]')].map(element => [element.id.replace(/-([a-z])/g, (_, char) => char.toUpperCase()), element]));
+
+        function loadQueue() {
+            try { return JSON.parse(localStorage.getItem('nightvectorExoplanetQueue') || '[]'); }
+            catch { return []; }
+        }
+        function saveQueue() {
+            localStorage.setItem('nightvectorExoplanetQueue', JSON.stringify(state.queue));
+        }
+        function finite(value, fallback = null) {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : fallback;
+        }
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+        function jdFromDate(date) {
+            return date.getTime() / 86400000 + 2440587.5;
+        }
+        function dateFromJd(jd) {
+            return new Date((jd - 2440587.5) * 86400000);
+        }
+        function utc(jd, withDate = true) {
+            const date = dateFromJd(jd);
+            return withDate
+                ? date.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+                : date.toISOString().slice(11, 16);
+        }
+        function value(value, suffix = '', digits = null) {
+            const number = finite(value);
+            if (number !== null) return `${digits === null ? number : number.toFixed(digits)}${suffix}`;
+            return value ? `${value}${suffix}` : 'unavailable';
+        }
+        function depthPercent(planet) {
+            const archiveDepth = finite(planet.pl_trandep);
+            if (archiveDepth !== null) return archiveDepth;
+            const ratio = finite(planet.pl_ratror);
+            return ratio !== null ? ratio * ratio * 100 : null;
+        }
+        function ratio(planet) {
+            const archiveRatio = finite(planet.pl_ratror);
+            if (archiveRatio !== null) return archiveRatio;
+            const radiusEarth = finite(planet.pl_rade);
+            const starSolar = finite(planet.st_rad);
+            return radiusEarth !== null && starSolar ? radiusEarth / (starSolar * 109.076) : 0.1;
+        }
+        function ingressHours(planet) {
+            const duration = finite(planet.pl_trandur, 2);
+            const k = clamp(ratio(planet), 0.005, 0.8);
+            const b = clamp(finite(planet.pl_imppar, 0), 0, Math.max(0, 1 - k - 0.001));
+            const top = Math.max(0, (1 - k) ** 2 - b ** 2);
+            const bottom = Math.max(0.0001, (1 + k) ** 2 - b ** 2);
+            const fullDuration = duration * Math.sqrt(top / bottom);
+            return clamp((duration - fullDuration) / 2, duration * 0.04, duration * 0.22);
+        }
+        function uncertaintyMinutes(planet, cycles) {
+            const epochError = Math.max(Math.abs(finite(planet.pl_tranmiderr1, 0)), Math.abs(finite(planet.pl_tranmiderr2, 0)));
+            const periodError = Math.max(Math.abs(finite(planet.pl_orbpererr1, 0)), Math.abs(finite(planet.pl_orbpererr2, 0)));
+            return Math.sqrt(epochError ** 2 + (cycles * periodError) ** 2) * 24 * 60;
+        }
+        function buildEvents(planet) {
+            const epoch = finite(planet.pl_tranmid);
+            const period = finite(planet.pl_orbper);
+            const durationHours = finite(planet.pl_trandur);
+            if (epoch === null || period === null || durationHours === null) return [];
+            const now = jdFromDate(new Date());
+            const firstCycle = Math.floor((now - epoch) / period) - 1;
+            const ingress = ingressHours(planet) / 24;
+            const half = durationHours / 48;
+            const pre = Math.max(10, finite(els.preBaseline.value, 45)) / 1440;
+            const post = Math.max(10, finite(els.postBaseline.value, 45)) / 1440;
+            return Array.from({ length: 10 }, (_, index) => {
+                const cycle = firstCycle + index;
+                const midpoint = epoch + cycle * period;
+                const ingressStart = midpoint - half;
+                const egressEnd = midpoint + half;
+                return {
+                    cycle,
+                    midpoint,
+                    baselineStart: ingressStart - pre,
+                    ingressStart,
+                    ingressEnd: ingressStart + ingress,
+                    egressStart: egressEnd - ingress,
+                    egressEnd,
+                    baselineEnd: egressEnd + post,
+                    uncertaintyMinutes: uncertaintyMinutes(planet, cycle)
+                };
+            }).filter(event => event.baselineEnd > now - 0.02);
+        }
+        function selectedEvent() {
+            return state.events[state.selectedEventIndex] || state.events[0];
+        }
+        function pickCurrentOrNextEvent() {
+            const now = jdFromDate(new Date());
+            const active = state.events.findIndex(event => now >= event.baselineStart && now <= event.baselineEnd);
+            const future = state.events.findIndex(event => event.baselineStart > now);
+            state.selectedEventIndex = active >= 0 ? active : Math.max(0, future);
+        }
+        function contactCard(label, jd, accent) {
+            return `<div class="stat rounded-md p-2"><p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p><p class="mono mt-1 text-xs font-bold ${accent}">${utc(jd, false)}</p></div>`;
+        }
+        function statCard(label, content, accent = 'text-cyan-100') {
+            return `<div class="stat rounded-md p-2"><p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p><p class="mono mt-1 text-sm font-bold ${accent}">${escapeHtml(content)}</p></div>`;
+        }
+        function definition(label, content) {
+            return `<div class="flex items-start justify-between gap-3 border-b border-slate-500/15 pb-2"><dt class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</dt><dd class="text-right text-slate-200">${escapeHtml(content)}</dd></div>`;
+        }
+        function renderPlanet() {
+            const planet = state.planet;
+            if (!planet) return;
+            const depth = depthPercent(planet);
+            els.planetName.textContent = planet.pl_name;
+            els.coordinates.textContent = `${planet.rastr || value(planet.ra, ' deg')} / ${planet.decstr || value(planet.dec, ' deg')}`;
+            els.fluxStats.innerHTML = [
+                statCard('Depth', depth === null ? 'unavailable' : `${depth.toFixed(3)}%`, 'text-fuchsia-100'),
+                statCard('Depth ppm', depth === null ? 'unavailable' : `${Math.round(depth * 10000)} ppm`, 'text-green-100'),
+                statCard('Relative floor', depth === null ? 'unavailable' : `${(1 - depth / 100).toFixed(6)}`, 'text-cyan-100'),
+                statCard('Period', value(planet.pl_orbper, ' d', 6), 'text-amber-100'),
+                statCard('Duration', value(planet.pl_trandur, ' h', 3), 'text-green-100'),
+                statCard('TTV flag', Number(planet.ttv_flag) === 1 ? 'yes' : 'no', Number(planet.ttv_flag) === 1 ? 'text-amber-100' : 'text-cyan-100')
+            ].join('');
+            els.planetStats.innerHTML = [
+                definition('Planet', planet.pl_name),
+                definition('Radius', `${value(planet.pl_rade, ' Rearth', 2)} / ${value(planet.pl_radj, ' Rjup', 3)}`),
+                definition('Mass', `${value(planet.pl_bmasse, ' Mearth', 2)} / ${value(planet.pl_bmassj, ' Mjup', 3)}`),
+                definition('Semi-major axis', value(planet.pl_orbsmax, ' AU', 5)),
+                definition('Inclination', value(planet.pl_orbincl, ' deg', 3)),
+                definition('Impact parameter', value(planet.pl_imppar, '', 3)),
+                definition('Equilibrium temp', value(planet.pl_eqt, ' K', 0)),
+                definition('Insolation', value(planet.pl_insol, ' Earth', 2)),
+                definition('Discovery', `${planet.discoverymethod || 'unavailable'} / ${planet.disc_year || '?'}`)
+            ].join('');
+            const hostMag = finite(planet.sy_vmag) ?? finite(planet.sy_gaiamag);
+            els.starStats.innerHTML = [
+                definition('Host', planet.hostname),
+                definition('V magnitude', value(planet.sy_vmag, ' mag', 3)),
+                definition('Gaia magnitude', value(planet.sy_gaiamag, ' mag', 3)),
+                definition('Distance', value(planet.sy_dist, ' pc', 2)),
+                definition('Spectral type', planet.st_spectype || 'unavailable'),
+                definition('Temperature', value(planet.st_teff, ' K', 0)),
+                definition('Radius', value(planet.st_rad, ' Rsun', 3)),
+                definition('Mass', value(planet.st_mass, ' Msun', 3)),
+                definition('Log g', value(planet.st_logg, '', 3)),
+                definition('Metallicity', value(planet.st_met, ' dex', 3)),
+                definition('Planner magnitude', hostMag === null ? 'unavailable' : `${hostMag.toFixed(3)} mag`)
+            ].join('');
+            renderEvents();
+            renderGraphics();
+        }
+        function renderEvents() {
+            const event = selectedEvent();
+            els.eventSelect.innerHTML = '';
+            els.upcomingEvents.innerHTML = '';
+            if (!event) {
+                els.phaseStatus.textContent = 'Archive row is missing a transit midpoint, period, or duration.';
+                return;
+            }
+            state.events.forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = String(index);
+                option.textContent = `${utc(item.midpoint)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min`;
+                els.eventSelect.appendChild(option);
+                const button = document.createElement('button');
+                button.className = `event-row w-full rounded-md p-2 text-left ${index === state.selectedEventIndex ? 'active' : ''}`;
+                button.innerHTML = `<p class="mono text-xs font-bold text-cyan-100">${utc(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-400">ingress ${utc(item.ingressStart, false)} / egress ${utc(item.egressEnd, false)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min</p>`;
+                button.addEventListener('click', () => { state.selectedEventIndex = index; renderEvents(); renderGraphics(); generatePlan(); });
+                els.upcomingEvents.appendChild(button);
+            });
+            els.eventSelect.value = String(state.selectedEventIndex);
+            els.contactGrid.innerHTML = [
+                contactCard('Ingress start', event.ingressStart, 'text-green-100'),
+                contactCard('Ingress end', event.ingressEnd, 'text-cyan-100'),
+                contactCard('Midpoint', event.midpoint, 'text-fuchsia-100'),
+                contactCard('Egress start', event.egressStart, 'text-cyan-100'),
+                contactCard('Egress end', event.egressEnd, 'text-green-100')
+            ].join('');
+        }
+        function transitPosition(event, nowJd) {
+            return clamp((nowJd - event.baselineStart) / (event.baselineEnd - event.baselineStart), 0, 1);
+        }
+        function transitFlux(event, x, depth) {
+            const jd = event.baselineStart + x * (event.baselineEnd - event.baselineStart);
+            if (jd <= event.ingressStart || jd >= event.egressEnd) return 1;
+            if (jd < event.ingressEnd) return 1 - depth * (jd - event.ingressStart) / (event.ingressEnd - event.ingressStart);
+            if (jd > event.egressStart) return 1 - depth * (event.egressEnd - jd) / (event.egressEnd - event.egressStart);
+            return 1 - depth;
+        }
+        function renderGraphics() {
+            const planet = state.planet;
+            const event = selectedEvent();
+            if (!planet || !event) return;
+            const now = jdFromDate(new Date());
+            const depthFraction = (depthPercent(planet) || 1) / 100;
+            const progress = transitPosition(event, now);
+            const yForFlux = flux => 76 + (1 - flux) / Math.max(depthFraction, 0.0001) * 69;
+            const points = Array.from({ length: 101 }, (_, index) => {
+                const x = index / 100;
+                return `${50 + x * 825},${yForFlux(transitFlux(event, x, depthFraction))}`;
+            });
+            els.fluxPath.setAttribute('d', `M ${points.join(' L ')}`);
+            const nowX = 50 + progress * 825;
+            const nowY = yForFlux(transitFlux(event, progress, depthFraction));
+            els.nowLine.setAttribute('x1', nowX);
+            els.nowLine.setAttribute('x2', nowX);
+            els.nowDot.setAttribute('cx', nowX);
+            els.nowDot.setAttribute('cy', nowY);
+            els.timelineDepth.textContent = depthPercent(planet) === null ? 'depth unavailable' : `${depthPercent(planet).toFixed(3)}% depth`;
+            els.fluxFloorLabel.textContent = (1 - depthFraction).toFixed(4);
+            els.timelineMidLabel.textContent = `midpoint ${utc(event.midpoint, false)}`;
+
+            const k = clamp(ratio(planet), 0.02, 0.38);
+            const impact = clamp(finite(planet.pl_imppar, 0), -0.92, 0.92);
+            const inTransitProgress = clamp((now - event.ingressStart) / (event.egressEnd - event.ingressStart), 0, 1);
+            const planetX = 332 + inTransitProgress * 236;
+            const planetY = 115 + impact * 82;
+            els.planetDisc.setAttribute('cx', planetX);
+            els.planetDisc.setAttribute('cy', planetY);
+            els.planetDisc.setAttribute('r', Math.max(8, k * 82));
+            els.planetDiscLabel.setAttribute('x', planetX);
+            els.planetDiscLabel.setAttribute('y', planetY + Math.max(8, k * 82) + 28);
+            els.transitChord.setAttribute('y1', planetY);
+            els.transitChord.setAttribute('y2', planetY);
+            els.geometryLabel.textContent = `b = ${value(planet.pl_imppar, '', 3)} / Rp/Rs = ${ratio(planet).toFixed(3)}`;
+
+            const phase = now < event.baselineStart
+                ? `Waiting for pre-transit baseline / starts ${utc(event.baselineStart)}`
+                : now < event.ingressStart
+                    ? 'Pre-transit baseline'
+                    : now < event.ingressEnd
+                        ? 'Ingress in progress'
+                        : now < event.egressStart
+                            ? 'Full transit'
+                            : now < event.egressEnd
+                                ? 'Egress in progress'
+                                : now <= event.baselineEnd
+                                    ? 'Post-transit baseline'
+                                    : 'Selected event has ended';
+            els.phaseStatus.textContent = `${phase} / archive ephemeris uncertainty +/- ${event.uncertaintyMinutes.toFixed(1)} min`;
+        }
+        function exposureSeconds(magnitude) {
+            const mag = finite(magnitude, 10);
+            const raw = 12 * Math.pow(10, 0.4 * (mag - 9));
+            const clamped = clamp(raw, mag < 6 ? 1 : 2, 90);
+            return clamped <= 10 ? Math.round(clamped) : Math.round(clamped / 5) * 5;
+        }
+        function generatePlan() {
+            const planet = state.planet;
+            const event = selectedEvent();
+            if (!planet || !event) return;
+            const magnitude = finite(planet.sy_vmag) ?? finite(planet.sy_gaiamag) ?? 10;
+            const exposure = exposureSeconds(magnitude);
+            const pause = clamp(finite(els.readoutSeconds.value, 4), 0, 30);
+            const seconds = (event.baselineEnd - event.baselineStart) * 86400;
+            const count = Math.max(1, Math.floor(seconds / (exposure + pause)));
+            const preset = magnitude < 9 ? { label: 'HDR', mode: 'dynamic range priority', gain: 100, offset: 30 } : magnitude > 12 ? { label: 'HCG', mode: 'faint-source efficiency', gain: 100, offset: 30 } : { label: 'LCG', mode: 'photometry headroom', gain: 100, offset: 30 };
+            const filter = els.planFilter.value;
+            state.plan = { exposure, pause, count, preset, filter, magnitude, event };
+            els.exposurePlan.innerHTML = `
+                <div class="grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-md border border-slate-500/20 bg-slate-950/40 p-3">
+                    <span class="mono rounded bg-cyan-300/10 px-2 py-1 text-center text-sm font-bold text-cyan-100">${filter}</span>
+                    <span class="mono text-xs text-slate-300">${count} continuous frames / 1x1 / ${preset.label} gain ${preset.gain} offset ${preset.offset} / ${pause}s pause</span>
+                    <span class="mono text-right text-xs font-bold text-green-200">${exposure}s exp</span>
+                </div>`;
+            els.planTotal.textContent = `${(seconds / 3600).toFixed(2)}h window`;
+            els.planNote.textContent = `Calculated from host magnitude ${magnitude.toFixed(2)}. Use one consistent filter, disable dithering, and verify comparison-star saturation with a short test frame before ingress.`;
+            els.aptOutput.value = aptText();
+        }
+        function aptText() {
+            if (!state.plan || !state.planet) return '';
+            const plan = state.plan;
+            const event = plan.event;
+            return [
+                `APT transit recipe: ${state.planet.pl_name}`,
+                `Host star: ${state.planet.hostname}`,
+                `GoTo command: ${state.planet.rastr || state.planet.ra} ${state.planet.decstr || state.planet.dec}`,
+                `Archive midpoint: ${utc(event.midpoint)}`,
+                `Observation window: ${utc(event.baselineStart)} to ${utc(event.baselineEnd)}`,
+                `Contacts: ingress ${utc(event.ingressStart)} / midpoint ${utc(event.midpoint)} / egress ${utc(event.egressEnd)}`,
+                `Sequence: ${plan.count} x ${plan.exposure}s / filter ${plan.filter} / 1x1 / pause ${plan.pause}s`,
+                `CMOS: ${plan.preset.label} / ${plan.preset.mode} / gain ${plan.preset.gain} / offset ${plan.preset.offset}`,
+                'Dithering: disabled',
+                'Guiding: continuous',
+                'Note: verify comparison stars, focus, and saturation before the pre-transit baseline begins.'
+            ].join('\n');
+        }
+        function downloadText(filename, text) {
+            const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+        function loadPlanet(row) {
+            state.planet = row;
+            state.events = buildEvents(row);
+            pickCurrentOrNextEvent();
+            state.plan = null;
+            renderPlanet();
+            generatePlan();
+        }
+        async function lookupPlanet() {
+            const name = els.planetQuery.value.trim();
+            const endpoint = els.cloudEndpoint.value.trim().replace(/\/$/, '');
+            if (!name || !endpoint) return;
+            localStorage.setItem('observingCloudEndpoint', endpoint);
+            els.lookupStatus.textContent = `Querying NASA Exoplanet Archive for ${name}...`;
+            const response = await fetch(`${endpoint}/exoplanet-info?${new URLSearchParams({ name })}`).catch(() => null);
+            const result = response ? await response.json().catch(() => ({})) : {};
+            if (!response || !response.ok || !result.ok) {
+                els.lookupStatus.textContent = `Lookup failed: ${result.error || 'Worker unreachable'}`;
+                return;
+            }
+            if (!result.rows?.length) {
+                els.lookupStatus.textContent = `No confirmed transiting planet matched ${name}.`;
+                return;
+            }
+            els.archiveResults.innerHTML = '';
+            result.rows.forEach((row, index) => {
+                const option = document.createElement('option');
+                option.value = String(index);
+                option.textContent = `${row.pl_name} / ${row.hostname}`;
+                els.archiveResults.appendChild(option);
+            });
+            els.archiveResultWrap.classList.toggle('hidden', result.rows.length === 1);
+            els.archiveResults.dataset.rows = JSON.stringify(result.rows);
+            els.lookupStatus.textContent = `${result.rows.length} transiting archive match${result.rows.length === 1 ? '' : 'es'} / loaded ${result.rows[0].pl_name}.`;
+            loadPlanet(result.rows[0]);
+        }
+        function renderQueue() {
+            els.transitQueue.innerHTML = '';
+            if (!state.queue.length) {
+                els.transitQueue.innerHTML = '<p class="mono text-[11px] text-slate-500">No saved transit targets.</p>';
+                return;
+            }
+            state.queue.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'event-row flex items-center justify-between gap-2 rounded-md p-2';
+                row.innerHTML = `<button class="min-w-0 flex-1 truncate text-left text-xs font-bold text-cyan-100">${escapeHtml(item.pl_name)}</button><button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Remove</button>`;
+                row.querySelector('button').addEventListener('click', () => { els.planetQuery.value = item.pl_name; lookupPlanet(); });
+                row.querySelectorAll('button')[1].addEventListener('click', () => { state.queue = state.queue.filter(entry => entry.pl_name !== item.pl_name); saveQueue(); renderQueue(); });
+                els.transitQueue.appendChild(row);
+            });
+        }
+
+        els.cloudEndpoint.value = localStorage.getItem('observingCloudEndpoint') || DEFAULT_WORKER_URL;
+        els.lookupPlanet.addEventListener('click', lookupPlanet);
+        els.planetQuery.addEventListener('keydown', event => { if (event.key === 'Enter') lookupPlanet(); });
+        els.archiveResults.addEventListener('change', () => {
+            const rows = JSON.parse(els.archiveResults.dataset.rows || '[]');
+            loadPlanet(rows[Number(els.archiveResults.value)]);
+        });
+        els.eventSelect.addEventListener('change', () => { state.selectedEventIndex = Number(els.eventSelect.value); renderEvents(); renderGraphics(); generatePlan(); });
+        [els.preBaseline, els.postBaseline].forEach(input => input.addEventListener('change', () => { if (!state.planet) return; state.events = buildEvents(state.planet); pickCurrentOrNextEvent(); renderEvents(); renderGraphics(); generatePlan(); }));
+        [els.planFilter, els.readoutSeconds].forEach(input => input.addEventListener('change', generatePlan));
+        els.generatePlan.addEventListener('click', generatePlan);
+        els.copyGoto.addEventListener('click', async () => {
+            const line = els.aptOutput.value.split('\n').find(item => item.startsWith('GoTo command:'));
+            await navigator.clipboard.writeText(line?.replace('GoTo command: ', '') || '').catch(() => {});
+        });
+        els.downloadPlan.addEventListener('click', () => {
+            if (!state.plan || !state.planet) return;
+            downloadText(`${state.planet.pl_name.replace(/\s+/g, '_')}_APT_transit.txt`, els.aptOutput.value);
+        });
+        els.queueCurrent.addEventListener('click', () => {
+            if (!state.planet || state.queue.some(item => item.pl_name === state.planet.pl_name)) return;
+            state.queue.push({ pl_name: state.planet.pl_name, hostname: state.planet.hostname });
+            saveQueue();
+            renderQueue();
+        });
+        setInterval(() => {
+            els.utcClock.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+            renderGraphics();
+        }, 1000);
+        els.utcClock.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        renderQueue();
+        lookupPlanet();
+    </script>
+</body>
+</html>

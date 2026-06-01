@@ -47,6 +47,8 @@ The upload token protects R2 upload, list, and download requests. Target lookup,
 
 Online target lookup resolves names through CDS Sesame and enriches the result through SIMBAD TAP. When available, NightVector automatically fills the custom-target magnitude, angular size in arcminutes, and planner object type before the target is added.
 
+`exoplanets.html` is the NightVector transit workspace. Its public `/exoplanet-info` Worker route queries the NASA Exoplanet Archive `pscomppars` table for confirmed transiting planets and returns ephemerides, coordinates, transit geometry, host-star properties, and planet properties. The page calculates upcoming contact times, current transit phase, flux statistics, and a continuous-cadence APT starting plan.
+
 ## Upload performance
 
 NightVector supports two upload routes:
