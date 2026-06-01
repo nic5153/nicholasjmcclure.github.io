@@ -564,18 +564,34 @@ function escapeAdql(value) {
     .slice(0, 96);
 }
 
+const EXOPLANET_ARCHIVE_COLUMNS = `
+  pl_name, hostname, rastr, decstr, ra, dec, sy_vmag, sy_gaiamag, sy_tmag, sy_dist,
+  st_spectype, st_teff, st_rad, st_mass, st_logg, st_met,
+  pl_orbper, pl_orbpererr1, pl_orbpererr2,
+  pl_tranmid, pl_tranmiderr1, pl_tranmiderr2, pl_tranmid_systemref,
+  pl_trandur, pl_trandurerr1, pl_trandurerr2, pl_trandep, pl_ratror,
+  pl_rade, pl_radj, pl_bmasse, pl_bmassj, pl_orbsmax, pl_orbincl,
+  pl_imppar, pl_insol, pl_eqt, ttv_flag, tran_flag, disc_year, discoverymethod, disc_facility
+`.replace(/\s+/g, " ").trim();
+
+async function queryExoplanetTap(query) {
+  const params = new URLSearchParams({ query, format: "json" });
+  const response = await fetch(`https://exoplanetarchive.ipac.caltech.edu/TAP/sync?${params}`, {
+    headers: { "user-agent": "observing-vault/1.0 (NightVector transit planner)" }
+  });
+  const data = await response.json().catch(() => []);
+  if (!response.ok) {
+    return { ok: false, error: data?.message || "NASA Exoplanet Archive request failed" };
+  }
+  return { ok: true, rows: Array.isArray(data) ? data : [] };
+}
+
 async function queryExoplanetArchive(name) {
   const queryName = escapeAdql(name);
   if (!queryName) return { ok: false, error: "Missing exoplanet name" };
   const query = `
     SELECT TOP 12
-      pl_name, hostname, rastr, decstr, ra, dec, sy_vmag, sy_gaiamag, sy_dist,
-      st_spectype, st_teff, st_rad, st_mass, st_logg, st_met,
-      pl_orbper, pl_orbpererr1, pl_orbpererr2,
-      pl_tranmid, pl_tranmiderr1, pl_tranmiderr2, pl_tranmid_systemref,
-      pl_trandur, pl_trandurerr1, pl_trandurerr2, pl_trandep, pl_ratror,
-      pl_rade, pl_radj, pl_bmasse, pl_bmassj, pl_orbsmax, pl_orbincl,
-      pl_imppar, pl_insol, pl_eqt, ttv_flag, tran_flag, disc_year, discoverymethod
+      ${EXOPLANET_ARCHIVE_COLUMNS}
     FROM pscomppars
     WHERE tran_flag = 1
       AND (
@@ -585,15 +601,9 @@ async function queryExoplanetArchive(name) {
         OR LOWER(hostname) LIKE LOWER('%${queryName}%')
       )
   `.replace(/\s+/g, " ").trim();
-  const params = new URLSearchParams({ query, format: "json" });
-  const response = await fetch(`https://exoplanetarchive.ipac.caltech.edu/TAP/sync?${params}`, {
-    headers: { "user-agent": "observing-vault/1.0 (NightVector transit planner)" }
-  });
-  const data = await response.json().catch(() => []);
-  if (!response.ok) {
-    return { ok: false, error: data?.message || "NASA Exoplanet Archive request failed" };
-  }
-  const rows = Array.isArray(data) ? data : [];
+  const result = await queryExoplanetTap(query);
+  if (!result.ok) return result;
+  const rows = result.rows;
   const normalized = queryName.toLowerCase();
   rows.sort((left, right) => {
     const rank = row => String(row.pl_name || "").toLowerCase() === normalized
@@ -609,6 +619,25 @@ async function queryExoplanetArchive(name) {
     updated: new Date().toISOString(),
     query: name,
     rows
+  };
+}
+
+async function queryTessConfirmedExoplanets() {
+  const query = `
+    SELECT TOP 2000
+      ${EXOPLANET_ARCHIVE_COLUMNS}
+    FROM pscomppars
+    WHERE tran_flag = 1
+      AND disc_facility = 'Transiting Exoplanet Survey Satellite (TESS)'
+    ORDER BY pl_name
+  `.replace(/\s+/g, " ").trim();
+  const result = await queryExoplanetTap(query);
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    source: "NASA Exoplanet Archive PSCompPars",
+    updated: new Date().toISOString(),
+    rows: result.rows
   };
 }
 
@@ -690,6 +719,11 @@ export default {
     if (request.method === "GET" && url.pathname === "/exoplanet-info") {
       const name = url.searchParams.get("name");
       const result = await queryExoplanetArchive(name);
+      return json(result, result.ok ? 200 : 400, env, request);
+    }
+
+    if (request.method === "GET" && url.pathname === "/tess-exoplanets") {
+      const result = await queryTessConfirmedExoplanets();
       return json(result, result.ok ? 200 : 400, env, request);
     }
 

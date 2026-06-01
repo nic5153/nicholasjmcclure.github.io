@@ -148,6 +148,16 @@
                     </section>
 
                     <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-200">TESS Confirmed</h2>
+                            <button id="reload-tess-catalog" class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Reload</button>
+                        </div>
+                        <input id="tess-catalog-filter" class="input-dark mt-3 w-full rounded-md px-3 py-2 text-xs" placeholder="Filter planet or host star">
+                        <select id="tess-catalog" class="input-dark mt-3 w-full rounded-md px-2 py-2 text-xs" size="10" aria-label="TESS confirmed exoplanets"></select>
+                        <p id="tess-catalog-status" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Loading confirmed TESS planets from the NASA Exoplanet Archive...</p>
+                    </section>
+
+                    <section class="panel rounded-lg p-4">
                         <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Observation Setup</h2>
                         <div class="mt-4 grid grid-cols-2 gap-2">
                             <label class="block">
@@ -308,6 +318,7 @@
             events: [],
             selectedEventIndex: 0,
             plan: null,
+            tessCatalog: [],
             queue: loadQueue()
         };
         const els = Object.fromEntries([...document.querySelectorAll('[id]')].map(element => [element.id.replace(/-([a-z])/g, (_, char) => char.toUpperCase()), element]));
@@ -647,6 +658,48 @@
             els.lookupStatus.textContent = `${result.rows.length} transiting archive match${result.rows.length === 1 ? '' : 'es'} / loaded ${result.rows[0].pl_name}.`;
             loadPlanet(result.rows[0]);
         }
+        function tessCatalogLabel(row) {
+            const magnitude = finite(row.sy_tmag, finite(row.sy_vmag));
+            const period = finite(row.pl_orbper);
+            return [
+                row.pl_name,
+                magnitude === null ? '' : `T ${magnitude.toFixed(2)}`,
+                period === null ? '' : `P ${period.toFixed(3)}d`
+            ].filter(Boolean).join(' / ');
+        }
+        function renderTessCatalog() {
+            const filter = els.tessCatalogFilter.value.trim().toLowerCase();
+            const matches = state.tessCatalog.filter(row => {
+                const text = `${row.pl_name || ''} ${row.hostname || ''}`.toLowerCase();
+                return !filter || text.includes(filter);
+            });
+            els.tessCatalog.innerHTML = '';
+            matches.forEach(row => {
+                const option = document.createElement('option');
+                option.value = row.pl_name;
+                option.textContent = tessCatalogLabel(row);
+                els.tessCatalog.appendChild(option);
+            });
+            els.tessCatalogStatus.textContent = `${matches.length} of ${state.tessCatalog.length} confirmed TESS transit target${state.tessCatalog.length === 1 ? '' : 's'} shown. Select one to load its timeline and plots.`;
+        }
+        async function loadTessCatalog() {
+            els.tessCatalogStatus.textContent = 'Loading confirmed TESS planets from the NASA Exoplanet Archive...';
+            const response = await fetch(`${DEFAULT_WORKER_URL}/tess-exoplanets`).catch(() => null);
+            const result = response ? await response.json().catch(() => ({})) : {};
+            if (!response || !response.ok || !result.ok || !Array.isArray(result.rows)) {
+                els.tessCatalogStatus.textContent = `TESS catalog unavailable: ${result.error || 'Worker unreachable'}`;
+                return;
+            }
+            state.tessCatalog = result.rows;
+            renderTessCatalog();
+        }
+        function selectTessPlanet() {
+            const row = state.tessCatalog.find(item => item.pl_name === els.tessCatalog.value);
+            if (!row) return;
+            els.planetQuery.value = row.pl_name;
+            els.lookupStatus.textContent = `Loaded confirmed TESS discovery ${row.pl_name} from the NASA Exoplanet Archive.`;
+            loadPlanet(row);
+        }
         function renderQueue() {
             els.transitQueue.innerHTML = '';
             if (!state.queue.length) {
@@ -665,6 +718,10 @@
 
         els.lookupPlanet.addEventListener('click', lookupPlanet);
         els.planetQuery.addEventListener('keydown', event => { if (event.key === 'Enter') lookupPlanet(); });
+        els.reloadTessCatalog.addEventListener('click', loadTessCatalog);
+        els.tessCatalogFilter.addEventListener('input', renderTessCatalog);
+        els.tessCatalog.addEventListener('change', selectTessPlanet);
+        els.tessCatalog.addEventListener('click', selectTessPlanet);
         els.archiveResults.addEventListener('change', () => {
             const rows = JSON.parse(els.archiveResults.dataset.rows || '[]');
             loadPlanet(rows[Number(els.archiveResults.value)]);
@@ -693,6 +750,7 @@
         }, 1000);
         els.utcClock.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
         renderQueue();
+        loadTessCatalog();
         lookupPlanet();
     </script>
 </body>
