@@ -71,13 +71,20 @@ function uploadKey(searchParams) {
   const exposure = cleanSegment(searchParams.get("exposure"), "unknown");
   const binning = cleanSegment(searchParams.get("binning"), "unknown");
   const filter = cleanSegment(searchParams.get("filter"), "unknown");
+  const batch = cleanSegment(searchParams.get("batch"), "");
+  const sequence = cleanSegment(searchParams.get("sequence"), "");
   const unique = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   const calibrationSettings = `gain-${gain}_offset-${offset}_temp-${temperature}C_exp-${exposure}s_bin-${binning}_filter-${filter}`;
-  const folder = collection === "calibration"
-    ? `calibration/${kind}/${sessionDate}/${rig}/${calibrationSettings}`
-    : `${sessionDate}/${target}/${kind}`;
+  const folder = batch
+    ? collection === "calibration"
+      ? `calibration/${rig}/${sessionDate}/${batch}/${kind}/${calibrationSettings}`
+      : `observations/${sessionDate}/${target}/${batch}/${kind}`
+    : collection === "calibration"
+      ? `calibration/${kind}/${sessionDate}/${rig}/${calibrationSettings}`
+      : `${sessionDate}/${target}/${kind}`;
+  const objectName = batch && sequence ? `${sequence}-${filename}` : `${unique}-${filename}`;
   return {
-    key: `${folder}/${unique}-${filename}`,
+    key: `${folder}/${objectName}`,
     target,
     kind,
     sessionDate,
@@ -89,7 +96,9 @@ function uploadKey(searchParams) {
     offset,
     exposure,
     binning,
-    filter
+    filter,
+    batch,
+    sequence
   };
 }
 
@@ -759,7 +768,9 @@ export default {
           offset: upload.offset ?? "unknown",
           exposure: upload.exposure ?? "unknown",
           binning: upload.binning ?? "unknown",
-          filter: upload.filter || "unknown"
+          filter: upload.filter || "unknown",
+          batch: upload.batch || "",
+          sequence: upload.sequence || ""
         });
         const { key } = uploadKey(params);
         return presignR2Put(env, key);
@@ -772,7 +783,7 @@ export default {
     }
 
     if (request.method === "POST" && url.pathname === "/upload") {
-      const { key, target, kind, sessionDate, filename, collection, rig, temperature, gain, offset, exposure, binning, filter } = uploadKey(url.searchParams);
+      const { key, target, kind, sessionDate, filename, collection, rig, temperature, gain, offset, exposure, binning, filter, batch, sequence } = uploadKey(url.searchParams);
 
       await env.OBS_BUCKET.put(key, request.body, {
         httpMetadata: {
@@ -790,7 +801,9 @@ export default {
           offset,
           exposure,
           binning,
-          filter
+          filter,
+          batch,
+          sequence
         }
       });
 

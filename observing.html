@@ -596,33 +596,36 @@
                             <p class="mono text-[10px] uppercase tracking-widest text-green-200">Calibration FITS metadata</p>
                             <p id="calibration-summary-text" class="mt-1 text-xs leading-5 text-slate-400">Choose Calibration library, then stage FITS files to read their headers locally.</p>
                         </div>
-                        <div class="mt-3 space-y-2">
-                            <input id="cloud-endpoint" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" placeholder="Cloudflare Worker URL">
-                            <input id="upload-token" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" type="password" placeholder="Upload token">
-                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                <label class="block">
-                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Upload route</span>
-                                    <select id="upload-mode" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
-                                        <option value="auto" selected>Direct R2 / auto fallback</option>
-                                        <option value="proxy">Worker proxy / compatibility</option>
-                                    </select>
-                                </label>
-                                <label class="block">
-                                    <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Parallel uploads</span>
-                                    <select id="upload-concurrency" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
-                                        <option value="1">1 file / compatibility</option>
-                                        <option value="4">4 files</option>
-                                        <option value="8">8 files</option>
-                                        <option value="12" selected>12 files / recommended</option>
-                                        <option value="16">16 files / very fast</option>
-                                        <option value="24">24 files / aggressive</option>
-                                    </select>
-                                </label>
+                        <details class="mt-3 rounded-md border border-slate-500/20 bg-slate-950/30 p-2">
+                            <summary class="cursor-pointer mono text-[10px] font-bold uppercase tracking-widest text-slate-400">Cloud connection &amp; advanced</summary>
+                            <div class="mt-3 space-y-2">
+                                <input id="cloud-endpoint" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" placeholder="Cloudflare Worker URL">
+                                <input id="upload-token" class="input-dark w-full rounded-md px-3 py-2 mono text-xs" type="password" placeholder="Upload token">
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <label class="block">
+                                        <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Upload route</span>
+                                        <select id="upload-mode" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
+                                            <option value="auto" selected>Direct R2 / auto fallback</option>
+                                            <option value="proxy">Worker proxy / compatibility</option>
+                                        </select>
+                                    </label>
+                                    <label class="block">
+                                        <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Parallel uploads</span>
+                                        <select id="upload-concurrency" class="input-dark mt-1 w-full rounded-md px-3 py-2 mono text-xs">
+                                            <option value="1">1 file / compatibility</option>
+                                            <option value="4">4 files</option>
+                                            <option value="8">8 files</option>
+                                            <option value="12" selected>12 files / recommended</option>
+                                            <option value="16">16 files / very fast</option>
+                                            <option value="24">24 files / aggressive</option>
+                                        </select>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
+                        </details>
                         <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <button id="upload-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Upload Cloud</button>
-                            <button id="download-manifest" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Inventory</button>
+                            <button id="upload-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Upload Staged Batch</button>
+                            <button id="download-manifest" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Save Manifest</button>
                         </div>
                         <div class="upload-progress mt-3 h-3 rounded-full">
                             <span id="upload-progress-bar"></span>
@@ -634,13 +637,18 @@
                     </section>
 
                     <section class="panel rounded-xl p-4">
-                        <details>
-                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Cloud Inventory</summary>
-                        <input id="cloud-prefix" class="input-dark mt-4 w-full rounded-md px-3 py-2 mono text-xs" placeholder="Prefix, e.g. 2026-05-29/M51">
+                        <details open>
+                        <summary class="cursor-pointer mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Cloud Library</summary>
                         <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <button id="list-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">View Cloud</button>
-                            <button id="download-cloud-listed" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Download Listed</button>
+                            <button id="browse-latest-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Latest Upload</button>
+                            <button id="browse-current-cloud" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Current Night</button>
                         </div>
+                        <details class="mt-3 rounded-md border border-slate-500/20 bg-slate-950/30 p-2">
+                            <summary class="cursor-pointer mono text-[10px] font-bold uppercase tracking-widest text-slate-400">Manual folder filter</summary>
+                            <input id="cloud-prefix" class="input-dark mt-3 w-full rounded-md px-3 py-2 mono text-xs" placeholder="Folder prefix">
+                            <button id="list-cloud" class="ghost-button mt-2 w-full rounded-md px-3 py-2 mono text-xs font-bold">Browse Folder</button>
+                        </details>
+                        <button id="download-cloud-listed" class="ghost-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Download Listed Folder</button>
                         <p id="cloud-inventory-status" class="mt-3 mono text-[11px] text-cyan-100">No cloud inventory loaded.</p>
                         <div class="upload-progress mt-3 h-2 rounded-full">
                             <span id="download-progress-bar"></span>
@@ -1699,10 +1707,39 @@
             els.plannerProfileStatus.textContent = `Loaded cloud planner backup from ${result.updatedAt || 'D1'}.`;
         }
 
+        function cleanCloudSegment(value, fallback = 'unknown') {
+            return String(value || fallback)
+                .trim()
+                .replace(/[^a-z0-9._ -]/gi, '')
+                .replace(/\s+/g, '_')
+                .slice(0, 80) || fallback;
+        }
+
+        function cloudBatchId() {
+            return `batch-${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}`;
+        }
+
+        function cloudPrefixForItem(item) {
+            const date = cleanCloudSegment(item.sessionDate, new Date().toISOString().slice(0, 10));
+            const batch = cleanCloudSegment(item.batch, 'batch');
+            return item.collection === 'calibration'
+                ? `calibration/${cleanCloudSegment(selectedRig().name, 'unknown-rig')}/${date}/${batch}`
+                : `observations/${date}/${cleanCloudSegment(item.target, 'unknown-target')}/${batch}`;
+        }
+
+        function setCloudPrefix(prefix) {
+            els.cloudPrefix.value = prefix;
+            localStorage.setItem('observingCloudPrefix', prefix);
+        }
+
         function defaultCloudPrefix() {
             const target = els.vaultTargetName.value.trim() || (allTargets().find(t => t.id === state.selectedId)?.name || '');
             const date = els.sessionDate.value || new Date().toISOString().slice(0, 10);
-            return target ? `${date}/${target.replace(/\s+/g, "_")}` : date;
+            return els.vaultCollection.value === 'calibration'
+                ? `calibration/${cleanCloudSegment(selectedRig().name, 'unknown-rig')}`
+                : target
+                    ? `observations/${cleanCloudSegment(date)}/${cleanCloudSegment(target)}`
+                    : `observations/${cleanCloudSegment(date)}`;
         }
 
         function renderCloudInventory() {
@@ -2959,6 +2996,16 @@
             const typedTarget = els.vaultTargetName.value.trim();
             const sessionDate = els.sessionDate.value || new Date().toISOString().slice(0, 10);
             const collection = els.vaultCollection.value;
+            const stagedTarget = typedTarget || (target ? target.name : '');
+            const existing = state.files.find(item => item.file && !item.remoteKey);
+            const changedObservation = existing
+                && collection === 'session'
+                && (existing.collection !== collection || existing.sessionDate !== sessionDate || existing.target !== stagedTarget);
+            const changedCollection = existing && existing.collection !== collection;
+            if (changedObservation || changedCollection) {
+                els.vaultStatus.textContent = 'Local: finish uploading or clear the staged batch before switching collection, target, or observing date.';
+                return;
+            }
             const supported = /\.(fits?|fts|xisf|ser|avi|mp4|mov|mkv|jpe?g|png|tiff?|cr2|cr3|nef|arw|dng)$/i;
             const files = Array.from(fileList || [])
                 .map(item => item.file ? item : { file: item, relativePath: item.webkitRelativePath || item.name })
@@ -2989,7 +3036,7 @@
                     kind,
                     collection,
                     calibration,
-                    target: typedTarget || (target ? target.name : ''),
+                    target: stagedTarget,
                     sessionDate: calibration?.date || sessionDate,
                     lastModified: new Date(file.lastModified).toISOString(),
                     relativePath: relativePath || file.webkitRelativePath || file.name,
@@ -3119,6 +3166,19 @@
             localStorage.setItem('observingCloudPrefix', els.cloudPrefix.value.trim());
         });
         document.getElementById('list-cloud').addEventListener('click', listCloudObjects);
+        document.getElementById('browse-latest-cloud').addEventListener('click', async () => {
+            const prefix = localStorage.getItem('observingLastCloudPrefix');
+            if (!prefix) {
+                els.cloudInventoryStatus.textContent = 'No upload batch has been saved from this browser yet.';
+                return;
+            }
+            setCloudPrefix(prefix);
+            await listCloudObjects();
+        });
+        document.getElementById('browse-current-cloud').addEventListener('click', async () => {
+            setCloudPrefix(defaultCloudPrefix());
+            await listCloudObjects();
+        });
         document.getElementById('download-cloud-listed').addEventListener('click', downloadListedObjects);
         async function prepareDirectUploadTickets(items, endpoint, token, uploadMode) {
             const tickets = new Map();
@@ -3147,7 +3207,9 @@
                                 offset: item.calibration?.offset ?? '',
                                 exposure: item.calibration?.exposure ?? '',
                                 binning: item.calibration?.binning ?? '',
-                                filter: item.calibration?.filter ?? ''
+                                filter: item.calibration?.filter ?? '',
+                                batch: item.batch || '',
+                                sequence: item.sequence || ''
                             }))
                         })
                     });
@@ -3179,7 +3241,9 @@
                 offset: item.calibration?.offset ?? '',
                 exposure: item.calibration?.exposure ?? '',
                 binning: item.calibration?.binning ?? '',
-                filter: item.calibration?.filter ?? ''
+                filter: item.calibration?.filter ?? '',
+                batch: item.batch || '',
+                sequence: item.sequence || ''
             });
             if (directState === 'batch') {
                 let directResponse;
@@ -3258,11 +3322,21 @@
             }
             const pending = state.files.filter(item => item.file && !item.remoteKey);
             if (!pending.length) {
-                els.cloudStatus.textContent = 'Cloud: no pending FITS files.';
+                els.cloudStatus.textContent = 'Cloud: no staged files waiting for upload.';
                 els.uploadDetail.textContent = 'Upload queue idle.';
                 els.uploadProgressBar.style.width = '100%';
                 return;
             }
+            if (new Set(pending.map(item => item.collection)).size > 1) {
+                els.cloudStatus.textContent = 'Cloud: this staged batch mixes observations and calibration files. Clear staged files, then upload one collection at a time.';
+                return;
+            }
+            const batch = cloudBatchId();
+            pending.forEach((item, index) => {
+                item.batch = batch;
+                item.sequence = String(index + 1).padStart(4, '0');
+            });
+            const uploadedPrefixes = [...new Set(pending.map(cloudPrefixForItem))];
             localStorage.setItem('observingCloudEndpoint', endpoint);
             els.uploadProgressBar.style.width = '0%';
             const uploadMode = els.uploadMode.value;
@@ -3319,10 +3393,13 @@
                 return;
             }
             els.uploadDetail.textContent = `Uploaded ${pending.length} file${pending.length === 1 ? '' : 's'} to Cloudflare R2.`;
+            const latestPrefix = uploadedPrefixes.length === 1 ? uploadedPrefixes[0] : defaultCloudPrefix();
+            setCloudPrefix(latestPrefix);
+            localStorage.setItem('observingLastCloudPrefix', latestPrefix);
             state.files = state.files.filter(item => !item.remoteKey);
             state.cloudObjects = [];
-            els.cloudInventoryStatus.textContent = 'Cloud inventory changed. Click View Cloud to refresh.';
             renderVault();
+            await listCloudObjects();
         });
 
         const mobileMenuButton = document.getElementById('mobile-menu-button');

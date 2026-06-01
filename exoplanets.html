@@ -145,7 +145,6 @@
                             <select id="archive-results" class="input-dark mt-1 w-full rounded-md px-3 py-2 text-xs"></select>
                         </label>
                         <p id="lookup-status" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Ready to query the NASA Exoplanet Archive.</p>
-                        <input id="cloud-endpoint" class="input-dark mt-3 w-full rounded-md px-3 py-2 mono text-[11px]" placeholder="Cloudflare Worker URL">
                     </section>
 
                     <section class="panel rounded-lg p-4">
@@ -624,11 +623,9 @@
         }
         async function lookupPlanet() {
             const name = els.planetQuery.value.trim();
-            const endpoint = els.cloudEndpoint.value.trim().replace(/\/$/, '');
-            if (!name || !endpoint) return;
-            localStorage.setItem('observingCloudEndpoint', endpoint);
+            if (!name) return;
             els.lookupStatus.textContent = `Querying NASA Exoplanet Archive for ${name}...`;
-            const response = await fetch(`${endpoint}/exoplanet-info?${new URLSearchParams({ name })}`).catch(() => null);
+            const response = await fetch(`${DEFAULT_WORKER_URL}/exoplanet-info?${new URLSearchParams({ name })}`).catch(() => null);
             const result = response ? await response.json().catch(() => ({})) : {};
             if (!response || !response.ok || !result.ok) {
                 els.lookupStatus.textContent = `Lookup failed: ${result.error || 'Worker unreachable'}`;
@@ -666,7 +663,6 @@
             });
         }
 
-        els.cloudEndpoint.value = localStorage.getItem('observingCloudEndpoint') || DEFAULT_WORKER_URL;
         els.lookupPlanet.addEventListener('click', lookupPlanet);
         els.planetQuery.addEventListener('keydown', event => { if (event.key === 'Enter') lookupPlanet(); });
         els.archiveResults.addEventListener('change', () => {

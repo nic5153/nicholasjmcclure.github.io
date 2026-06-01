@@ -49,6 +49,8 @@ Online target lookup resolves names through CDS Sesame and enriches the result t
 
 `exoplanets.html` is the NightVector transit workspace. Its public `/exoplanet-info` Worker route queries the NASA Exoplanet Archive `pscomppars` table for confirmed transiting planets and returns ephemerides, coordinates, transit geometry, host-star properties, and planet properties. The page calculates upcoming contact times, current transit phase, flux statistics, and a continuous-cadence APT starting plan.
 
+New vault uploads are grouped into readable batches. Observations use `observations/YYYY-MM-DD/target/batch/frame-type`, while calibration files use `calibration/rig/YYYY-MM-DD/batch/frame-type/settings`. Older browser copies continue to use the legacy layout until the updated `observing.html` is published.
+
 ## Upload performance
 
 NightVector supports two upload routes:
