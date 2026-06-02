@@ -119,7 +119,7 @@
                     <h1 class="mt-2 text-3xl font-extrabold text-white md:text-5xl">Exoplanet Transits</h1>
                 </div>
                 <div class="panel rounded-md px-3 py-2">
-                    <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Current UTC</p>
+                    <p class="mono text-[10px] uppercase tracking-widest text-slate-500">Current Central / UTC</p>
                     <p id="utc-clock" class="mono mt-1 text-sm font-bold text-cyan-100"></p>
                 </div>
             </header>
@@ -313,6 +313,7 @@
 
     <script>
         const DEFAULT_WORKER_URL = 'https://observing-vault.nic5153mcclure.workers.dev';
+        const CENTRAL_TIME_ZONE = 'America/Chicago';
         const state = {
             planet: null,
             events: [],
@@ -351,11 +352,44 @@
         function dateFromJd(jd) {
             return new Date((jd - 2440587.5) * 86400000);
         }
-        function utc(jd, withDate = true) {
-            const date = dateFromJd(jd);
+        function utcDate(date, withDate = true, withSeconds = false) {
             return withDate
-                ? date.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
-                : date.toISOString().slice(11, 16);
+                ? `${date.toISOString().replace('T', ' ').slice(0, withSeconds ? 19 : 16)} UTC`
+                : `${date.toISOString().slice(11, withSeconds ? 19 : 16)} UTC`;
+        }
+        function centralDate(date, withDate = true, withSeconds = false) {
+            const options = {
+                timeZone: CENTRAL_TIME_ZONE,
+                hour12: false,
+                year: withDate ? 'numeric' : undefined,
+                month: withDate ? '2-digit' : undefined,
+                day: withDate ? '2-digit' : undefined,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: withSeconds ? '2-digit' : undefined,
+                timeZoneName: 'short'
+            };
+            const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', options)
+                .formatToParts(date)
+                .filter(part => part.type !== 'literal')
+                .map(part => [part.type, part.value]));
+            const time = `${parts.hour}:${parts.minute}${withSeconds ? `:${parts.second}` : ''}`;
+            return withDate
+                ? `${parts.year}-${parts.month}-${parts.day} ${time} ${parts.timeZoneName}`
+                : `${time} ${parts.timeZoneName}`;
+        }
+        function utc(jd, withDate = true) {
+            return utcDate(dateFromJd(jd), withDate);
+        }
+        function central(jd, withDate = true) {
+            return centralDate(dateFromJd(jd), withDate);
+        }
+        function dualTime(jd, withDate = true) {
+            return `${central(jd, withDate)} / ${utc(jd, withDate)}`;
+        }
+        function currentClock() {
+            const now = new Date();
+            return `${centralDate(now, true, true)} / ${utcDate(now, true, true)}`;
         }
         function value(value, suffix = '', digits = null) {
             const number = finite(value);
@@ -428,7 +462,7 @@
             state.selectedEventIndex = active >= 0 ? active : Math.max(0, future);
         }
         function contactCard(label, jd, accent) {
-            return `<div class="stat rounded-md p-2"><p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p><p class="mono mt-1 text-xs font-bold ${accent}">${utc(jd, false)}</p></div>`;
+            return `<div class="stat rounded-md p-2"><p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p><p class="mono mt-1 text-xs font-bold ${accent}">${central(jd, false)}</p><p class="mono mt-1 text-[10px] text-slate-500">${utc(jd, false)}</p></div>`;
         }
         function statCard(label, content, accent = 'text-cyan-100') {
             return `<div class="stat rounded-md p-2"><p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p><p class="mono mt-1 text-sm font-bold ${accent}">${escapeHtml(content)}</p></div>`;
@@ -489,11 +523,11 @@
             state.events.forEach((item, index) => {
                 const option = document.createElement('option');
                 option.value = String(index);
-                option.textContent = `${utc(item.midpoint)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min`;
+                option.textContent = `${dualTime(item.midpoint)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min`;
                 els.eventSelect.appendChild(option);
                 const button = document.createElement('button');
                 button.className = `event-row w-full rounded-md p-2 text-left ${index === state.selectedEventIndex ? 'active' : ''}`;
-                button.innerHTML = `<p class="mono text-xs font-bold text-cyan-100">${utc(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-400">ingress ${utc(item.ingressStart, false)} / egress ${utc(item.egressEnd, false)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min</p>`;
+                button.innerHTML = `<p class="mono text-xs font-bold text-cyan-100">${central(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-500">${utc(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-400">ingress ${central(item.ingressStart, false)} / egress ${central(item.egressEnd, false)}</p><p class="mono mt-1 text-[10px] text-slate-500">ingress ${utc(item.ingressStart, false)} / egress ${utc(item.egressEnd, false)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min</p>`;
                 button.addEventListener('click', () => { state.selectedEventIndex = index; renderEvents(); renderGraphics(); generatePlan(); });
                 els.upcomingEvents.appendChild(button);
             });
@@ -537,7 +571,7 @@
             els.nowDot.setAttribute('cy', nowY);
             els.timelineDepth.textContent = depthPercent(planet) === null ? 'depth unavailable' : `${depthPercent(planet).toFixed(3)}% depth`;
             els.fluxFloorLabel.textContent = (1 - depthFraction).toFixed(4);
-            els.timelineMidLabel.textContent = `midpoint ${utc(event.midpoint, false)}`;
+            els.timelineMidLabel.textContent = `midpoint ${central(event.midpoint, false)} / ${utc(event.midpoint, false)}`;
 
             const k = clamp(ratio(planet), 0.02, 0.38);
             const impact = clamp(finite(planet.pl_imppar, 0), -0.92, 0.92);
@@ -554,7 +588,7 @@
             els.geometryLabel.textContent = `b = ${value(planet.pl_imppar, '', 3)} / Rp/Rs = ${ratio(planet).toFixed(3)}`;
 
             const phase = now < event.baselineStart
-                ? `Waiting for pre-transit baseline / starts ${utc(event.baselineStart)}`
+                ? `Waiting for pre-transit baseline / starts ${dualTime(event.baselineStart)}`
                 : now < event.ingressStart
                     ? 'Pre-transit baseline'
                     : now < event.ingressEnd
@@ -604,9 +638,9 @@
                 `APT transit recipe: ${state.planet.pl_name}`,
                 `Host star: ${state.planet.hostname}`,
                 `GoTo command: ${state.planet.rastr || state.planet.ra} ${state.planet.decstr || state.planet.dec}`,
-                `Archive midpoint: ${utc(event.midpoint)}`,
-                `Observation window: ${utc(event.baselineStart)} to ${utc(event.baselineEnd)}`,
-                `Contacts: ingress ${utc(event.ingressStart)} / midpoint ${utc(event.midpoint)} / egress ${utc(event.egressEnd)}`,
+                `Archive midpoint: ${dualTime(event.midpoint)}`,
+                `Observation window: ${dualTime(event.baselineStart)} to ${dualTime(event.baselineEnd)}`,
+                `Contacts: ingress ${dualTime(event.ingressStart)} / midpoint ${dualTime(event.midpoint)} / egress ${dualTime(event.egressEnd)}`,
                 `Sequence: ${plan.count} x ${plan.exposure}s / filter ${plan.filter} / 1x1 / pause ${plan.pause}s`,
                 `CMOS: ${plan.preset.label} / ${plan.preset.mode} / gain ${plan.preset.gain} / offset ${plan.preset.offset}`,
                 'Dithering: disabled',
@@ -745,10 +779,10 @@
             renderQueue();
         });
         setInterval(() => {
-            els.utcClock.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+            els.utcClock.textContent = currentClock();
             renderGraphics();
         }, 1000);
-        els.utcClock.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        els.utcClock.textContent = currentClock();
         renderQueue();
         loadTessCatalog();
         lookupPlanet();
