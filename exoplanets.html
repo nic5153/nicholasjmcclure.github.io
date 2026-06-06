@@ -192,6 +192,17 @@
                         </div>
                         <div id="transit-queue" class="mt-3 space-y-2"></div>
                     </section>
+                    <section class="panel rounded-lg p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-amber-200">Suggested Nightly Transits</h2>
+                            <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Choose a night</span>
+                        </div>
+                        <label class="mt-3 block">
+                            <input id="night-date" type="date" class="input-dark w-full rounded-md px-3 py-2 text-xs">
+                        </label>
+                        <div id="nightly-suggestions" class="mt-3 space-y-2 text-xs"></div>
+                        <p id="nightly-suggestion-note" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Saved transit targets with visible windows for the selected night will be ranked by observability, depth, duration, and uncertainty.</p>
+                    </section>
                 </aside>
 
                 <section class="space-y-4">
@@ -320,7 +331,8 @@
             selectedEventIndex: 0,
             plan: null,
             tessCatalog: [],
-            queue: loadQueue()
+            queue: loadQueue(),
+            nightDate: new Date().toISOString().slice(0, 10)
         };
         const els = Object.fromEntries([...document.querySelectorAll('[id]')].map(element => [element.id.replace(/-([a-z])/g, (_, char) => char.toUpperCase()), element]));
 
@@ -330,6 +342,19 @@
         }
         function saveQueue() {
             localStorage.setItem('nightvectorExoplanetQueue', JSON.stringify(state.queue));
+        }
+        function localMidnight(dateString) {
+            const [year, month, day] = String(dateString).split('-').map(Number);
+            return new Date(year, month - 1, day, 0, 0, 0, 0);
+        }
+        function nightRange(dateString) {
+            const start = localMidnight(dateString);
+            return { start, end: new Date(start.getTime() + 86400000) };
+        }
+        function rangeOverlapMinutes(event, range) {
+            const start = Math.max(event.baselineStart, jdFromDate(range.start));
+            const end = Math.min(event.baselineEnd, jdFromDate(range.end));
+            return Math.max(0, (end - start) * 1440);
         }
         function finite(value, fallback = null) {
             const number = Number(value);
@@ -738,16 +763,23 @@
             els.transitQueue.innerHTML = '';
             if (!state.queue.length) {
                 els.transitQueue.innerHTML = '<p class="mono text-[11px] text-slate-500">No saved transit targets.</p>';
-                return;
+            } else {
+                state.queue.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'event-row flex items-center justify-between gap-2 rounded-md p-2';
+                    row.innerHTML = `<button class="min-w-0 flex-1 truncate text-left text-xs font-bold text-cyan-100">${escapeHtml(item.pl_name || item.row?.pl_name || '')}</button><button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Remove</button>`;
+                    row.querySelector('button').addEventListener('click', () => {
+                        const planetName = item.pl_name || item.row?.pl_name;
+                        if (planetName) {
+                            els.planetQuery.value = planetName;
+                            lookupPlanet();
+                        }
+                    });
+                    row.querySelectorAll('button')[1].addEventListener('click', () => { state.queue = state.queue.filter(entry => entry.pl_name !== item.pl_name); saveQueue(); renderQueue(); renderSuggestions(); });
+                    els.transitQueue.appendChild(row);
+                });
             }
-            state.queue.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'event-row flex items-center justify-between gap-2 rounded-md p-2';
-                row.innerHTML = `<button class="min-w-0 flex-1 truncate text-left text-xs font-bold text-cyan-100">${escapeHtml(item.pl_name)}</button><button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Remove</button>`;
-                row.querySelector('button').addEventListener('click', () => { els.planetQuery.value = item.pl_name; lookupPlanet(); });
-                row.querySelectorAll('button')[1].addEventListener('click', () => { state.queue = state.queue.filter(entry => entry.pl_name !== item.pl_name); saveQueue(); renderQueue(); });
-                els.transitQueue.appendChild(row);
-            });
+            renderSuggestions();
         }
 
         els.lookupPlanet.addEventListener('click', lookupPlanet);
@@ -761,6 +793,7 @@
             loadPlanet(rows[Number(els.archiveResults.value)]);
         });
         els.eventSelect.addEventListener('change', () => { state.selectedEventIndex = Number(els.eventSelect.value); renderEvents(); renderGraphics(); generatePlan(); });
+        els.nightDate.addEventListener('change', () => { state.nightDate = els.nightDate.value; renderSuggestions(); });
         [els.preBaseline, els.postBaseline].forEach(input => input.addEventListener('change', () => { if (!state.planet) return; state.events = buildEvents(state.planet); pickCurrentOrNextEvent(); renderEvents(); renderGraphics(); generatePlan(); }));
         [els.planFilter, els.readoutSeconds].forEach(input => input.addEventListener('change', generatePlan));
         els.generatePlan.addEventListener('click', generatePlan);
@@ -772,9 +805,54 @@
             if (!state.plan || !state.planet) return;
             downloadText(`${state.planet.pl_name.replace(/\s+/g, '_')}_APT_transit.txt`, els.aptOutput.value);
         });
+        function transitSuggestionScore(row, event, range) {
+            const depth = Math.max(0, finite(depthPercent(row), 0));
+            const duration = Math.max(0, finite(row.pl_trandur, 0));
+            const mag = finite(row.sy_vmag, finite(row.sy_tmag, finite(row.sy_gaiamag, 12)));
+            const brightness = clamp(1 - (mag - 8) / 6, 0, 1);
+            const depthScore = clamp(depth / 2, 0, 1);
+            const durationScore = clamp(duration / 4, 0, 1);
+            const overlapScore = clamp(rangeOverlapMinutes(event, range) / 180, 0, 1);
+            const uncertaintyScore = 1 - clamp(finite(event.uncertaintyMinutes, 0) / 30, 0, 1);
+            return brightness * 0.25 + depthScore * 0.25 + durationScore * 0.2 + overlapScore * 0.2 + uncertaintyScore * 0.1;
+        }
+        function renderSuggestions() {
+            const dateValue = els.nightDate.value || state.nightDate;
+            const range = nightRange(dateValue);
+            const now = jdFromDate(new Date());
+            const suggestions = state.queue.flatMap(item => {
+                const row = item.row || item;
+                if (!row || finite(row.pl_tranmid) === null || finite(row.pl_orbper) === null || finite(row.pl_trandur) === null) return [];
+                return buildEvents(row)
+                    .filter(event => event.baselineEnd >= jdFromDate(range.start) && event.baselineStart <= jdFromDate(range.end))
+                    .map(event => ({ row, event, score: transitSuggestionScore(row, event, range) }));
+            }).filter(item => item.score > 0);
+            suggestions.sort((a, b) => b.score - a.score);
+            els.nightlySuggestions.innerHTML = '';
+            if (!suggestions.length) {
+                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No queued transit windows are visible on that night.</p>';
+                return;
+            }
+            suggestions.slice(0, 8).forEach(item => {
+                const name = item.row.pl_name || item.row.hostname || 'Unknown target';
+                const row = document.createElement('div');
+                row.className = 'event-row rounded-md p-3';
+                row.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="mono text-[10px] uppercase tracking-widest text-slate-500">${escapeHtml(name)}</p>
+                            <p class="mono mt-1 text-xs text-cyan-100">Midpoint ${central(item.event.midpoint)}</p>
+                        </div>
+                        <span class="mono rounded-full border border-slate-500/20 bg-slate-950/40 px-2 py-1 text-[10px] font-bold text-green-200">Rank ${((item.score * 100) | 0)}</span>
+                    </div>
+                    <p class="mono mt-2 text-[10px] text-slate-400">Depth ${value(depthPercent(item.row), '%', 3)} / ${value(item.row.pl_trandur, 'h', 2)} dur / ${rangeOverlapMinutes(item.event, range).toFixed(0)} min overlap</p>
+                `;
+                els.nightlySuggestions.appendChild(row);
+            });
+        }
         els.queueCurrent.addEventListener('click', () => {
             if (!state.planet || state.queue.some(item => item.pl_name === state.planet.pl_name)) return;
-            state.queue.push({ pl_name: state.planet.pl_name, hostname: state.planet.hostname });
+            state.queue.push({ pl_name: state.planet.pl_name, hostname: state.planet.hostname, row: state.planet });
             saveQueue();
             renderQueue();
         });
@@ -782,10 +860,12 @@
             els.utcClock.textContent = currentClock();
             renderGraphics();
         }, 1000);
+        els.nightDate.value = state.nightDate;
         els.utcClock.textContent = currentClock();
         renderQueue();
         loadTessCatalog();
         lookupPlanet();
+        renderSuggestions();
     </script>
 </body>
 </html>
