@@ -194,14 +194,17 @@
                     </section>
                     <section class="panel rounded-lg p-4">
                         <div class="flex items-center justify-between gap-3">
-                            <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-amber-200">Suggested Nightly Transits</h2>
-                            <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Choose a night</span>
+                            <div>
+                                <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-amber-200">Suggested Nightly Transits</h2>
+                                <span class="mono text-[10px] uppercase tracking-widest text-slate-400">Choose a night from the database</span>
+                            </div>
+                            <button id="refresh-suggestions" class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold">Refresh</button>
                         </div>
                         <label class="mt-3 block">
                             <input id="night-date" type="date" class="input-dark w-full rounded-md px-3 py-2 text-xs">
                         </label>
                         <div id="nightly-suggestions" class="mt-3 space-y-2 text-xs"></div>
-                        <p id="nightly-suggestion-note" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Saved transit targets with visible windows for the selected night will be ranked by observability, depth, duration, and uncertainty.</p>
+                        <p id="nightly-suggestion-note" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Database-sourced transit targets on the selected night are ranked by observability, depth, duration, and uncertainty.</p>
                     </section>
                 </aside>
 
@@ -332,7 +335,8 @@
             plan: null,
             tessCatalog: [],
             queue: loadQueue(),
-            nightDate: new Date().toISOString().slice(0, 10)
+            nightDate: new Date().toISOString().slice(0, 10),
+            suggestionOffset: 0
         };
         const els = Object.fromEntries([...document.querySelectorAll('[id]')].map(element => [element.id.replace(/-([a-z])/g, (_, char) => char.toUpperCase()), element]));
 
@@ -751,6 +755,7 @@
             }
             state.tessCatalog = result.rows;
             renderTessCatalog();
+            renderSuggestions();
         }
         function selectTessPlanet() {
             const row = state.tessCatalog.find(item => item.pl_name === els.tessCatalog.value);
@@ -775,11 +780,10 @@
                             lookupPlanet();
                         }
                     });
-                    row.querySelectorAll('button')[1].addEventListener('click', () => { state.queue = state.queue.filter(entry => entry.pl_name !== item.pl_name); saveQueue(); renderQueue(); renderSuggestions(); });
+                    row.querySelectorAll('button')[1].addEventListener('click', () => { state.queue = state.queue.filter(entry => entry.pl_name !== item.pl_name); saveQueue(); renderQueue(); });
                     els.transitQueue.appendChild(row);
                 });
             }
-            renderSuggestions();
         }
 
         els.lookupPlanet.addEventListener('click', lookupPlanet);
@@ -793,7 +797,7 @@
             loadPlanet(rows[Number(els.archiveResults.value)]);
         });
         els.eventSelect.addEventListener('change', () => { state.selectedEventIndex = Number(els.eventSelect.value); renderEvents(); renderGraphics(); generatePlan(); });
-        els.nightDate.addEventListener('change', () => { state.nightDate = els.nightDate.value; renderSuggestions(); });
+        els.nightDate.addEventListener('change', () => { state.nightDate = els.nightDate.value; state.suggestionOffset = 0; renderSuggestions(); });
         [els.preBaseline, els.postBaseline].forEach(input => input.addEventListener('change', () => { if (!state.planet) return; state.events = buildEvents(state.planet); pickCurrentOrNextEvent(); renderEvents(); renderGraphics(); generatePlan(); }));
         [els.planFilter, els.readoutSeconds].forEach(input => input.addEventListener('change', generatePlan));
         els.generatePlan.addEventListener('click', generatePlan);
@@ -816,24 +820,32 @@
             const uncertaintyScore = 1 - clamp(finite(event.uncertaintyMinutes, 0) / 30, 0, 1);
             return brightness * 0.25 + depthScore * 0.25 + durationScore * 0.2 + overlapScore * 0.2 + uncertaintyScore * 0.1;
         }
-        function renderSuggestions() {
-            const dateValue = els.nightDate.value || state.nightDate;
-            const range = nightRange(dateValue);
-            const now = jdFromDate(new Date());
-            const suggestions = state.queue.flatMap(item => {
-                const row = item.row || item;
+        function databaseSuggestions(range) {
+            return state.tessCatalog.flatMap(row => {
                 if (!row || finite(row.pl_tranmid) === null || finite(row.pl_orbper) === null || finite(row.pl_trandur) === null) return [];
                 return buildEvents(row)
                     .filter(event => event.baselineEnd >= jdFromDate(range.start) && event.baselineStart <= jdFromDate(range.end))
                     .map(event => ({ row, event, score: transitSuggestionScore(row, event, range) }));
             }).filter(item => item.score > 0);
-            suggestions.sort((a, b) => b.score - a.score);
-            els.nightlySuggestions.innerHTML = '';
-            if (!suggestions.length) {
-                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No queued transit windows are visible on that night.</p>';
+        }
+        function renderSuggestions() {
+            const dateValue = els.nightDate.value || state.nightDate;
+            const range = nightRange(dateValue);
+            if (!state.tessCatalog.length) {
+                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">Loading database suggestions...</p>';
                 return;
             }
-            suggestions.slice(0, 8).forEach(item => {
+            const suggestions = databaseSuggestions(range).sort((a, b) => b.score - a.score);
+            if (!suggestions.length) {
+                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No database transit windows are visible on that night.</p>';
+                return;
+            }
+            const offset = state.suggestionOffset % suggestions.length;
+            const visible = suggestions.slice(offset, offset + 5).length === 5
+                ? suggestions.slice(offset, offset + 5)
+                : suggestions.slice(offset).concat(suggestions.slice(0, Math.max(0, 5 - (suggestions.length - offset))));
+            els.nightlySuggestions.innerHTML = '';
+            visible.forEach(item => {
                 const name = item.row.pl_name || item.row.hostname || 'Unknown target';
                 const row = document.createElement('div');
                 row.className = 'event-row rounded-md p-3';
@@ -855,6 +867,10 @@
             state.queue.push({ pl_name: state.planet.pl_name, hostname: state.planet.hostname, row: state.planet });
             saveQueue();
             renderQueue();
+        });
+        els.refreshSuggestions.addEventListener('click', () => {
+            state.suggestionOffset += 5;
+            renderSuggestions();
         });
         setInterval(() => {
             els.utcClock.textContent = currentClock();
