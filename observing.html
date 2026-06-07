@@ -680,6 +680,60 @@
                     </section>
 
                     <section class="panel rounded-xl p-4">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">Observing Products</h2>
+                                <p id="observing-products-note" class="mono mt-1 text-[11px] text-slate-400">Set a site and select a target to render night products.</p>
+                            </div>
+                            <span id="observing-products-window" class="mono text-xs text-green-100"></span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
+                            <div class="rounded-md border border-cyan-300/20 bg-slate-950/40 p-2">
+                                <p class="mono mb-2 text-[10px] uppercase tracking-widest text-cyan-200">Airmass</p>
+                                <svg id="target-airmass-svg" viewBox="0 0 320 180" class="h-44 w-full" role="img" aria-label="Target airmass through the night">
+                                    <g stroke="rgba(152,168,200,0.18)" stroke-width="1">
+                                        <line x1="34" y1="18" x2="34" y2="150"></line>
+                                        <line x1="34" y1="150" x2="300" y2="150"></line>
+                                        <line x1="34" y1="62" x2="300" y2="62" stroke-dasharray="4 6"></line>
+                                        <line x1="34" y1="106" x2="300" y2="106" stroke-dasharray="4 6"></line>
+                                    </g>
+                                    <path id="target-airmass-path" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round"></path>
+                                    <text x="8" y="23" fill="#98a8c8" font-size="10">1</text>
+                                    <text x="8" y="111" fill="#98a8c8" font-size="10">2</text>
+                                    <text x="34" y="169" fill="#98a8c8" font-size="10">dusk</text>
+                                    <text x="300" y="169" text-anchor="end" fill="#98a8c8" font-size="10">dawn</text>
+                                </svg>
+                            </div>
+                            <div class="rounded-md border border-green-300/20 bg-slate-950/40 p-2">
+                                <p class="mono mb-2 text-[10px] uppercase tracking-widest text-green-200">Sky Path</p>
+                                <svg id="target-sky-svg" viewBox="0 0 320 180" class="h-44 w-full" role="img" aria-label="Target path across the sky">
+                                    <circle cx="160" cy="88" r="70" fill="rgba(0,229,255,0.04)" stroke="rgba(152,168,200,0.25)"></circle>
+                                    <circle cx="160" cy="88" r="45" fill="none" stroke="rgba(152,168,200,0.16)" stroke-dasharray="4 6"></circle>
+                                    <circle cx="160" cy="88" r="20" fill="none" stroke="rgba(152,168,200,0.16)" stroke-dasharray="4 6"></circle>
+                                    <path id="target-sky-path" fill="none" stroke="#48ff9b" stroke-width="3" stroke-linecap="round"></path>
+                                    <circle id="target-sky-now" cx="160" cy="88" r="5" fill="#ffd166"></circle>
+                                    <text x="160" y="14" text-anchor="middle" fill="#98a8c8" font-size="10">N</text>
+                                    <text x="160" y="176" text-anchor="middle" fill="#98a8c8" font-size="10">S</text>
+                                    <text x="10" y="92" fill="#98a8c8" font-size="10">W</text>
+                                    <text x="310" y="92" text-anchor="end" fill="#98a8c8" font-size="10">E</text>
+                                </svg>
+                            </div>
+                            <div class="rounded-md border border-fuchsia-300/20 bg-slate-950/40 p-2">
+                                <p class="mono mb-2 text-[10px] uppercase tracking-widest text-fuchsia-200">Finder Chart</p>
+                                <svg id="target-finder-svg" viewBox="0 0 320 180" class="h-44 w-full" role="img" aria-label="Target finder chart with field footprint">
+                                    <rect x="22" y="14" width="276" height="140" fill="rgba(5,3,11,0.8)" stroke="rgba(228,76,255,0.28)"></rect>
+                                    <g id="target-finder-stars"></g>
+                                    <rect id="target-finder-frame" x="72" y="34" width="176" height="100" fill="none" stroke="#00e5ff" stroke-width="2"></rect>
+                                    <line x1="160" y1="76" x2="160" y2="104" stroke="#ffd166" stroke-width="2"></line>
+                                    <line x1="146" y1="90" x2="174" y2="90" stroke="#ffd166" stroke-width="2"></line>
+                                    <text id="target-finder-label" x="160" y="170" text-anchor="middle" fill="#98a8c8" font-size="10">centered finder chart</text>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="target-count-guidance" class="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3"></div>
+                    </section>
+
+                    <section class="panel rounded-xl p-4">
                         <div class="flex items-center justify-between">
                             <h2 class="mono text-sm font-bold uppercase tracking-[0.2em] text-green-200">Exposure Plan</h2>
                             <span id="plan-total" class="mono text-xs text-slate-400"></span>
@@ -1048,6 +1102,15 @@
             statFratio: document.getElementById('stat-fratio'),
             statMode: document.getElementById('stat-mode'),
             targetEllipse: document.getElementById('target-ellipse'),
+            observingProductsNote: document.getElementById('observing-products-note'),
+            observingProductsWindow: document.getElementById('observing-products-window'),
+            targetAirmassPath: document.getElementById('target-airmass-path'),
+            targetSkyPath: document.getElementById('target-sky-path'),
+            targetSkyNow: document.getElementById('target-sky-now'),
+            targetFinderStars: document.getElementById('target-finder-stars'),
+            targetFinderFrame: document.getElementById('target-finder-frame'),
+            targetFinderLabel: document.getElementById('target-finder-label'),
+            targetCountGuidance: document.getElementById('target-count-guidance'),
             fitBadge: document.getElementById('fit-badge'),
             planLines: document.getElementById('plan-lines'),
             planTotal: document.getElementById('plan-total'),
@@ -1394,6 +1457,7 @@
             els.targetEllipse.style.height = `${ellipseH}%`;
             els.targetEllipse.style.left = `${50 - ellipseW / 2}%`;
             els.targetEllipse.style.top = `${50 - ellipseH / 2}%`;
+            renderObservingProducts(target);
 
             els.planLines.innerHTML = '';
             if (!plan) {
@@ -1552,25 +1616,56 @@
             els.lcNotes.textContent = profile.notes;
         }
 
+        function xmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&apos;');
+        }
+
         function aptText(target, plan) {
             const rig = selectedRig();
             const goto = `#GoTo++ Auto Blind ${target.ra} ${target.dec} ${target.name.replace(/\s+/g, '_')}`;
-            const lines = plan.lines.map((line, index) =>
-                `${index + 1}. Light | ${line.exp}s | ${line.bin} | ${line.preset.label} ${line.preset.bitDepth} | gain ${line.preset.gain} | offset ${line.preset.offset} | pause ${line.pause}s | count ${line.count} | filter ${line.filter}`
-            );
+            const planName = `${target.name.replace(/\s+/g, '_')}_NightVector`;
+            const xmlLines = [
+                { exp: 0, bin: '1x1', pause: 0, count: 1, filter: 'No Change', command: goto },
+                ...plan.lines.map(line => ({
+                    exp: line.exp,
+                    bin: line.bin,
+                    pause: line.pause,
+                    count: line.count,
+                    filter: line.filter,
+                    command: ''
+                }))
+            ].map((line, index) => `
+      <Line order="${index + 1}">
+        <Exposure>${xmlEscape(line.exp)}</Exposure>
+        <Binning>${xmlEscape(line.bin)}</Binning>
+        <Pause>${xmlEscape(line.pause)}</Pause>
+        <Count>${xmlEscape(line.count)}</Count>
+        <Filter>${xmlEscape(line.filter)}</Filter>
+        <Command>${xmlEscape(line.command)}</Command>
+        <WaitCommandEnd>true</WaitCommandEnd>
+      </Line>`).join('');
             return [
-                `APT session recipe: ${target.name}`,
-                `Target: ${target.name}`,
-                `RA: ${target.ra}`,
-                `Dec: ${target.dec}`,
-                `GoTo command: ${goto}`,
-                '',
-                'CCD/CMOS plan lines:',
-                ...lines,
-                '',
-                `Mode: ${state.mode}`,
-                `Rig: ${rig.telescope} x${state.reducer} + ${rig.camera} + ${rig.filters || 'filters'}`,
-                'Note: verify gain/offset names and filter wheel positions inside APT before running.'
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<!-- NightVector APT CCD/CMOS Plan Editor import candidate. -->',
+                `<!-- GoTo command: ${goto} -->`,
+                '<APTPlans>',
+                `  <Plan name="${xmlEscape(planName)}" type="Light" cameraMode="CCD/CMOS">`,
+                `    <ObjectName>${xmlEscape(target.name)}</ObjectName>`,
+                `    <RA>${xmlEscape(target.ra)}</RA>`,
+                `    <Dec>${xmlEscape(target.dec)}</Dec>`,
+                '    <NoDithering>false</NoDithering>',
+                '    <VerticalPlan>false</VerticalPlan>',
+                `    <Rig>${xmlEscape(`${rig.telescope} x${state.reducer} + ${rig.camera} + ${rig.filters || 'filters'}`)}</Rig>`,
+                '    <Lines>',
+                xmlLines,
+                '    </Lines>',
+                '  </Plan>',
+                '</APTPlans>'
             ].join('\n');
         }
 
@@ -2327,7 +2422,7 @@
                     });
                 });
                 row.querySelector('[data-action="load"]').addEventListener('click', () => loadSavedPlan(saved));
-                row.querySelector('[data-action="apt"]').addEventListener('click', () => downloadFile(`${saved.target.name.replace(/\s+/g, '_')}_APT_plan.txt`, saved.apt, 'text/plain'));
+                row.querySelector('[data-action="apt"]').addEventListener('click', () => downloadFile(`${saved.target.name.replace(/\s+/g, '_')}_APT_plan.xml`, saved.apt, 'application/xml'));
                 row.querySelector('[data-action="remove"]').addEventListener('click', () => {
                     program.plans = program.plans.filter(plan => plan.id !== saved.id);
                     savePlannerProfiles();
@@ -2534,12 +2629,19 @@
         }
 
         function altitudeAt(raDeg, decDeg, latDeg, lonDeg, date) {
+            return horizontalAt(raDeg, decDeg, latDeg, lonDeg, date).altitude;
+        }
+
+        function horizontalAt(raDeg, decDeg, latDeg, lonDeg, date) {
             const hourAngle = normalizeDegrees(siderealDegrees(date, lonDeg) - raDeg);
             const ha = degToRad(hourAngle > 180 ? hourAngle - 360 : hourAngle);
             const dec = degToRad(decDeg);
             const lat = degToRad(latDeg);
             const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha);
-            return radToDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+            const altitude = radToDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+            const y = -Math.sin(ha) * Math.cos(dec);
+            const x = Math.sin(dec) * Math.cos(lat) - Math.cos(dec) * Math.sin(lat) * Math.cos(ha);
+            return { altitude, azimuth: normalizeDegrees(radToDeg(Math.atan2(y, x))) };
         }
 
         function solarCoordinates(date) {
@@ -2621,6 +2723,149 @@
                 hours: (best.end - best.start) / 3600000,
                 maxAltitude
             };
+        }
+
+        function airmassFromAltitude(altitude) {
+            if (altitude <= 0) return null;
+            const z = 90 - altitude;
+            return 1 / (Math.cos(degToRad(z)) + 0.50572 * Math.pow(96.07995 - z, -1.6364));
+        }
+
+        function productNightDate() {
+            return els.planStart.value ? new Date(`${els.planStart.value}T12:00:00`) : new Date();
+        }
+
+        function observingProductSamples(target) {
+            const lat = Number(els.siteLat.value);
+            const lon = Number(els.siteLon.value);
+            const ra = parseRaDegrees(target.ra);
+            const dec = parseDecDegrees(target.dec);
+            if (![lat, lon, ra, dec].every(Number.isFinite)) return null;
+            const nightWindow = astronomicalNightWindow(productNightDate(), lat, lon);
+            if (!nightWindow) return null;
+            const samples = [];
+            const stepMs = 10 * 60 * 1000;
+            for (let time = nightWindow.start.getTime(); time <= nightWindow.end.getTime(); time += stepMs) {
+                const date = new Date(time);
+                const horizontal = horizontalAt(ra, dec, lat, lon, date);
+                samples.push({
+                    date,
+                    altitude: horizontal.altitude,
+                    azimuth: horizontal.azimuth,
+                    airmass: airmassFromAltitude(horizontal.altitude)
+                });
+            }
+            return { nightWindow, samples };
+        }
+
+        function deterministicNoise(seed) {
+            let value = seed % 2147483647;
+            return () => {
+                value = value * 48271 % 2147483647;
+                return value / 2147483647;
+            };
+        }
+
+        function seedFromTarget(target) {
+            return String(target.name || target.id || 'target')
+                .split('')
+                .reduce((sum, char) => sum + char.charCodeAt(0), 17);
+        }
+
+        function renderFinderChart(target) {
+            const random = deterministicNoise(seedFromTarget(target));
+            els.targetFinderStars.innerHTML = '';
+            for (let index = 0; index < 42; index += 1) {
+                const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                star.setAttribute('cx', (28 + random() * 264).toFixed(1));
+                star.setAttribute('cy', (20 + random() * 128).toFixed(1));
+                star.setAttribute('r', (0.8 + random() * 2.5).toFixed(1));
+                star.setAttribute('fill', random() > 0.72 ? '#ffd166' : random() > 0.42 ? '#c7f9ff' : '#f0e6ff');
+                star.setAttribute('opacity', String(0.45 + random() * 0.5));
+                els.targetFinderStars.appendChild(star);
+            }
+            const p = profile();
+            const frameW = Math.min(250, Math.max(70, 276 * Math.min(1, p.fovW / Math.max(target.size || 1, p.fovW))));
+            const frameH = Math.min(126, Math.max(44, 140 * Math.min(1, p.fovH / Math.max(target.size || 1, p.fovH))));
+            els.targetFinderFrame.setAttribute('x', ((320 - frameW) / 2).toFixed(1));
+            els.targetFinderFrame.setAttribute('y', ((168 - frameH) / 2).toFixed(1));
+            els.targetFinderFrame.setAttribute('width', frameW.toFixed(1));
+            els.targetFinderFrame.setAttribute('height', frameH.toFixed(1));
+            els.targetFinderLabel.textContent = `${target.name} / N up, E left / ${p.fovW.toFixed(1)}' x ${p.fovH.toFixed(1)}'`;
+        }
+
+        function countGuidance(target) {
+            const photometry = target.mode?.includes('photometry') || state.mode === 'photometry' || state.mode === 'eclipse';
+            const bright = Number(target.mag) <= 7;
+            if (photometry) {
+                return [
+                    ['Photometry peaks', bright ? '18k-28k ADU' : '22k-35k ADU', 'Target and comparison-star peak pixels. Defocus bright stars if needed.'],
+                    ['Hard ceiling', '< 45k ADU', 'Reject or shorten subs if any important star approaches this. Never clip at 65,535.'],
+                    ['Background', '800-4k ADU', 'Measured above the calibrated bias/dark pedestal; keep it consistent through the run.']
+                ];
+            }
+            return [
+                ['Star peaks', bright ? '20k-32k ADU' : '25k-42k ADU', 'Keep the brightest useful stars below the non-linear shoulder.'],
+                ['Hard ceiling', '< 50k ADU', 'Shorten exposures if highlights or galaxy cores approach clipping.'],
+                ['Background', '1k-5k ADU', 'Above calibration pedestal; raise exposure only if the histogram is pinned left.']
+            ];
+        }
+
+        function renderCountGuidance(target) {
+            els.targetCountGuidance.innerHTML = countGuidance(target).map(([label, count, note]) => `
+                <div class="rounded-md border border-slate-500/20 bg-slate-950/40 p-3">
+                    <p class="mono text-[10px] uppercase tracking-widest text-slate-500">${label}</p>
+                    <p class="mono mt-1 text-sm font-bold text-green-100">${count}</p>
+                    <p class="mt-2 text-[11px] leading-4 text-slate-400">${note}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderObservingProducts(target) {
+            renderFinderChart(target);
+            renderCountGuidance(target);
+            const product = observingProductSamples(target);
+            if (!product) {
+                els.observingProductsNote.textContent = 'Enter site latitude/longitude to render airmass and sky-path products.';
+                els.observingProductsWindow.textContent = '';
+                els.targetAirmassPath.setAttribute('d', '');
+                els.targetSkyPath.setAttribute('d', '');
+                return;
+            }
+            const { nightWindow, samples } = product;
+            const visible = samples.filter(sample => sample.altitude > 0 && sample.airmass);
+            els.observingProductsWindow.textContent = `${formatClock(nightWindow.start)}-${formatClock(nightWindow.end)}`;
+            if (!visible.length) {
+                els.observingProductsNote.textContent = `${target.name} stays below the horizon during astronomical night.`;
+                els.targetAirmassPath.setAttribute('d', '');
+                els.targetSkyPath.setAttribute('d', '');
+                return;
+            }
+            const maxAltitude = Math.max(...visible.map(sample => sample.altitude));
+            const minAirmass = Math.min(...visible.map(sample => sample.airmass));
+            els.observingProductsNote.textContent = `Max altitude ${Math.round(maxAltitude)} deg / best airmass ${minAirmass.toFixed(2)} on selected night.`;
+            const startTime = nightWindow.start.getTime();
+            const span = nightWindow.end.getTime() - startTime;
+            const airmassPoints = visible.map(sample => {
+                const x = 34 + (sample.date.getTime() - startTime) / span * 266;
+                const y = 18 + (Math.min(2.8, Math.max(1, sample.airmass)) - 1) / 1.8 * 132;
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            });
+            els.targetAirmassPath.setAttribute('d', `M ${airmassPoints.join(' L ')}`);
+            const skyPoints = visible.map(sample => {
+                const radius = (90 - Math.max(0, sample.altitude)) / 90 * 70;
+                const angle = degToRad(sample.azimuth);
+                return `${(160 + Math.sin(angle) * radius).toFixed(1)},${(88 - Math.cos(angle) * radius).toFixed(1)}`;
+            });
+            els.targetSkyPath.setAttribute('d', `M ${skyPoints.join(' L ')}`);
+            const now = new Date();
+            const nowSample = visible.reduce((closest, sample) =>
+                Math.abs(sample.date - now) < Math.abs(closest.date - now) ? sample : closest
+            , visible[0]);
+            const radius = (90 - Math.max(0, nowSample.altitude)) / 90 * 70;
+            const angle = degToRad(nowSample.azimuth);
+            els.targetSkyNow.setAttribute('cx', (160 + Math.sin(angle) * radius).toFixed(1));
+            els.targetSkyNow.setAttribute('cy', (88 - Math.cos(angle) * radius).toFixed(1));
         }
 
         function transitAltitude(latDeg, decDeg) {
@@ -3002,6 +3247,12 @@
         els.minAltitude.addEventListener('input', () => {
             els.minAltitudeLabel.textContent = `${els.minAltitude.value} deg`;
         });
+        [els.siteLat, els.siteLon, els.planStart].forEach(input => {
+            input.addEventListener('change', () => {
+                const target = allTargets().find(item => item.id === state.selectedId);
+                if (target) renderObservingProducts(target);
+            });
+        });
         document.getElementById('resolve-site').addEventListener('click', resolveSite);
         document.getElementById('use-gps').addEventListener('click', useGps);
         document.getElementById('build-suggestions').addEventListener('click', buildSuggestions);
@@ -3032,15 +3283,17 @@
                 els.planWarning.textContent = 'Generate an exposure plan before downloading the APT recipe.';
                 return;
             }
-            downloadFile(`${target.name.replace(/\s+/g, '_')}_APT_plan.txt`, els.aptOutput.value, 'text/plain');
+            downloadFile(`${target.name.replace(/\s+/g, '_')}_APT_plan.xml`, els.aptOutput.value, 'application/xml');
         });
         document.getElementById('copy-goto').addEventListener('click', async () => {
             if (!els.aptOutput.value.trim()) {
                 els.planWarning.textContent = 'Generate an exposure plan before copying the GoTo++ command.';
                 return;
             }
-            const firstLine = els.aptOutput.value.split('\n').find(line => line.startsWith('GoTo command:'));
-            const command = firstLine ? firstLine.replace('GoTo command: ', '') : els.aptOutput.value;
+            const firstLine = els.aptOutput.value.split('\n').find(line => line.includes('GoTo command:'));
+            const command = firstLine
+                ? firstLine.replace(/.*GoTo command:\s*/, '').replace(/\s*-->.*/, '')
+                : els.aptOutput.value;
             await navigator.clipboard.writeText(command).catch(() => {});
         });
         function fitsValue(raw) {
