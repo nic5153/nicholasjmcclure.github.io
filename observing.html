@@ -2512,6 +2512,117 @@
             return diff;
         }
 
+        function degToRad(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function radToDeg(radians) {
+            return radians * 180 / Math.PI;
+        }
+
+        function normalizeDegrees(degrees) {
+            return ((degrees % 360) + 360) % 360;
+        }
+
+        function julianDate(date) {
+            return date.getTime() / 86400000 + 2440587.5;
+        }
+
+        function siderealDegrees(date, lonDeg) {
+            const days = julianDate(date) - 2451545.0;
+            return normalizeDegrees(280.46061837 + 360.98564736629 * days + lonDeg);
+        }
+
+        function altitudeAt(raDeg, decDeg, latDeg, lonDeg, date) {
+            const hourAngle = normalizeDegrees(siderealDegrees(date, lonDeg) - raDeg);
+            const ha = degToRad(hourAngle > 180 ? hourAngle - 360 : hourAngle);
+            const dec = degToRad(decDeg);
+            const lat = degToRad(latDeg);
+            const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(ha);
+            return radToDeg(Math.asin(Math.max(-1, Math.min(1, sinAlt))));
+        }
+
+        function solarCoordinates(date) {
+            const days = julianDate(date) - 2451545.0;
+            const meanLongitude = normalizeDegrees(280.460 + 0.9856474 * days);
+            const anomaly = normalizeDegrees(357.528 + 0.9856003 * days);
+            const lambda = degToRad(normalizeDegrees(
+                meanLongitude
+                + 1.915 * Math.sin(degToRad(anomaly))
+                + 0.020 * Math.sin(degToRad(2 * anomaly))
+            ));
+            const obliquity = degToRad(23.439 - 0.0000004 * days);
+            return {
+                ra: normalizeDegrees(radToDeg(Math.atan2(Math.cos(obliquity) * Math.sin(lambda), Math.cos(lambda)))),
+                dec: radToDeg(Math.asin(Math.sin(obliquity) * Math.sin(lambda)))
+            };
+        }
+
+        function sunAltitude(date, latDeg, lonDeg) {
+            const sun = solarCoordinates(date);
+            return altitudeAt(sun.ra, sun.dec, latDeg, lonDeg, date);
+        }
+
+        function formatClock(date) {
+            return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function astronomicalNightWindow(night, latDeg, lonDeg) {
+            const start = new Date(night);
+            start.setHours(12, 0, 0, 0);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            const stepMs = 10 * 60 * 1000;
+            const samples = [];
+            for (let time = start.getTime(); time <= end.getTime(); time += stepMs) {
+                const date = new Date(time);
+                samples.push({ date, dark: sunAltitude(date, latDeg, lonDeg) <= -18 });
+            }
+            const intervals = [];
+            let open = null;
+            samples.forEach((sample, index) => {
+                if (sample.dark && !open) open = sample.date;
+                const next = samples[index + 1];
+                if (open && (!next || !next.dark)) {
+                    intervals.push({ start: open, end: sample.date });
+                    open = null;
+                }
+            });
+            return intervals
+                .filter(interval => interval.end - interval.start >= 30 * 60 * 1000)
+                .sort((a, b) => (b.end - b.start) - (a.end - a.start))[0] || null;
+        }
+
+        function targetVisibilityDuringNight(target, nightWindow, latDeg, lonDeg, minAlt) {
+            const ra = parseRaDegrees(target.ra);
+            const dec = parseDecDegrees(target.dec);
+            if (!Number.isFinite(ra) || !Number.isFinite(dec) || !nightWindow) return null;
+            const stepMs = 10 * 60 * 1000;
+            const intervals = [];
+            let open = null;
+            let maxAltitude = -90;
+            for (let time = nightWindow.start.getTime(); time <= nightWindow.end.getTime(); time += stepMs) {
+                const date = new Date(time);
+                const altitude = altitudeAt(ra, dec, latDeg, lonDeg, date);
+                maxAltitude = Math.max(maxAltitude, altitude);
+                if (altitude >= minAlt && !open) open = date;
+                if (open && (altitude < minAlt || time + stepMs > nightWindow.end.getTime())) {
+                    intervals.push({ start: open, end: date });
+                    open = null;
+                }
+            }
+            const best = intervals
+                .filter(interval => interval.end - interval.start >= 30 * 60 * 1000)
+                .sort((a, b) => (b.end - b.start) - (a.end - a.start))[0];
+            if (!best) return null;
+            return {
+                start: best.start,
+                end: best.end,
+                hours: (best.end - best.start) / 3600000,
+                maxAltitude
+            };
+        }
+
         function transitAltitude(latDeg, decDeg) {
             return 90 - Math.abs(latDeg - decDeg);
         }
@@ -2599,15 +2710,27 @@
             });
         }
 
-        function scoreTargetForNight(target, night, lat) {
-            const ra = parseRaDegrees(target.ra);
-            const dec = parseDecDegrees(target.dec);
-            if (!Number.isFinite(ra) || !Number.isFinite(dec)) return null;
-            const alt = transitAltitude(lat, dec);
-            const raMatch = 100 - angularDistanceDeg(ra, seasonalRaAtMidnight(night)) / 1.8;
+        function scoreTargetForNight(target, night, lat, lon, minAlt) {
+            const nightWindow = astronomicalNightWindow(night, lat, lon);
+            const visibility = targetVisibilityDuringNight(target, nightWindow, lat, lon, minAlt);
+            if (!visibility) return null;
             const weather = weatherScoreForNight(night);
-            const score = Math.round(Math.max(0, Math.min(100, (alt * 0.55) + (Math.max(0, raMatch) * 0.25) + (weather.score * 0.20))));
-            return { target, night: toDateInput(night), altitude: Math.round(alt), weather: weather.label, score };
+            const durationScore = Math.min(100, visibility.hours / 6 * 100);
+            const altitudeScore = Math.max(0, Math.min(100, visibility.maxAltitude));
+            const score = Math.round(Math.max(0, Math.min(100, (altitudeScore * 0.45) + (durationScore * 0.35) + (weather.score * 0.20))));
+            return {
+                target,
+                night: toDateInput(night),
+                dusk: nightWindow ? formatClock(nightWindow.start) : '',
+                dawn: nightWindow ? formatClock(nightWindow.end) : '',
+                visibleStart: formatClock(visibility.start),
+                visibleEnd: formatClock(visibility.end),
+                visibleHours: visibility.hours,
+                altitude: Math.round(visibility.maxAltitude),
+                minAltitude: minAlt,
+                weather: weather.label,
+                score
+            };
         }
 
         function renderSuggestions() {
@@ -2631,7 +2754,8 @@
                             <button class="ghost-button rounded px-2 py-1 mono text-[10px] font-bold" data-action="queue">Add</button>
                         </div>
                     </div>
-                    <p class="mt-2 text-sm text-slate-300">Transit altitude ${item.altitude} deg / ${item.weather}</p>
+                    <p class="mt-2 text-sm text-slate-300">Visible ${item.visibleStart}-${item.visibleEnd} (${item.visibleHours.toFixed(1)}h) / max altitude ${item.altitude} deg</p>
+                    <p class="mt-1 text-xs text-slate-500">Astronomical night ${item.dusk}-${item.dawn} / ${item.weather}</p>
                 `;
                 row.addEventListener('click', () => {
                     state.mode = item.target.mode[0] || state.mode;
@@ -2726,7 +2850,8 @@
 
         async function buildSuggestions() {
             const lat = Number(els.siteLat.value);
-            if (!Number.isFinite(lat)) {
+            const lon = Number(els.siteLon.value);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
                 els.siteStatus.textContent = 'Set latitude/longitude before building suggestions.';
                 return;
             }
@@ -2736,17 +2861,20 @@
             dateRange().forEach(night => {
                 allTargets().forEach(target => {
                     if (!target.mode.includes(state.mode)) return;
-                    const scored = scoreTargetForNight(target, night, lat);
-                    if (scored && scored.altitude >= minAlt) suggestions.push(scored);
+                    const scored = scoreTargetForNight(target, night, lat, lon, minAlt);
+                    if (scored) suggestions.push(scored);
                 });
             });
             state.suggestions = suggestions.sort((a, b) => b.score - a.score).slice(0, 80);
+            els.siteStatus.textContent = state.suggestions.length
+                ? `Suggestions filtered to targets above ${minAlt} deg between astronomical dusk and dawn.`
+                : `No ${state.mode} targets clear ${minAlt} deg between astronomical dusk and dawn for the selected nights.`;
             renderSuggestions();
         }
 
         function exportSuggestionsCsv() {
-            const rows = state.suggestions.map(item => [item.night, item.target.name, item.target.ra, item.target.dec, item.target.type, item.altitude, item.weather, item.score]);
-            const csv = [['Night', 'Name', 'RA', 'Dec', 'Type', 'TransitAltitudeDeg', 'Weather', 'Score'], ...rows]
+            const rows = state.suggestions.map(item => [item.night, item.target.name, item.target.ra, item.target.dec, item.target.type, item.dusk, item.dawn, item.visibleStart, item.visibleEnd, item.visibleHours.toFixed(2), item.altitude, item.weather, item.score]);
+            const csv = [['Night', 'Name', 'RA', 'Dec', 'Type', 'AstronomicalDusk', 'AstronomicalDawn', 'VisibleStart', 'VisibleEnd', 'VisibleHours', 'MaxAltitudeDeg', 'Weather', 'Score'], ...rows]
                 .map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(','))
                 .join('\n');
             downloadFile('suggested-targets.csv', csv, 'text/csv');
