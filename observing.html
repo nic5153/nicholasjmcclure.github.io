@@ -1629,43 +1629,43 @@
             const rig = selectedRig();
             const goto = `#GoTo++ Auto Blind ${target.ra} ${target.dec} ${target.name.replace(/\s+/g, '_')}`;
             const planName = `${target.name.replace(/\s+/g, '_')}_NightVector`;
+            const filterCode = filter => ({ L: '0', R: '1', G: '2', B: '3' })[filter] ?? '-1';
             const xmlLines = [
-                { exp: 0, bin: '1x1', pause: 0, count: 1, filter: 'No Change', command: goto },
+                { exp: 0, pause: 0, count: 1, filter: '-1', command: goto, wait: 1 },
                 ...plan.lines.map(line => ({
                     exp: line.exp,
-                    bin: line.bin,
                     pause: line.pause,
                     count: line.count,
-                    filter: line.filter,
-                    command: ''
+                    filter: filterCode(line.filter),
+                    command: '',
+                    wait: 0
                 }))
-            ].map((line, index) => `
-      <Line order="${index + 1}">
-        <Exposure>${xmlEscape(line.exp)}</Exposure>
-        <Binning>${xmlEscape(line.bin)}</Binning>
-        <Pause>${xmlEscape(line.pause)}</Pause>
-        <Count>${xmlEscape(line.count)}</Count>
-        <Filter>${xmlEscape(line.filter)}</Filter>
-        <Command>${xmlEscape(line.command)}</Command>
-        <WaitCommandEnd>true</WaitCommandEnd>
-      </Line>`).join('');
+            ].map((line, index) => `\t\t\t<Exposures>
+\t\t\t\t<Order>${index + 1}</Order>
+\t\t\t\t<Exp>${xmlEscape(line.exp)}</Exp>
+\t\t\t\t<ISO>100</ISO>
+\t\t\t\t<Quality>1</Quality>
+\t\t\t\t<Pause>${xmlEscape(line.pause)}</Pause>
+\t\t\t\t<Count>${xmlEscape(line.count)}</Count>
+\t\t\t\t<RunCommand>${xmlEscape(line.command)}</RunCommand>
+\t\t\t\t<WaitCommand>${line.wait}</WaitCommand>
+\t\t\t\t<Filter>${xmlEscape(line.filter)}</Filter>
+\t\t\t\t<LensAV></LensAV>
+\t\t\t</Exposures>`).join('\n');
             return [
-                '<?xml version="1.0" encoding="UTF-8"?>',
-                '<!-- NightVector APT CCD/CMOS Plan Editor import candidate. -->',
+                '<?xml version="1.0"?>',
                 `<!-- GoTo command: ${goto} -->`,
-                '<APTPlans>',
-                `  <Plan name="${xmlEscape(planName)}" type="Light" cameraMode="CCD/CMOS">`,
-                `    <ObjectName>${xmlEscape(target.name)}</ObjectName>`,
-                `    <RA>${xmlEscape(target.ra)}</RA>`,
-                `    <Dec>${xmlEscape(target.dec)}</Dec>`,
-                '    <NoDithering>false</NoDithering>',
-                '    <VerticalPlan>false</VerticalPlan>',
-                `    <Rig>${xmlEscape(`${rig.telescope} x${state.reducer} + ${rig.camera} + ${rig.filters || 'filters'}`)}</Rig>`,
-                '    <Lines>',
+                `<!-- Target ${target.name} / RA ${target.ra} / Dec ${target.dec} / ${rig.telescope} x${state.reducer} + ${rig.camera} -->`,
+                '<Plans>',
+                '\t<LightPlans>',
+                '\t\t<Plan>',
+                `\t\t\t<Name>${xmlEscape(planName)}</Name>`,
+                '\t\t\t<DontDither>0</DontDither>',
+                '\t\t\t<Vertical>0</Vertical>',
                 xmlLines,
-                '    </Lines>',
-                '  </Plan>',
-                '</APTPlans>'
+                '\t\t</Plan>',
+                '\t</LightPlans>',
+                '</Plans>'
             ].join('\n');
         }
 

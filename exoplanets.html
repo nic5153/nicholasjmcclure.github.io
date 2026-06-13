@@ -204,7 +204,7 @@
                             <input id="night-date" type="date" class="input-dark w-full rounded-md px-3 py-2 text-xs">
                         </label>
                         <div id="nightly-suggestions" class="mt-3 space-y-2 text-xs"></div>
-                        <p id="nightly-suggestion-note" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Database-sourced transit targets on the selected night are ranked by observability, depth, duration, and uncertainty.</p>
+                        <p id="nightly-suggestion-note" class="mono mt-3 text-[11px] leading-5 text-cyan-100">Database-sourced transit targets on the selected night are grouped by transit duration. Click any suggestion to load the full timeline, plots, and APT plan.</p>
                     </section>
                 </aside>
 
@@ -875,45 +875,44 @@
             const goto = `#GoTo++ Auto Blind ${state.planet.rastr || state.planet.ra} ${state.planet.decstr || state.planet.dec} ${state.planet.pl_name.replace(/\s+/g, '_')}`;
             const planName = `${state.planet.pl_name.replace(/\s+/g, '_')}_Transit`;
             return [
-                '<?xml version="1.0" encoding="UTF-8"?>',
-                '<!-- NightVector APT CCD/CMOS Plan Editor import candidate. -->',
+                '<?xml version="1.0"?>',
                 `<!-- GoTo command: ${goto} -->`,
                 `<!-- Archive midpoint: ${dualTime(event.midpoint)} -->`,
                 `<!-- Observation window: ${dualTime(event.baselineStart)} to ${dualTime(event.baselineEnd)} -->`,
                 `<!-- Contacts: ingress ${dualTime(event.ingressStart)} / midpoint ${dualTime(event.midpoint)} / egress ${dualTime(event.egressEnd)} -->`,
-                '<APTPlans>',
-                `  <Plan name="${xmlEscape(planName)}" type="Light" cameraMode="CCD/CMOS">`,
-                `    <ObjectName>${xmlEscape(state.planet.pl_name)}</ObjectName>`,
-                `    <HostStar>${xmlEscape(state.planet.hostname)}</HostStar>`,
-                `    <RA>${xmlEscape(state.planet.rastr || state.planet.ra)}</RA>`,
-                `    <Dec>${xmlEscape(state.planet.decstr || state.planet.dec)}</Dec>`,
-                '    <NoDithering>true</NoDithering>',
-                '    <VerticalPlan>false</VerticalPlan>',
-                `    <CMOSMode>${xmlEscape(`${plan.preset.label} / ${plan.preset.mode}`)}</CMOSMode>`,
-                `    <Gain>${xmlEscape(plan.preset.gain)}</Gain>`,
-                `    <Offset>${xmlEscape(plan.preset.offset)}</Offset>`,
-                '    <Lines>',
-                '      <Line order="1">',
-                '        <Exposure>0</Exposure>',
-                '        <Binning>1x1</Binning>',
-                '        <Pause>0</Pause>',
-                '        <Count>1</Count>',
-                '        <Filter>No Change</Filter>',
-                `        <Command>${xmlEscape(goto)}</Command>`,
-                '        <WaitCommandEnd>true</WaitCommandEnd>',
-                '      </Line>',
-                '      <Line order="2">',
-                `        <Exposure>${xmlEscape(plan.exposure)}</Exposure>`,
-                '        <Binning>1x1</Binning>',
-                `        <Pause>${xmlEscape(plan.pause)}</Pause>`,
-                `        <Count>${xmlEscape(plan.count)}</Count>`,
-                `        <Filter>${xmlEscape(plan.filter)}</Filter>`,
-                '        <Command></Command>',
-                '        <WaitCommandEnd>true</WaitCommandEnd>',
-                '      </Line>',
-                '    </Lines>',
-                '  </Plan>',
-                '</APTPlans>'
+                '<Plans>',
+                '\t<LightPlans>',
+                '\t\t<Plan>',
+                `\t\t\t<Name>${xmlEscape(planName)}</Name>`,
+                '\t\t\t<DontDither>1</DontDither>',
+                '\t\t\t<Vertical>0</Vertical>',
+                '\t\t\t<Exposures>',
+                '\t\t\t\t<Order>1</Order>',
+                '\t\t\t\t<Exp>0</Exp>',
+                '\t\t\t\t<ISO>100</ISO>',
+                '\t\t\t\t<Quality>1</Quality>',
+                '\t\t\t\t<Pause>0</Pause>',
+                '\t\t\t\t<Count>1</Count>',
+                `\t\t\t\t<RunCommand>${xmlEscape(goto)}</RunCommand>`,
+                '\t\t\t\t<WaitCommand>1</WaitCommand>',
+                '\t\t\t\t<Filter>-1</Filter>',
+                '\t\t\t\t<LensAV></LensAV>',
+                '\t\t\t</Exposures>',
+                '\t\t\t<Exposures>',
+                '\t\t\t\t<Order>2</Order>',
+                `\t\t\t\t<Exp>${xmlEscape(plan.exposure)}</Exp>`,
+                '\t\t\t\t<ISO>100</ISO>',
+                '\t\t\t\t<Quality>1</Quality>',
+                `\t\t\t\t<Pause>${xmlEscape(plan.pause)}</Pause>`,
+                `\t\t\t\t<Count>${xmlEscape(plan.count)}</Count>`,
+                '\t\t\t\t<RunCommand></RunCommand>',
+                '\t\t\t\t<WaitCommand>0</WaitCommand>',
+                `\t\t\t\t<Filter>${xmlEscape(({ L: '0', R: '1', G: '2', B: '3' })[plan.filter] ?? '-1')}</Filter>`,
+                '\t\t\t\t<LensAV></LensAV>',
+                '\t\t\t</Exposures>',
+                '\t\t</Plan>',
+                '\t</LightPlans>',
+                '</Plans>'
             ].join('\n');
         }
         function downloadText(filename, text) {
@@ -1076,6 +1075,43 @@
                     .map(event => ({ row, event, score: transitSuggestionScore(row, event, range) }));
             }).filter(item => item.score > 0);
         }
+        function transitDurationBucket(hours) {
+            if (hours >= 1 && hours < 2) return 'oneToTwo';
+            if (hours >= 2 && hours < 3) return 'twoToThree';
+            if (hours >= 3 && hours < 4) return 'threeToFour';
+            if (hours >= 4) return 'fourPlus';
+            return 'short';
+        }
+        function suggestionCard(item, range) {
+            const name = item.row.pl_name || item.row.hostname || 'Unknown target';
+            const duration = finite(item.row.pl_trandur, 0);
+            const row = document.createElement('button');
+            row.className = 'event-row w-full rounded-md p-3 text-left';
+            row.innerHTML = `
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-widest text-slate-500">${escapeHtml(name)}</p>
+                        <p class="mono mt-1 text-xs text-cyan-100">Midpoint ${central(item.event.midpoint)}</p>
+                    </div>
+                    <span class="mono rounded-full border border-slate-500/20 bg-slate-950/40 px-2 py-1 text-[10px] font-bold text-green-200">${duration.toFixed(2)}h</span>
+                </div>
+                <p class="mono mt-2 text-[10px] text-slate-400">Depth ${value(depthPercent(item.row), '%', 3)} / overlap ${rangeOverlapMinutes(item.event, range).toFixed(0)} min / rank ${((item.score * 100) | 0)}</p>
+            `;
+            row.addEventListener('click', () => {
+                els.planetQuery.value = item.row.pl_name || item.row.hostname || '';
+                loadPlanet(item.row);
+                const index = state.events.findIndex(event => event.cycle === item.event.cycle);
+                if (index >= 0) {
+                    state.selectedEventIndex = index;
+                    renderEvents();
+                    renderGraphics();
+                    renderTransitObservingProducts();
+                    generatePlan();
+                }
+                els.lookupStatus.textContent = `Loaded suggested transit ${name}.`;
+            });
+            return row;
+        }
         function renderSuggestions() {
             const dateValue = els.nightDate.value || state.nightDate;
             const range = nightRange(dateValue);
@@ -1083,31 +1119,43 @@
                 els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">Loading database suggestions...</p>';
                 return;
             }
-            const suggestions = databaseSuggestions(range).sort((a, b) => b.score - a.score);
+            const suggestions = databaseSuggestions(range).sort((a, b) =>
+                finite(a.row.pl_trandur, 0) - finite(b.row.pl_trandur, 0) || b.score - a.score
+            );
             if (!suggestions.length) {
                 els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No database transit windows are visible on that night.</p>';
                 return;
             }
-            const offset = state.suggestionOffset % suggestions.length;
-            const visible = suggestions.slice(offset, offset + 5).length === 5
-                ? suggestions.slice(offset, offset + 5)
-                : suggestions.slice(offset).concat(suggestions.slice(0, Math.max(0, 5 - (suggestions.length - offset))));
+            const buckets = [
+                { id: 'oneToTwo', label: '1-2 hr', rows: [] },
+                { id: 'twoToThree', label: '2-3 hr', rows: [] },
+                { id: 'threeToFour', label: '3-4 hr', rows: [] },
+                { id: 'fourPlus', label: '4+ hr', rows: [] }
+            ];
+            const bucketMap = Object.fromEntries(buckets.map(bucket => [bucket.id, bucket]));
+            suggestions.forEach(item => {
+                const bucket = bucketMap[transitDurationBucket(finite(item.row.pl_trandur, 0))];
+                if (bucket) bucket.rows.push(item);
+            });
             els.nightlySuggestions.innerHTML = '';
-            visible.forEach(item => {
-                const name = item.row.pl_name || item.row.hostname || 'Unknown target';
-                const row = document.createElement('div');
-                row.className = 'event-row rounded-md p-3';
-                row.innerHTML = `
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <p class="mono text-[10px] uppercase tracking-widest text-slate-500">${escapeHtml(name)}</p>
-                            <p class="mono mt-1 text-xs text-cyan-100">Midpoint ${central(item.event.midpoint)}</p>
-                        </div>
-                        <span class="mono rounded-full border border-slate-500/20 bg-slate-950/40 px-2 py-1 text-[10px] font-bold text-green-200">Rank ${((item.score * 100) | 0)}</span>
+            buckets.forEach(bucket => {
+                const section = document.createElement('section');
+                section.className = 'rounded-md border border-slate-500/20 bg-slate-950/30 p-2';
+                const shown = bucket.rows.slice(0, 5);
+                section.innerHTML = `
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <p class="mono text-[10px] font-bold uppercase tracking-widest text-fuchsia-100">${bucket.label}</p>
+                        <span class="mono text-[10px] text-slate-500">${bucket.rows.length}</span>
                     </div>
-                    <p class="mono mt-2 text-[10px] text-slate-400">Depth ${value(depthPercent(item.row), '%', 3)} / ${value(item.row.pl_trandur, 'h', 2)} dur / ${rangeOverlapMinutes(item.event, range).toFixed(0)} min overlap</p>
+                    <div class="space-y-2" data-bucket="${bucket.id}"></div>
                 `;
-                els.nightlySuggestions.appendChild(row);
+                const list = section.querySelector('[data-bucket]');
+                if (!shown.length) {
+                    list.innerHTML = '<p class="mono text-[10px] text-slate-500">No visible transits in this duration range.</p>';
+                } else {
+                    shown.forEach(item => list.appendChild(suggestionCard(item, range)));
+                }
+                els.nightlySuggestions.appendChild(section);
             });
         }
         els.queueCurrent.addEventListener('click', () => {
@@ -1117,7 +1165,7 @@
             renderQueue();
         });
         els.refreshSuggestions.addEventListener('click', () => {
-            state.suggestionOffset += 5;
+            state.suggestionOffset = 0;
             renderSuggestions();
         });
         setInterval(() => {
