@@ -1629,28 +1629,28 @@
             const rig = selectedRig();
             const goto = `#GoTo++ Auto Blind ${target.ra} ${target.dec} ${target.name.replace(/\s+/g, '_')}`;
             const planName = `${target.name.replace(/\s+/g, '_')}_NightVector`;
-            const filterCode = filter => ({ L: '0', R: '1', G: '2', B: '3' })[filter] ?? '-1';
             const xmlLines = [
-                { exp: 0, pause: 0, count: 1, filter: '-1', command: goto, wait: 1 },
+                { exp: 0, pause: 0, count: 1, command: goto, wait: 1, gain: '', offset: '' },
                 ...plan.lines.map(line => ({
                     exp: line.exp,
                     pause: line.pause,
                     count: line.count,
-                    filter: filterCode(line.filter),
                     command: '',
-                    wait: 0
+                    wait: 0,
+                    gain: line.preset.gain,
+                    offset: line.preset.offset
                 }))
             ].map((line, index) => `\t\t\t<Exposures>
 \t\t\t\t<Order>${index + 1}</Order>
 \t\t\t\t<Exp>${xmlEscape(line.exp)}</Exp>
-\t\t\t\t<ISO>100</ISO>
-\t\t\t\t<Quality>1</Quality>
+\t\t\t\t<Binning>1</Binning>
 \t\t\t\t<Pause>${xmlEscape(line.pause)}</Pause>
 \t\t\t\t<Count>${xmlEscape(line.count)}</Count>
 \t\t\t\t<RunCommand>${xmlEscape(line.command)}</RunCommand>
 \t\t\t\t<WaitCommand>${line.wait}</WaitCommand>
-\t\t\t\t<Filter>${xmlEscape(line.filter)}</Filter>
-\t\t\t\t<LensAV></LensAV>
+\t\t\t\t<Filter>-1</Filter>
+\t\t\t\t<Gain>${xmlEscape(line.gain)}</Gain>
+\t\t\t\t<Offset>${xmlEscape(line.offset)}</Offset>
 \t\t\t</Exposures>`).join('\n');
             return [
                 '<?xml version="1.0"?>',
