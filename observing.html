@@ -1644,13 +1644,13 @@
 \t\t\t\t<Order>${index + 1}</Order>
 \t\t\t\t<Exp>${xmlEscape(line.exp)}</Exp>
 \t\t\t\t<Binning>1</Binning>
-\t\t\t\t<Pause>${xmlEscape(line.pause)}</Pause>
-\t\t\t\t<Count>${xmlEscape(line.count)}</Count>
-\t\t\t\t<RunCommand>${xmlEscape(line.command)}</RunCommand>
-\t\t\t\t<WaitCommand>${line.wait}</WaitCommand>
-\t\t\t\t<Filter>-1</Filter>
 \t\t\t\t<Gain>${xmlEscape(line.gain)}</Gain>
 \t\t\t\t<Offset>${xmlEscape(line.offset)}</Offset>
+\t\t\t\t<Pause>${xmlEscape(line.pause)}</Pause>
+\t\t\t\t<Count>${xmlEscape(line.count)}</Count>
+\t\t\t\t<Filter>-1</Filter>
+\t\t\t\t<RunCommand>${xmlEscape(line.command)}</RunCommand>
+\t\t\t\t<WaitCommand>${line.wait}</WaitCommand>
 \t\t\t</Exposures>`).join('\n');
             return [
                 '<?xml version="1.0"?>',

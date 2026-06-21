@@ -438,6 +438,72 @@
         function dateFromJd(jd) {
             return new Date((jd - 2440587.5) * 86400000);
         }
+        const TT_MINUS_UTC_SECONDS = 69.184;
+        const AU_LIGHT_SECONDS = 499.004783836;
+        function archiveTimeRef(planet) {
+            return String(planet?.pl_tranmid_systemref || 'BJD_TDB').toUpperCase().replace(/\s+/g, '_');
+        }
+        function usesUtcScale(planet) {
+            return archiveTimeRef(planet).includes('UTC');
+        }
+        function usesBarycentricOrHeliocentricTime(planet) {
+            const ref = archiveTimeRef(planet);
+            return ref.includes('BJD') || ref.includes('HJD');
+        }
+        function timeScaleOffsetDays(planet) {
+            return usesUtcScale(planet) ? 0 : TT_MINUS_UTC_SECONDS / 86400;
+        }
+        function earthHeliocentricEquatorialAu(utcJd) {
+            const n = utcJd - 2451545.0;
+            const meanLongitude = normalizeDegrees(280.460 + 0.9856474 * n);
+            const meanAnomaly = normalizeDegrees(357.528 + 0.9856003 * n);
+            const anomaly = degToRad(meanAnomaly);
+            const sunLongitude = normalizeDegrees(meanLongitude + 1.915 * Math.sin(anomaly) + 0.020 * Math.sin(2 * anomaly));
+            const radius = 1.00014 - 0.01671 * Math.cos(anomaly) - 0.00014 * Math.cos(2 * anomaly);
+            const earthLongitude = degToRad(normalizeDegrees(sunLongitude + 180));
+            const obliquity = degToRad(23.439291);
+            const x = radius * Math.cos(earthLongitude);
+            const y = radius * Math.sin(earthLongitude);
+            return {
+                x,
+                y: y * Math.cos(obliquity),
+                z: y * Math.sin(obliquity)
+            };
+        }
+        function targetUnitVector(planet) {
+            const ra = finite(planet?.ra);
+            const dec = finite(planet?.dec);
+            if (ra === null || dec === null) return null;
+            const raRad = degToRad(ra);
+            const decRad = degToRad(dec);
+            return {
+                x: Math.cos(decRad) * Math.cos(raRad),
+                y: Math.cos(decRad) * Math.sin(raRad),
+                z: Math.sin(decRad)
+            };
+        }
+        function barycentricCorrectionDays(utcJd, planet) {
+            if (!usesBarycentricOrHeliocentricTime(planet)) return 0;
+            const target = targetUnitVector(planet);
+            if (!target) return 0;
+            const earth = earthHeliocentricEquatorialAu(utcJd);
+            const projectedAu = earth.x * target.x + earth.y * target.y + earth.z * target.z;
+            return projectedAu * AU_LIGHT_SECONDS / 86400;
+        }
+        function archiveTimeFromUtcJd(utcJd, planet) {
+            return utcJd + timeScaleOffsetDays(planet) + barycentricCorrectionDays(utcJd, planet);
+        }
+        function utcJdFromArchiveTime(archiveJd, planet) {
+            let utcJd = archiveJd - timeScaleOffsetDays(planet);
+            for (let index = 0; index < 4; index += 1) {
+                utcJd = archiveJd - timeScaleOffsetDays(planet) - barycentricCorrectionDays(utcJd, planet);
+            }
+            return utcJd;
+        }
+        function timingCorrectionMinutes(archiveJd, planet) {
+            const utcJd = utcJdFromArchiveTime(archiveJd, planet);
+            return (archiveJd - utcJd) * 1440;
+        }
         function utcDate(date, withDate = true, withSeconds = false) {
             return withDate
                 ? `${date.toISOString().replace('T', ' ').slice(0, withSeconds ? 19 : 16)} UTC`
@@ -652,24 +718,24 @@
             const periodError = Math.max(Math.abs(finite(planet.pl_orbpererr1, 0)), Math.abs(finite(planet.pl_orbpererr2, 0)));
             return Math.sqrt(epochError ** 2 + (cycles * periodError) ** 2) * 24 * 60;
         }
-        function buildEvents(planet) {
+        function buildEventsFromCycle(planet, firstCycle, count) {
             const epoch = finite(planet.pl_tranmid);
             const period = finite(planet.pl_orbper);
             const durationHours = finite(planet.pl_trandur);
             if (epoch === null || period === null || durationHours === null) return [];
-            const now = jdFromDate(new Date());
-            const firstCycle = Math.floor((now - epoch) / period) - 1;
             const ingress = ingressHours(planet) / 24;
             const half = durationHours / 48;
             const pre = Math.max(10, finite(els.preBaseline.value, 45)) / 1440;
             const post = Math.max(10, finite(els.postBaseline.value, 45)) / 1440;
-            return Array.from({ length: 10 }, (_, index) => {
+            return Array.from({ length: count }, (_, index) => {
                 const cycle = firstCycle + index;
-                const midpoint = epoch + cycle * period;
+                const archiveMidpoint = epoch + cycle * period;
+                const midpoint = utcJdFromArchiveTime(archiveMidpoint, planet);
                 const ingressStart = midpoint - half;
                 const egressEnd = midpoint + half;
                 return {
                     cycle,
+                    archiveMidpoint,
                     midpoint,
                     baselineStart: ingressStart - pre,
                     ingressStart,
@@ -679,7 +745,57 @@
                     baselineEnd: egressEnd + post,
                     uncertaintyMinutes: uncertaintyMinutes(planet, cycle)
                 };
-            }).filter(event => event.baselineEnd > now - 0.02);
+            });
+        }
+        function buildEvents(planet, centerUtcJd = jdFromDate(new Date()), count = 12) {
+            const epoch = finite(planet.pl_tranmid);
+            const period = finite(planet.pl_orbper);
+            if (epoch === null || period === null) return [];
+            const centerArchiveJd = archiveTimeFromUtcJd(centerUtcJd, planet);
+            const firstCycle = Math.floor((centerArchiveJd - epoch) / period) - 1;
+            return buildEventsFromCycle(planet, firstCycle, count)
+                .filter(event => event.baselineEnd > centerUtcJd - 0.02 || event.baselineEnd > jdFromDate(new Date()) - 0.02);
+        }
+        function buildEventsForRange(planet, range) {
+            const epoch = finite(planet.pl_tranmid);
+            const period = finite(planet.pl_orbper);
+            if (epoch === null || period === null) return [];
+            const startArchiveJd = archiveTimeFromUtcJd(jdFromDate(range.start), planet);
+            const endArchiveJd = archiveTimeFromUtcJd(jdFromDate(range.end), planet);
+            const firstCycle = Math.floor((startArchiveJd - epoch) / period) - 2;
+            const lastCycle = Math.ceil((endArchiveJd - epoch) / period) + 2;
+            const count = clamp(lastCycle - firstCycle + 1, 1, 80);
+            return buildEventsFromCycle(planet, firstCycle, count);
+        }
+        function serviceEventFromRow(row, planet, index = 0) {
+            const midpoint = finite(row.midpointjd);
+            if (midpoint === null) return null;
+            const durationHours = finite(row.transitduration, finite(planet.pl_trandur, 2));
+            const half = durationHours / 48;
+            const pre = Math.max(10, finite(els.preBaseline.value, 45)) / 1440;
+            const post = Math.max(10, finite(els.postBaseline.value, 45)) / 1440;
+            const ingressStart = finite(row.ingressjd, midpoint - half);
+            const egressEnd = finite(row.egressjd, midpoint + half);
+            const ingressLength = ingressHours({ ...planet, pl_trandur: durationHours }) / 24;
+            return {
+                cycle: `service-${index}`,
+                archiveMidpoint: midpoint,
+                midpoint,
+                baselineStart: ingressStart - pre,
+                ingressStart,
+                ingressEnd: ingressStart + ingressLength,
+                egressStart: egressEnd - ingressLength,
+                egressEnd,
+                baselineEnd: egressEnd + post,
+                uncertaintyMinutes: Math.max(0, finite(row.propmidpointunc, 0) * 1440),
+                source: 'NASA Transit Service',
+                refname: row.refname || '',
+                refpubldate: row.refpubldate || '',
+                isMostPrecise: Number(row.ismostprecise) === 1
+            };
+        }
+        function eventsFromTransitService(rows, planet) {
+            return rows.map((row, index) => serviceEventFromRow(row, planet, index)).filter(Boolean);
         }
         function selectedEvent() {
             return state.events[state.selectedEventIndex] || state.events[0];
@@ -703,6 +819,8 @@
             const planet = state.planet;
             if (!planet) return;
             const depth = depthPercent(planet);
+            const event = selectedEvent();
+            const correction = event && event.source !== 'NASA Transit Service' ? timingCorrectionMinutes(event.archiveMidpoint, planet) : null;
             els.planetName.textContent = planet.pl_name;
             els.coordinates.textContent = `${planet.rastr || value(planet.ra, ' deg')} / ${planet.decstr || value(planet.dec, ' deg')}`;
             els.fluxStats.innerHTML = [
@@ -711,7 +829,10 @@
                 statCard('Relative floor', depth === null ? 'unavailable' : `${(1 - depth / 100).toFixed(6)}`, 'text-cyan-100'),
                 statCard('Period', value(planet.pl_orbper, ' d', 6), 'text-amber-100'),
                 statCard('Duration', value(planet.pl_trandur, ' h', 3), 'text-green-100'),
-                statCard('TTV flag', Number(planet.ttv_flag) === 1 ? 'yes' : 'no', Number(planet.ttv_flag) === 1 ? 'text-amber-100' : 'text-cyan-100')
+                statCard('TTV flag', Number(planet.ttv_flag) === 1 ? 'yes' : 'no', Number(planet.ttv_flag) === 1 ? 'text-amber-100' : 'text-cyan-100'),
+                statCard('Timing source', event?.source || planet.timing_table || 'NASA Archive PS', 'text-cyan-100'),
+                statCard('Time ref', event?.source === 'NASA Transit Service' ? 'Transit Service JD' : planet.pl_tranmid_systemref || 'BJD_TDB assumed', 'text-cyan-100'),
+                statCard('UTC correction', event?.source === 'NASA Transit Service' ? 'service supplied' : correction === null ? 'unavailable' : `${correction.toFixed(1)} min`, 'text-fuchsia-100')
             ].join('');
             els.planetStats.innerHTML = [
                 definition('Planet', planet.pl_name),
@@ -757,7 +878,10 @@
                 els.eventSelect.appendChild(option);
                 const button = document.createElement('button');
                 button.className = `event-row w-full rounded-md p-2 text-left ${index === state.selectedEventIndex ? 'active' : ''}`;
-                button.innerHTML = `<p class="mono text-xs font-bold text-cyan-100">${central(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-500">${utc(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-400">ingress ${central(item.ingressStart, false)} / egress ${central(item.egressEnd, false)}</p><p class="mono mt-1 text-[10px] text-slate-500">ingress ${utc(item.ingressStart, false)} / egress ${utc(item.egressEnd, false)} / +/- ${item.uncertaintyMinutes.toFixed(1)} min</p>`;
+                const timingNote = item.source === 'NASA Transit Service'
+                    ? `${item.source}${item.refname ? ` / ${escapeHtml(item.refname)}` : ''}`
+                    : `${archiveTimeRef(state.planet)} correction ${timingCorrectionMinutes(item.archiveMidpoint, state.planet).toFixed(1)} min`;
+                button.innerHTML = `<p class="mono text-xs font-bold text-cyan-100">${central(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-500">${utc(item.midpoint)}</p><p class="mono mt-1 text-[10px] text-slate-400">ingress ${central(item.ingressStart, false)} / egress ${central(item.egressEnd, false)}</p><p class="mono mt-1 text-[10px] text-slate-500">ingress ${utc(item.ingressStart, false)} / egress ${utc(item.egressEnd, false)} / ${timingNote} / +/- ${item.uncertaintyMinutes.toFixed(1)} min</p>`;
                 button.addEventListener('click', () => { state.selectedEventIndex = index; renderEvents(); renderGraphics(); generatePlan(); });
                 els.upcomingEvents.appendChild(button);
             });
@@ -890,25 +1014,25 @@
                 '\t\t\t\t<Order>1</Order>',
                 '\t\t\t\t<Exp>0</Exp>',
                 '\t\t\t\t<Binning>1</Binning>',
-                '\t\t\t\t<Pause>0</Pause>',
-                '\t\t\t\t<Count>1</Count>',
-                `\t\t\t\t<RunCommand>${xmlEscape(goto)}</RunCommand>`,
-                '\t\t\t\t<WaitCommand>1</WaitCommand>',
-                '\t\t\t\t<Filter>-1</Filter>',
                 '\t\t\t\t<Gain></Gain>',
                 '\t\t\t\t<Offset></Offset>',
+                '\t\t\t\t<Pause>0</Pause>',
+                '\t\t\t\t<Count>1</Count>',
+                '\t\t\t\t<Filter>-1</Filter>',
+                `\t\t\t\t<RunCommand>${xmlEscape(goto)}</RunCommand>`,
+                '\t\t\t\t<WaitCommand>1</WaitCommand>',
                 '\t\t\t</Exposures>',
                 '\t\t\t<Exposures>',
                 '\t\t\t\t<Order>2</Order>',
                 `\t\t\t\t<Exp>${xmlEscape(plan.exposure)}</Exp>`,
                 '\t\t\t\t<Binning>1</Binning>',
-                `\t\t\t\t<Pause>${xmlEscape(plan.pause)}</Pause>`,
-                `\t\t\t\t<Count>${xmlEscape(plan.count)}</Count>`,
-                '\t\t\t\t<RunCommand></RunCommand>',
-                '\t\t\t\t<WaitCommand>0</WaitCommand>',
-                '\t\t\t\t<Filter>-1</Filter>',
                 `\t\t\t\t<Gain>${xmlEscape(plan.preset.gain)}</Gain>`,
                 `\t\t\t\t<Offset>${xmlEscape(plan.preset.offset)}</Offset>`,
+                `\t\t\t\t<Pause>${xmlEscape(plan.pause)}</Pause>`,
+                `\t\t\t\t<Count>${xmlEscape(plan.count)}</Count>`,
+                '\t\t\t\t<Filter>-1</Filter>',
+                '\t\t\t\t<RunCommand></RunCommand>',
+                '\t\t\t\t<WaitCommand>0</WaitCommand>',
                 '\t\t\t</Exposures>',
                 '\t\t</Plan>',
                 '\t</LightPlans>',
@@ -926,6 +1050,37 @@
             link.remove();
             URL.revokeObjectURL(url);
         }
+        async function refreshTransitTiming(row) {
+            const planetName = row?.pl_name || row?.hostname;
+            if (!planetName) return;
+            const center = selectedEvent()?.midpoint || jdFromDate(new Date());
+            const params = new URLSearchParams({
+                name: planetName,
+                begin: String(center - 14),
+                end: String(center + 28)
+            });
+            const site = siteFromInputs();
+            if (Number.isFinite(site.lat) && Number.isFinite(site.lon)) {
+                params.set('lat', String(site.lat));
+                params.set('lon', String(site.lon));
+            }
+            const response = await fetch(`${DEFAULT_WORKER_URL}/transit-timing?${params.toString()}`).catch(() => null);
+            const result = response ? await response.json().catch(() => ({})) : {};
+            if (!response || !response.ok || !result.ok || !Array.isArray(result.rows) || !result.rows.length) {
+                els.lookupStatus.textContent = `${planetName} loaded from NASA Archive PS; Transit Service timing unavailable (${result.error || 'no service rows'}).`;
+                return;
+            }
+            if (state.planet?.pl_name !== row.pl_name) return;
+            const serviceEvents = eventsFromTransitService(result.rows, state.planet)
+                .filter(event => event.baselineEnd > jdFromDate(new Date()) - 0.02);
+            if (!serviceEvents.length) return;
+            state.events = serviceEvents;
+            pickCurrentOrNextEvent();
+            state.plan = null;
+            renderPlanet();
+            generatePlan();
+            els.lookupStatus.textContent = `${planetName} timing confirmed with ${result.source}; ${serviceEvents.length} predicted event${serviceEvents.length === 1 ? '' : 's'} loaded.`;
+        }
         function loadPlanet(row) {
             state.planet = row;
             state.events = buildEvents(row);
@@ -933,6 +1088,7 @@
             state.plan = null;
             renderPlanet();
             generatePlan();
+            refreshTransitTiming(row);
         }
         async function lookupPlanet() {
             const name = els.planetQuery.value.trim();
@@ -1070,7 +1226,7 @@
         function databaseSuggestions(range) {
             return state.tessCatalog.flatMap(row => {
                 if (!row || finite(row.pl_tranmid) === null || finite(row.pl_orbper) === null || finite(row.pl_trandur) === null) return [];
-                return buildEvents(row)
+                return buildEventsForRange(row, range)
                     .filter(event => event.baselineEnd >= jdFromDate(range.start) && event.baselineStart <= jdFromDate(range.end))
                     .map(event => ({ row, event, score: transitSuggestionScore(row, event, range) }));
             }).filter(item => item.score > 0);

@@ -568,10 +568,11 @@ const EXOPLANET_ARCHIVE_COLUMNS = `
   pl_name, hostname, rastr, decstr, ra, dec, sy_vmag, sy_gaiamag, sy_tmag, sy_dist,
   st_spectype, st_teff, st_rad, st_mass, st_logg, st_met,
   pl_orbper, pl_orbpererr1, pl_orbpererr2,
-  pl_tranmid, pl_tranmiderr1, pl_tranmiderr2, pl_tranmid_systemref,
+  pl_tranmid, pl_tranmiderr1, pl_tranmiderr2,
   pl_trandur, pl_trandurerr1, pl_trandurerr2, pl_trandep, pl_ratror,
   pl_rade, pl_radj, pl_bmasse, pl_bmassj, pl_orbsmax, pl_orbincl,
-  pl_imppar, pl_insol, pl_eqt, ttv_flag, tran_flag, disc_year, discoverymethod, disc_facility
+  pl_imppar, pl_insol, pl_eqt, ttv_flag, tran_flag, disc_year, discoverymethod, disc_facility,
+  default_flag, pl_refname
 `.replace(/\s+/g, " ").trim();
 
 async function queryExoplanetTap(query) {
@@ -586,14 +587,32 @@ async function queryExoplanetTap(query) {
   return { ok: true, rows: Array.isArray(data) ? data : [] };
 }
 
+function numberOrNull(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function timingErrorScore(row) {
+  const epochError = Math.max(Math.abs(numberOrNull(row.pl_tranmiderr1) || 0), Math.abs(numberOrNull(row.pl_tranmiderr2) || 0));
+  const periodError = Math.max(Math.abs(numberOrNull(row.pl_orbpererr1) || 0), Math.abs(numberOrNull(row.pl_orbpererr2) || 0));
+  return (epochError || 99) + (periodError || 99);
+}
+
+function normalizePsTimingRow(row) {
+  return { ...row, pl_tranmid_systemref: "BJD_TDB", timing_table: "ps" };
+}
+
 async function queryExoplanetArchive(name) {
   const queryName = escapeAdql(name);
   if (!queryName) return { ok: false, error: "Missing exoplanet name" };
   const query = `
-    SELECT TOP 12
+    SELECT TOP 24
       ${EXOPLANET_ARCHIVE_COLUMNS}
-    FROM pscomppars
+    FROM ps
     WHERE tran_flag = 1
+      AND pl_orbper IS NOT NULL
+      AND pl_tranmid IS NOT NULL
+      AND pl_trandur IS NOT NULL
       AND (
         LOWER(pl_name) = LOWER('${queryName}')
         OR LOWER(hostname) = LOWER('${queryName}')
@@ -603,7 +622,7 @@ async function queryExoplanetArchive(name) {
   `.replace(/\s+/g, " ").trim();
   const result = await queryExoplanetTap(query);
   if (!result.ok) return result;
-  const rows = result.rows;
+  const rows = result.rows.map(normalizePsTimingRow);
   const normalized = queryName.toLowerCase();
   rows.sort((left, right) => {
     const rank = row => String(row.pl_name || "").toLowerCase() === normalized
@@ -611,11 +630,14 @@ async function queryExoplanetArchive(name) {
       : String(row.hostname || "").toLowerCase() === normalized
         ? 1
         : 2;
-    return rank(left) - rank(right) || String(left.pl_name || "").localeCompare(String(right.pl_name || ""));
+    return rank(left) - rank(right)
+      || Number(right.default_flag || 0) - Number(left.default_flag || 0)
+      || timingErrorScore(left) - timingErrorScore(right)
+      || String(left.pl_name || "").localeCompare(String(right.pl_name || ""));
   });
   return {
     ok: true,
-    source: "NASA Exoplanet Archive PSCompPars",
+    source: "NASA Exoplanet Archive PS",
     updated: new Date().toISOString(),
     query: name,
     rows
@@ -626,18 +648,90 @@ async function queryTessConfirmedExoplanets() {
   const query = `
     SELECT TOP 2000
       ${EXOPLANET_ARCHIVE_COLUMNS}
-    FROM pscomppars
+    FROM ps
     WHERE tran_flag = 1
+      AND pl_orbper IS NOT NULL
+      AND pl_tranmid IS NOT NULL
+      AND pl_trandur IS NOT NULL
       AND disc_facility = 'Transiting Exoplanet Survey Satellite (TESS)'
-    ORDER BY pl_name
+    ORDER BY pl_name, default_flag DESC
   `.replace(/\s+/g, " ").trim();
   const result = await queryExoplanetTap(query);
   if (!result.ok) return result;
+  const rowsByPlanet = new Map();
+  for (const row of result.rows.map(normalizePsTimingRow)) {
+    const existing = rowsByPlanet.get(row.pl_name);
+    if (!existing || Number(row.default_flag || 0) > Number(existing.default_flag || 0) || timingErrorScore(row) < timingErrorScore(existing)) {
+      rowsByPlanet.set(row.pl_name, row);
+    }
+  }
   return {
     ok: true,
-    source: "NASA Exoplanet Archive PSCompPars",
+    source: "NASA Exoplanet Archive PS",
     updated: new Date().toISOString(),
-    rows: result.rows
+    rows: [...rowsByPlanet.values()].sort((left, right) => String(left.pl_name || "").localeCompare(String(right.pl_name || "")))
+  };
+}
+
+function bestTransitServiceRows(rows) {
+  const valid = rows.filter(row => numberOrNull(row.midpointjd) !== null && !row.error);
+  if (!valid.length) return [];
+  const precise = valid.filter(row => Number(row.ismostprecise) === 1);
+  const sourceRows = precise.length ? precise : valid;
+  const byMidpoint = new Map();
+  for (const row of sourceRows) {
+    const midpoint = numberOrNull(row.midpointjd);
+    const key = midpoint === null ? "" : midpoint.toFixed(4);
+    const existing = byMidpoint.get(key);
+    const uncertainty = numberOrNull(row.propmidpointunc) ?? Number.POSITIVE_INFINITY;
+    const existingUncertainty = numberOrNull(existing?.propmidpointunc) ?? Number.POSITIVE_INFINITY;
+    if (!existing || uncertainty < existingUncertainty) byMidpoint.set(key, row);
+  }
+  return [...byMidpoint.values()].sort((left, right) => (numberOrNull(left.midpointjd) ?? 0) - (numberOrNull(right.midpointjd) ?? 0));
+}
+
+async function queryTransitTiming(url) {
+  const name = (url.searchParams.get("name") || "").trim();
+  if (!name) return { ok: false, error: "Missing exoplanet name" };
+  const begin = numberOrNull(url.searchParams.get("begin"));
+  const end = numberOrNull(url.searchParams.get("end"));
+  const lat = numberOrNull(url.searchParams.get("lat"));
+  const lon = numberOrNull(url.searchParams.get("lon"));
+  const params = new URLSearchParams({
+    sname: name,
+    most_precise_ephem: "1",
+    format: "json"
+  });
+  if (begin !== null && end !== null && end > begin) {
+    params.set("begin", String(begin));
+    params.set("end", String(end));
+  } else {
+    params.set("nextTransit", "1");
+  }
+  if (lat !== null && lon !== null) {
+    params.set("lat", String(lat));
+    params.set("lon", String(lon));
+    params.set("obsname", "NightVector");
+    params.set("twilight", "-12");
+  }
+  const response = await fetch(`https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TransitSearch/nph-transits-api?${params.toString()}`, {
+    headers: { "user-agent": "observing-vault/1.0 (NightVector transit planner)" }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.stat === "ERROR") {
+    return { ok: false, error: data.msg || "NASA Transit Service request failed" };
+  }
+  if (data.stat === "PENDING") {
+    return { ok: false, pending: true, error: "NASA Transit Service query is still pending", pollUrl: data.poll_url };
+  }
+  const rawRows = Array.isArray(data.data) ? data.data : [];
+  return {
+    ok: true,
+    source: "NASA Exoplanet Archive Transit Service",
+    updated: new Date().toISOString(),
+    query: name,
+    totalRows: rawRows.length,
+    rows: bestTransitServiceRows(rawRows)
   };
 }
 
@@ -724,6 +818,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/tess-exoplanets") {
       const result = await queryTessConfirmedExoplanets();
+      return json(result, result.ok ? 200 : 400, env, request);
+    }
+
+    if (request.method === "GET" && url.pathname === "/transit-timing") {
+      const result = await queryTransitTiming(url);
       return json(result, result.ok ? 200 : 400, env, request);
     }
 
