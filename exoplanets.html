@@ -245,6 +245,7 @@
                                 <line x1="50" y1="145" x2="875" y2="145" stroke-dasharray="4 7"></line>
                             </g>
                             <path id="flux-path" fill="none" stroke="url(#flux-gradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <g id="twilight-markers"></g>
                             <line id="now-line" x1="50" x2="50" y1="24" y2="188" stroke="#ffd166" stroke-width="3"></line>
                             <circle id="now-dot" cx="50" cy="76" r="7" fill="#ffd166" stroke="#05030b" stroke-width="3"></circle>
                             <text x="12" y="80" fill="#98a8c8" font-size="12">1.0</text>
@@ -567,6 +568,53 @@
             const x = Math.sin(dec) * Math.cos(lat) - Math.cos(dec) * Math.sin(lat) * Math.cos(ha);
             return { altitude, azimuth: normalizeDegrees(radToDeg(Math.atan2(y, x))) };
         }
+        function solarCoordinates(date) {
+            const days = jdFromDate(date) - 2451545.0;
+            const meanLongitude = normalizeDegrees(280.460 + 0.9856474 * days);
+            const anomaly = normalizeDegrees(357.528 + 0.9856003 * days);
+            const lambda = degToRad(normalizeDegrees(
+                meanLongitude
+                + 1.915 * Math.sin(degToRad(anomaly))
+                + 0.020 * Math.sin(degToRad(2 * anomaly))
+            ));
+            const obliquity = degToRad(23.439 - 0.0000004 * days);
+            return {
+                ra: normalizeDegrees(radToDeg(Math.atan2(Math.cos(obliquity) * Math.sin(lambda), Math.cos(lambda)))),
+                dec: radToDeg(Math.asin(Math.sin(obliquity) * Math.sin(lambda)))
+            };
+        }
+        function sunAltitude(date, latDeg, lonDeg) {
+            const sun = solarCoordinates(date);
+            return horizontalAt(sun.ra, sun.dec, latDeg, lonDeg, date).altitude;
+        }
+        function timelineX(event, jd) {
+            return 50 + (jd - event.baselineStart) / (event.baselineEnd - event.baselineStart) * 825;
+        }
+        function twilightMarkers(event, site, altitude = -18) {
+            if (!event || !Number.isFinite(site.lat) || !Number.isFinite(site.lon)) return [];
+            const start = dateFromJd(event.baselineStart);
+            const end = dateFromJd(event.baselineEnd);
+            const stepMs = 5 * 60 * 1000;
+            const markers = [];
+            let previous = { date: start, altitude: sunAltitude(start, site.lat, site.lon) };
+            for (let time = start.getTime() + stepMs; time <= end.getTime() + stepMs; time += stepMs) {
+                const date = new Date(Math.min(time, end.getTime()));
+                const current = { date, altitude: sunAltitude(date, site.lat, site.lon) };
+                const previousDelta = previous.altitude - altitude;
+                const currentDelta = current.altitude - altitude;
+                if (previousDelta === 0 || previousDelta * currentDelta < 0) {
+                    const fraction = Math.abs(previousDelta) / (Math.abs(previousDelta) + Math.abs(currentDelta));
+                    const crossing = new Date(previous.date.getTime() + (current.date - previous.date) * fraction);
+                    markers.push({
+                        jd: jdFromDate(crossing),
+                        label: previous.altitude > current.altitude ? 'astro dusk' : 'astro dawn'
+                    });
+                }
+                previous = current;
+                if (date.getTime() >= end.getTime()) break;
+            }
+            return markers;
+        }
         function airmassFromAltitude(altitude) {
             if (altitude <= 0) return null;
             const z = 90 - altitude;
@@ -689,25 +737,28 @@
         function value(value, suffix = '', digits = null) {
             const number = finite(value);
             if (number !== null) return `${digits === null ? number : number.toFixed(digits)}${suffix}`;
-            return value ? `${value}${suffix}` : 'unavailable';
+            return value ? `${value}${suffix}` : 'N/A';
         }
         function depthPercent(planet) {
             const archiveDepth = finite(planet.pl_trandep);
             if (archiveDepth !== null) return archiveDepth;
-            const ratio = finite(planet.pl_ratror);
-            return ratio !== null ? ratio * ratio * 100 : null;
+            const radiusRatio = ratio(planet);
+            return radiusRatio !== null ? radiusRatio * radiusRatio * 100 : null;
         }
         function ratio(planet) {
             const archiveRatio = finite(planet.pl_ratror);
             if (archiveRatio !== null) return archiveRatio;
             const radiusEarth = finite(planet.pl_rade);
             const starSolar = finite(planet.st_rad);
-            return radiusEarth !== null && starSolar ? radiusEarth / (starSolar * 109.076) : 0.1;
+            return radiusEarth !== null && starSolar ? radiusEarth / (starSolar * 109.076) : null;
+        }
+        function modelRatio(planet) {
+            return ratio(planet) ?? 0.1;
         }
         function ingressHours(planet) {
             const duration = finite(planet.pl_trandur, 2);
-            const k = clamp(ratio(planet), 0.005, 0.8);
-            const b = clamp(finite(planet.pl_imppar, 0), 0, Math.max(0, 1 - k - 0.001));
+            const k = clamp(modelRatio(planet), 0.005, 0.8);
+            const b = clamp(finite(planet.pl_imppar, Math.min(0.5, Math.max(0, 1 - k) / 2)), 0, Math.max(0, 1 - k - 0.001));
             const top = Math.max(0, (1 - k) ** 2 - b ** 2);
             const bottom = Math.max(0.0001, (1 + k) ** 2 - b ** 2);
             const fullDuration = duration * Math.sqrt(top / bottom);
@@ -824,15 +875,15 @@
             els.planetName.textContent = planet.pl_name;
             els.coordinates.textContent = `${planet.rastr || value(planet.ra, ' deg')} / ${planet.decstr || value(planet.dec, ' deg')}`;
             els.fluxStats.innerHTML = [
-                statCard('Depth', depth === null ? 'unavailable' : `${depth.toFixed(3)}%`, 'text-fuchsia-100'),
-                statCard('Depth ppm', depth === null ? 'unavailable' : `${Math.round(depth * 10000)} ppm`, 'text-green-100'),
-                statCard('Relative floor', depth === null ? 'unavailable' : `${(1 - depth / 100).toFixed(6)}`, 'text-cyan-100'),
+                statCard('Depth', depth === null ? 'N/A' : `${depth.toFixed(3)}%`, 'text-fuchsia-100'),
+                statCard('Depth ppm', depth === null ? 'N/A' : `${Math.round(depth * 10000)} ppm`, 'text-green-100'),
+                statCard('Relative floor', depth === null ? 'N/A' : `${(1 - depth / 100).toFixed(6)}`, 'text-cyan-100'),
                 statCard('Period', value(planet.pl_orbper, ' d', 6), 'text-amber-100'),
                 statCard('Duration', value(planet.pl_trandur, ' h', 3), 'text-green-100'),
                 statCard('TTV flag', Number(planet.ttv_flag) === 1 ? 'yes' : 'no', Number(planet.ttv_flag) === 1 ? 'text-amber-100' : 'text-cyan-100'),
                 statCard('Timing source', event?.source || planet.timing_table || 'NASA Archive PS', 'text-cyan-100'),
                 statCard('Time ref', event?.source === 'NASA Transit Service' ? 'Transit Service JD' : planet.pl_tranmid_systemref || 'BJD_TDB assumed', 'text-cyan-100'),
-                statCard('UTC correction', event?.source === 'NASA Transit Service' ? 'service supplied' : correction === null ? 'unavailable' : `${correction.toFixed(1)} min`, 'text-fuchsia-100')
+                statCard('UTC correction', event?.source === 'NASA Transit Service' ? 'service supplied' : correction === null ? 'N/A' : `${correction.toFixed(1)} min`, 'text-fuchsia-100')
             ].join('');
             els.planetStats.innerHTML = [
                 definition('Planet', planet.pl_name),
@@ -843,7 +894,7 @@
                 definition('Impact parameter', value(planet.pl_imppar, '', 3)),
                 definition('Equilibrium temp', value(planet.pl_eqt, ' K', 0)),
                 definition('Insolation', value(planet.pl_insol, ' Earth', 2)),
-                definition('Discovery', `${planet.discoverymethod || 'unavailable'} / ${planet.disc_year || '?'}`)
+                definition('Discovery', `${planet.discoverymethod || 'N/A'} / ${planet.disc_year || 'N/A'}`)
             ].join('');
             const hostMag = finite(planet.sy_vmag) ?? finite(planet.sy_gaiamag);
             els.starStats.innerHTML = [
@@ -851,13 +902,13 @@
                 definition('V magnitude', value(planet.sy_vmag, ' mag', 3)),
                 definition('Gaia magnitude', value(planet.sy_gaiamag, ' mag', 3)),
                 definition('Distance', value(planet.sy_dist, ' pc', 2)),
-                definition('Spectral type', planet.st_spectype || 'unavailable'),
+                definition('Spectral type', planet.st_spectype || 'N/A'),
                 definition('Temperature', value(planet.st_teff, ' K', 0)),
                 definition('Radius', value(planet.st_rad, ' Rsun', 3)),
                 definition('Mass', value(planet.st_mass, ' Msun', 3)),
                 definition('Log g', value(planet.st_logg, '', 3)),
                 definition('Metallicity', value(planet.st_met, ' dex', 3)),
-                definition('Planner magnitude', hostMag === null ? 'unavailable' : `${hostMag.toFixed(3)} mag`)
+                definition('Planner magnitude', hostMag === null ? 'N/A' : `${hostMag.toFixed(3)} mag`)
             ].join('');
             renderEvents();
             renderGraphics();
@@ -904,6 +955,31 @@
             if (jd > event.egressStart) return 1 - depth * (event.egressEnd - jd) / (event.egressEnd - event.egressStart);
             return 1 - depth;
         }
+        function renderTwilightMarkers(event) {
+            els.twilightMarkers.innerHTML = '';
+            const site = siteFromInputs();
+            twilightMarkers(event, site).forEach(marker => {
+                if (marker.jd < event.baselineStart || marker.jd > event.baselineEnd) return;
+                const x = timelineX(event, marker.jd);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x.toFixed(1));
+                line.setAttribute('x2', x.toFixed(1));
+                line.setAttribute('y1', '24');
+                line.setAttribute('y2', '188');
+                line.setAttribute('stroke', marker.label.includes('dusk') ? '#48ff9b' : '#00e5ff');
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-dasharray', '6 8');
+                line.setAttribute('opacity', '0.9');
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', x.toFixed(1));
+                label.setAttribute('y', '35');
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('fill', marker.label.includes('dusk') ? '#48ff9b' : '#00e5ff');
+                label.setAttribute('font-size', '11');
+                label.textContent = marker.label;
+                els.twilightMarkers.append(line, label);
+            });
+        }
         function renderGraphics() {
             const planet = state.planet;
             const event = selectedEvent();
@@ -917,29 +993,37 @@
                 return `${50 + x * 825},${yForFlux(transitFlux(event, x, depthFraction))}`;
             });
             els.fluxPath.setAttribute('d', `M ${points.join(' L ')}`);
+            renderTwilightMarkers(event);
             const nowX = 50 + progress * 825;
             const nowY = yForFlux(transitFlux(event, progress, depthFraction));
             els.nowLine.setAttribute('x1', nowX);
             els.nowLine.setAttribute('x2', nowX);
             els.nowDot.setAttribute('cx', nowX);
             els.nowDot.setAttribute('cy', nowY);
-            els.timelineDepth.textContent = depthPercent(planet) === null ? 'depth unavailable' : `${depthPercent(planet).toFixed(3)}% depth`;
+            els.timelineDepth.textContent = depthPercent(planet) === null ? 'depth N/A' : `${depthPercent(planet).toFixed(3)}% depth`;
             els.fluxFloorLabel.textContent = (1 - depthFraction).toFixed(4);
             els.timelineMidLabel.textContent = `midpoint ${central(event.midpoint, false)} / ${utc(event.midpoint, false)}`;
 
-            const k = clamp(ratio(planet), 0.02, 0.38);
-            const impact = clamp(finite(planet.pl_imppar, 0), -0.92, 0.92);
+            const radiusRatio = ratio(planet);
+            const impactParameter = finite(planet.pl_imppar);
+            const hasGeometry = radiusRatio !== null && impactParameter !== null;
+            const k = clamp(radiusRatio ?? 0.1, 0.02, 0.38);
+            const impact = clamp(impactParameter ?? 0, -0.92, 0.92);
             const inTransitProgress = clamp((now - event.ingressStart) / (event.egressEnd - event.ingressStart), 0, 1);
             const planetX = 332 + inTransitProgress * 236;
             const planetY = 115 + impact * 82;
             els.planetDisc.setAttribute('cx', planetX);
             els.planetDisc.setAttribute('cy', planetY);
             els.planetDisc.setAttribute('r', Math.max(8, k * 82));
+            els.planetDisc.setAttribute('opacity', hasGeometry ? '1' : '0.45');
             els.planetDiscLabel.setAttribute('x', planetX);
             els.planetDiscLabel.setAttribute('y', planetY + Math.max(8, k * 82) + 28);
             els.transitChord.setAttribute('y1', planetY);
             els.transitChord.setAttribute('y2', planetY);
-            els.geometryLabel.textContent = `b = ${value(planet.pl_imppar, '', 3)} / Rp/Rs = ${ratio(planet).toFixed(3)}`;
+            els.transitChord.setAttribute('opacity', hasGeometry ? '1' : '0.45');
+            els.geometryLabel.textContent = hasGeometry
+                ? `b = ${value(impactParameter, '', 3)} / Rp/Rs = ${value(radiusRatio, '', 3)}`
+                : `b = ${value(impactParameter, '', 3)} / Rp/Rs = ${value(radiusRatio, '', 3)} / schematic`;
 
             const phase = now < event.baselineStart
                 ? `Waiting for pre-transit baseline / starts ${dualTime(event.baselineStart)}`
@@ -1199,6 +1283,7 @@
             if (Number.isFinite(site.lat) && Number.isFinite(site.lon)) {
                 localStorage.setItem('observingSite', JSON.stringify({ name: 'Transit planner site', lat: site.lat, lon: site.lon }));
             }
+            renderGraphics();
             renderTransitObservingProducts();
         }));
         [els.planFilter, els.readoutSeconds].forEach(input => input.addEventListener('change', generatePlan));
