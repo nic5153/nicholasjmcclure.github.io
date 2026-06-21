@@ -418,6 +418,9 @@
             const end = Math.min(event.baselineEnd, jdFromDate(range.end));
             return Math.max(0, (end - start) * 1440);
         }
+        function siteIsSet(site) {
+            return Number.isFinite(site.lat) && Number.isFinite(site.lon);
+        }
         function finite(value, fallback = null) {
             const number = Number(value);
             return Number.isFinite(number) ? number : fallback;
@@ -741,13 +744,13 @@
         }
         function depthPercent(planet) {
             const archiveDepth = finite(planet.pl_trandep);
-            if (archiveDepth !== null) return archiveDepth;
+            if (archiveDepth !== null && archiveDepth > 0) return archiveDepth;
             const radiusRatio = ratio(planet);
             return radiusRatio !== null ? radiusRatio * radiusRatio * 100 : null;
         }
         function ratio(planet) {
             const archiveRatio = finite(planet.pl_ratror);
-            if (archiveRatio !== null) return archiveRatio;
+            if (archiveRatio !== null && archiveRatio > 0) return archiveRatio;
             const radiusEarth = finite(planet.pl_rade);
             const starSolar = finite(planet.st_rad);
             return radiusEarth !== null && starSolar ? radiusEarth / (starSolar * 109.076) : null;
@@ -1285,6 +1288,7 @@
             }
             renderGraphics();
             renderTransitObservingProducts();
+            renderSuggestions();
         }));
         [els.planFilter, els.readoutSeconds].forEach(input => input.addEventListener('change', generatePlan));
         els.generatePlan.addEventListener('click', generatePlan);
@@ -1306,14 +1310,44 @@
             const durationScore = clamp(duration / 4, 0, 1);
             const overlapScore = clamp(rangeOverlapMinutes(event, range) / 180, 0, 1);
             const uncertaintyScore = 1 - clamp(finite(event.uncertaintyMinutes, 0) / 30, 0, 1);
-            return brightness * 0.25 + depthScore * 0.25 + durationScore * 0.2 + overlapScore * 0.2 + uncertaintyScore * 0.1;
+            const altitudeScore = clamp((event.observability?.maxAltitude || 0) / 70, 0, 1);
+            return brightness * 0.2 + depthScore * 0.2 + durationScore * 0.15 + overlapScore * 0.15 + altitudeScore * 0.2 + uncertaintyScore * 0.1;
+        }
+        function transitObservability(row, event, site) {
+            const ra = finite(row.ra);
+            const dec = finite(row.dec);
+            if (!siteIsSet(site) || ra === null || dec === null) return null;
+            const start = dateFromJd(event.ingressStart);
+            const end = dateFromJd(event.egressEnd);
+            const stepMs = 5 * 60 * 1000;
+            let maxAltitude = -90;
+            let visibleDarkMinutes = 0;
+            let visibleMinutes = 0;
+            for (let time = start.getTime(); time <= end.getTime(); time += stepMs) {
+                const date = new Date(Math.min(time, end.getTime()));
+                const altitude = horizontalAt(ra, dec, site.lat, site.lon, date).altitude;
+                const isVisible = altitude > 0;
+                const isDark = sunAltitude(date, site.lat, site.lon) <= -18;
+                maxAltitude = Math.max(maxAltitude, altitude);
+                if (isVisible) visibleMinutes += 5;
+                if (isVisible && isDark) visibleDarkMinutes += 5;
+                if (date.getTime() >= end.getTime()) break;
+            }
+            return { maxAltitude, visibleMinutes, visibleDarkMinutes };
         }
         function databaseSuggestions(range) {
+            const site = siteFromInputs();
+            if (!siteIsSet(site)) return [];
             return state.tessCatalog.flatMap(row => {
                 if (!row || finite(row.pl_tranmid) === null || finite(row.pl_orbper) === null || finite(row.pl_trandur) === null) return [];
                 return buildEventsForRange(row, range)
                     .filter(event => event.baselineEnd >= jdFromDate(range.start) && event.baselineStart <= jdFromDate(range.end))
-                    .map(event => ({ row, event, score: transitSuggestionScore(row, event, range) }));
+                    .map(event => ({ row, event, observability: transitObservability(row, event, site) }))
+                    .filter(item => item.observability && item.observability.maxAltitude > 0 && item.observability.visibleDarkMinutes > 0)
+                    .map(item => {
+                        item.event.observability = item.observability;
+                        return { ...item, score: transitSuggestionScore(row, item.event, range) };
+                    });
             }).filter(item => item.score > 0);
         }
         function transitDurationBucket(hours) {
@@ -1336,7 +1370,7 @@
                     </div>
                     <span class="mono rounded-full border border-slate-500/20 bg-slate-950/40 px-2 py-1 text-[10px] font-bold text-green-200">${duration.toFixed(2)}h</span>
                 </div>
-                <p class="mono mt-2 text-[10px] text-slate-400">Depth ${value(depthPercent(item.row), '%', 3)} / overlap ${rangeOverlapMinutes(item.event, range).toFixed(0)} min / rank ${((item.score * 100) | 0)}</p>
+                <p class="mono mt-2 text-[10px] text-slate-400">Depth ${value(depthPercent(item.row), '%', 3)} / max alt ${Math.round(item.observability.maxAltitude)} deg / dark ${item.observability.visibleDarkMinutes.toFixed(0)} min / rank ${((item.score * 100) | 0)}</p>
             `;
             row.addEventListener('click', () => {
                 els.planetQuery.value = item.row.pl_name || item.row.hostname || '';
@@ -1356,6 +1390,11 @@
         function renderSuggestions() {
             const dateValue = els.nightDate.value || state.nightDate;
             const range = nightRange(dateValue);
+            const site = siteFromInputs();
+            if (!siteIsSet(site)) {
+                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">Enter transit site latitude and longitude to calculate location-filtered suggestions.</p>';
+                return;
+            }
             if (!state.tessCatalog.length) {
                 els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">Loading database suggestions...</p>';
                 return;
@@ -1364,7 +1403,7 @@
                 finite(a.row.pl_trandur, 0) - finite(b.row.pl_trandur, 0) || b.score - a.score
             );
             if (!suggestions.length) {
-                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No database transit windows are visible on that night.</p>';
+                els.nightlySuggestions.innerHTML = '<p class="mono text-[11px] text-slate-500">No TESS transit windows are above the horizon during astronomical darkness for those coordinates.</p>';
                 return;
             }
             const buckets = [

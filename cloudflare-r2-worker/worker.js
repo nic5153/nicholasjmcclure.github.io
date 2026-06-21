@@ -575,6 +575,13 @@ const EXOPLANET_ARCHIVE_COLUMNS = `
   default_flag, pl_refname
 `.replace(/\s+/g, " ").trim();
 
+const EXOPLANET_PHYSICAL_FALLBACK_COLUMNS = `
+  pl_name, sy_vmag, sy_gaiamag, sy_tmag, sy_dist,
+  st_spectype, st_teff, st_rad, st_mass, st_logg, st_met,
+  pl_trandep, pl_ratror, pl_rade, pl_radj, pl_bmasse, pl_bmassj,
+  pl_orbsmax, pl_orbincl, pl_imppar, pl_insol, pl_eqt
+`.replace(/\s+/g, " ").trim();
+
 async function queryExoplanetTap(query) {
   const params = new URLSearchParams({ query, format: "json" });
   const response = await fetch(`https://exoplanetarchive.ipac.caltech.edu/TAP/sync?${params}`, {
@@ -602,6 +609,35 @@ function normalizePsTimingRow(row) {
   return { ...row, pl_tranmid_systemref: "BJD_TDB", timing_table: "ps" };
 }
 
+const PHYSICAL_FALLBACK_FIELDS = [
+  "sy_vmag", "sy_gaiamag", "sy_tmag", "sy_dist",
+  "st_spectype", "st_teff", "st_rad", "st_mass", "st_logg", "st_met",
+  "pl_trandep", "pl_ratror", "pl_rade", "pl_radj", "pl_bmasse", "pl_bmassj",
+  "pl_orbsmax", "pl_orbincl", "pl_imppar", "pl_insol", "pl_eqt"
+];
+
+function hasValue(value, field) {
+  if (value === null || value === undefined || value === "") return false;
+  if (field === "pl_trandep" || field === "pl_ratror") return Number(value) > 0;
+  return true;
+}
+
+function enrichPhysicalFields(rows, fallbackRows) {
+  const fallbackByName = new Map(fallbackRows.map(row => [String(row.pl_name || "").toLowerCase(), row]));
+  return rows.map(row => {
+    const fallback = fallbackByName.get(String(row.pl_name || "").toLowerCase());
+    if (!fallback) return row;
+    const merged = { ...row };
+    for (const field of PHYSICAL_FALLBACK_FIELDS) {
+      if (!hasValue(merged[field], field) && hasValue(fallback[field], field)) {
+        merged[field] = fallback[field];
+      }
+    }
+    if (fallback.pl_trandep || fallback.pl_ratror) merged.physical_fallback_table = "pscomppars";
+    return merged;
+  });
+}
+
 async function queryExoplanetArchive(name) {
   const queryName = escapeAdql(name);
   if (!queryName) return { ok: false, error: "Missing exoplanet name" };
@@ -622,7 +658,20 @@ async function queryExoplanetArchive(name) {
   `.replace(/\s+/g, " ").trim();
   const result = await queryExoplanetTap(query);
   if (!result.ok) return result;
-  const rows = result.rows.map(normalizePsTimingRow);
+  const fallbackQuery = `
+    SELECT TOP 24
+      ${EXOPLANET_PHYSICAL_FALLBACK_COLUMNS}
+    FROM pscomppars
+    WHERE tran_flag = 1
+      AND (
+        LOWER(pl_name) = LOWER('${queryName}')
+        OR LOWER(hostname) = LOWER('${queryName}')
+        OR LOWER(pl_name) LIKE LOWER('%${queryName}%')
+        OR LOWER(hostname) LIKE LOWER('%${queryName}%')
+      )
+  `.replace(/\s+/g, " ").trim();
+  const fallback = await queryExoplanetTap(fallbackQuery).catch(() => ({ ok: false, rows: [] }));
+  const rows = enrichPhysicalFields(result.rows.map(normalizePsTimingRow), fallback.ok ? fallback.rows : []);
   const normalized = queryName.toLowerCase();
   rows.sort((left, right) => {
     const rank = row => String(row.pl_name || "").toLowerCase() === normalized
@@ -658,8 +707,17 @@ async function queryTessConfirmedExoplanets() {
   `.replace(/\s+/g, " ").trim();
   const result = await queryExoplanetTap(query);
   if (!result.ok) return result;
+  const fallbackQuery = `
+    SELECT TOP 2000
+      ${EXOPLANET_PHYSICAL_FALLBACK_COLUMNS}
+    FROM pscomppars
+    WHERE tran_flag = 1
+      AND disc_facility = 'Transiting Exoplanet Survey Satellite (TESS)'
+  `.replace(/\s+/g, " ").trim();
+  const fallback = await queryExoplanetTap(fallbackQuery).catch(() => ({ ok: false, rows: [] }));
+  const enrichedRows = enrichPhysicalFields(result.rows.map(normalizePsTimingRow), fallback.ok ? fallback.rows : []);
   const rowsByPlanet = new Map();
-  for (const row of result.rows.map(normalizePsTimingRow)) {
+  for (const row of enrichedRows) {
     const existing = rowsByPlanet.get(row.pl_name);
     if (!existing || Number(row.default_flag || 0) > Number(existing.default_flag || 0) || timingErrorScore(row) < timingErrorScore(existing)) {
       rowsByPlanet.set(row.pl_name, row);
