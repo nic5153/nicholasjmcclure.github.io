@@ -648,7 +648,7 @@
                             <input id="cloud-prefix" class="input-dark mt-3 w-full rounded-md px-3 py-2 mono text-xs" placeholder="Folder prefix">
                             <button id="list-cloud" class="ghost-button mt-2 w-full rounded-md px-3 py-2 mono text-xs font-bold">Browse Folder</button>
                         </details>
-                        <button id="download-cloud-listed" class="ghost-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Download Listed Folder</button>
+                        <button id="download-cloud-listed" class="ghost-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Download Listed Folder to Disk</button>
                         <p id="cloud-inventory-status" class="mt-3 mono text-[11px] text-cyan-100">No cloud inventory loaded.</p>
                         <div class="upload-progress mt-3 h-2 rounded-full">
                             <span id="download-progress-bar"></span>
@@ -2044,19 +2044,92 @@
         }
 
         async function downloadListedObjects() {
-            if (!state.cloudObjects.length) {
-                await listCloudObjects();
+            if (typeof window.showDirectoryPicker !== 'function') {
+                if (!state.cloudObjects.length) {
+                    await listCloudObjects();
+                }
+                if (!state.cloudObjects.length) return;
+                const objects = [...state.cloudObjects];
+                els.downloadProgressBar.style.width = '0%';
+                for (let index = 0; index < objects.length; index += 1) {
+                    const object = objects[index];
+                    const download = downloadCloudObject(object);
+                    els.cloudInventoryStatus.textContent = `Cloud: downloading ${object.key} (${index + 1}/${objects.length})`;
+                    if (!await download) return;
+                    els.downloadProgressBar.style.width = `${Math.round(((index + 1) / objects.length) * 100)}%`;
+                }
+                els.cloudInventoryStatus.textContent = `Downloaded ${objects.length} listed object${objects.length === 1 ? '' : 's'}.`;
+                return;
             }
-            if (!state.cloudObjects.length) return;
+
+            const objects = [...state.cloudObjects];
+            if (!objects.length) {
+                els.cloudInventoryStatus.textContent = 'Cloud: list a folder before downloading it.';
+                return;
+            }
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
+                return;
+            }
+            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            let directory;
+            try {
+                // Open the picker before any network awaits to retain user activation.
+                directory = await window.showDirectoryPicker({ mode: 'readwrite' });
+            } catch (error) {
+                els.cloudInventoryStatus.textContent = error.name === 'AbortError'
+                    ? 'Cloud: folder download cancelled.'
+                    : `Cloud: could not open the destination folder. ${error.message}`;
+                return;
+            }
+
             els.downloadProgressBar.style.width = '0%';
-            for (let index = 0; index < state.cloudObjects.length; index += 1) {
-                const object = state.cloudObjects[index];
-                els.downloadProgressBar.style.width = `${Math.round((index / state.cloudObjects.length) * 100)}%`;
-                const ok = await downloadCloudObject(object);
-                if (!ok) return;
-                els.downloadProgressBar.style.width = `${Math.round(((index + 1) / state.cloudObjects.length) * 100)}%`;
+            for (let index = 0; index < objects.length; index += 1) {
+                const object = objects[index];
+                els.cloudInventoryStatus.textContent = `Cloud: downloading ${object.key} (${index + 1}/${objects.length})`;
+                let writable;
+                try {
+                    if (!object.key.startsWith(prefix)) {
+                        throw new Error('Object is outside the selected prefix. List the folder again.');
+                    }
+                    const relativePath = object.key.slice(prefix.length).replace(/^\//, '');
+                    const parts = relativePath.split('/');
+                    if (parts.some(part => !part || part === '.' || part === '..' || part.includes('\\'))) {
+                        throw new Error('Object has an unsupported local file path.');
+                    }
+                    const filename = parts.pop();
+                    let parent = directory;
+                    for (const part of parts) {
+                        parent = await parent.getDirectoryHandle(part, { create: true });
+                    }
+                    const params = new URLSearchParams({ key: object.key });
+                    const response = await fetch(`${endpoint}/download?${params.toString()}`, {
+                        headers: { authorization: `Bearer ${token}` }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    const file = await parent.getFileHandle(filename, { create: true });
+                    writable = await file.createWritable();
+                    if (response.body && typeof response.body.pipeTo === 'function') {
+                        await response.body.pipeTo(writable);
+                    } else {
+                        await writable.write(await response.blob());
+                        await writable.close();
+                    }
+                    els.downloadProgressBar.style.width = `${Math.round(((index + 1) / objects.length) * 100)}%`;
+                    els.cloudInventoryStatus.textContent = `Cloud: downloaded ${object.key} (${index + 1}/${objects.length})`;
+                } catch (error) {
+                    if (writable) {
+                        await writable.abort().catch(() => {});
+                    }
+                    els.cloudInventoryStatus.textContent = `Cloud: download failed for ${object.key} (${index + 1}/${objects.length}). ${error.message}`;
+                    return;
+                }
             }
-            els.cloudInventoryStatus.textContent = `Downloaded ${state.cloudObjects.length} listed object${state.cloudObjects.length === 1 ? '' : 's'}.`;
+            els.cloudInventoryStatus.textContent = `Downloaded ${objects.length}/${objects.length} listed object${objects.length === 1 ? '' : 's'} to disk.`;
         }
 
         function addCustomTarget() {
