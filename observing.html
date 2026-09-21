@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NightVector - Nicholas J. McClure</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="files/vendor/zip.js-2.16.1/zip-native.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -649,6 +650,7 @@
                             <button id="list-cloud" class="ghost-button mt-2 w-full rounded-md px-3 py-2 mono text-xs font-bold">Browse Folder</button>
                         </details>
                         <button id="download-cloud-listed" class="ghost-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Download Listed Folder to Disk</button>
+                        <button id="download-cloud-zip" class="ghost-button mt-3 w-full rounded-md px-3 py-2 mono text-xs font-bold">Download Listed Folder as ZIP</button>
                         <p id="cloud-inventory-status" class="mt-3 mono text-[11px] text-cyan-100">No cloud inventory loaded.</p>
                         <div class="upload-progress mt-3 h-2 rounded-full">
                             <span id="download-progress-bar"></span>
@@ -2043,23 +2045,93 @@
             return true;
         }
 
+        async function downloadListedZip() {
+            const objects = [...state.cloudObjects];
+            if (!objects.length) {
+                els.cloudInventoryStatus.textContent = 'Cloud: list a folder before downloading it.';
+                return;
+            }
+            const endpoint = cloudEndpoint();
+            const token = cloudToken();
+            if (!endpoint || !token) {
+                els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
+                return;
+            }
+            if (!window.zip) {
+                els.cloudInventoryStatus.textContent = 'Cloud: ZIP library unavailable. Reload the page and try again.';
+                return;
+            }
+            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            const filename = (prefix.replace(/\/+$/, '').split('/').pop() || 'cloud-files') + '.zip';
+            const buttons = ['download-cloud-listed', 'download-cloud-zip'].map(id => document.getElementById(id));
+            if (buttons.some(button => button.disabled)) return;
+            buttons.forEach(button => { button.disabled = true; });
+            let writable;
+            let currentKey = '';
+            try {
+                let file;
+                if (typeof window.showSaveFilePicker === 'function') {
+                    try {
+                        // Keep the picker within the original click's user activation.
+                        file = await window.showSaveFilePicker({
+                            suggestedName: filename,
+                            types: [{ description: 'ZIP archive', accept: { 'application/zip': ['.zip'] } }]
+                        });
+                    } catch (error) {
+                        if (error.name === 'AbortError') {
+                            els.cloudInventoryStatus.textContent = 'Cloud: ZIP download cancelled.';
+                            return;
+                        }
+                        throw error;
+                    }
+                }
+                const entries = objects.map(object => {
+                    if (!object.key.startsWith(prefix)) {
+                        throw new Error('Object is outside the selected prefix. List the folder again.');
+                    }
+                    const path = object.key.slice(prefix.length).replace(/^\//, '');
+                    if (path.split('/').some(part => !part || part === '.' || part === '..' || part.includes('\\'))) {
+                        throw new Error('Object has an unsupported ZIP path.');
+                    }
+                    return { object, path };
+                });
+                writable = file ? await file.createWritable() : null;
+                // Store entries without compression to avoid spending CPU on large FITS files.
+                // zip.js supports streaming and ZIP64 for archives over 4 GiB.
+                const writer = new window.zip.ZipWriter(writable || new window.zip.BlobWriter('application/zip'), {
+                    level: 0, bufferedWrite: false, useWebWorkers: false
+                });
+                els.downloadProgressBar.style.width = '0%';
+                for (let index = 0; index < entries.length; index += 1) {
+                    const { object, path } = entries[index];
+                    currentKey = object.key;
+                    els.cloudInventoryStatus.textContent = `Cloud: adding ${currentKey} to ZIP (${index + 1}/${entries.length})`;
+                    const params = new URLSearchParams({ key: currentKey });
+                    const response = await fetch(`${endpoint}/download?${params.toString()}`, {
+                        headers: { authorization: `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    await writer.add(path, response.body || new window.zip.BlobReader(await response.blob()));
+                    els.downloadProgressBar.style.width = `${Math.round(((index + 1) / entries.length) * 100)}%`;
+                }
+                els.cloudInventoryStatus.textContent = `Cloud: finishing ZIP (${entries.length}/${entries.length})...`;
+                const archive = await writer.close();
+                if (!file) saveBlob(filename, archive);
+                els.cloudInventoryStatus.textContent = file
+                    ? `Saved ${entries.length} listed files to ${filename}.`
+                    : `ZIP ready: ${filename} (${entries.length} files). One browser download started.`;
+            } catch (error) {
+                if (writable) await writable.abort().catch(() => {});
+                els.cloudInventoryStatus.textContent = `Cloud: ZIP download failed${currentKey ? ' for ' + currentKey : ''}. ${error.message}`;
+            } finally {
+                buttons.forEach(button => { button.disabled = false; });
+            }
+        }
+
+
         async function downloadListedObjects() {
             if (typeof window.showDirectoryPicker !== 'function') {
-                if (!state.cloudObjects.length) {
-                    await listCloudObjects();
-                }
-                if (!state.cloudObjects.length) return;
-                const objects = [...state.cloudObjects];
-                els.downloadProgressBar.style.width = '0%';
-                for (let index = 0; index < objects.length; index += 1) {
-                    const object = objects[index];
-                    const download = downloadCloudObject(object);
-                    els.cloudInventoryStatus.textContent = `Cloud: downloading ${object.key} (${index + 1}/${objects.length})`;
-                    if (!await download) return;
-                    els.downloadProgressBar.style.width = `${Math.round(((index + 1) / objects.length) * 100)}%`;
-                }
-                els.cloudInventoryStatus.textContent = `Downloaded ${objects.length} listed object${objects.length === 1 ? '' : 's'}.`;
-                return;
+                return downloadListedZip();
             }
 
             const objects = [...state.cloudObjects];
@@ -3634,6 +3706,10 @@
             await listCloudObjects();
         });
         document.getElementById('download-cloud-listed').addEventListener('click', downloadListedObjects);
+        document.getElementById('download-cloud-zip').addEventListener('click', downloadListedZip);
+        if (typeof window.showDirectoryPicker !== 'function') {
+            document.getElementById('download-cloud-listed').hidden = true;
+        }
         async function prepareDirectUploadTickets(items, endpoint, token, uploadMode) {
             const tickets = new Map();
             if (uploadMode === 'proxy') return { mode: 'proxy', tickets };
