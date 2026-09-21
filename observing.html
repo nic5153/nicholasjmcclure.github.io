@@ -644,6 +644,13 @@
                             <button id="browse-latest-cloud" class="neon-button rounded-md px-3 py-2 mono text-xs font-bold">Latest Upload</button>
                             <button id="browse-current-cloud" class="ghost-button rounded-md px-3 py-2 mono text-xs font-bold">Current Night</button>
                         </div>
+                        <div class="mt-3 rounded-md border border-cyan-300/20 bg-slate-950/30 p-3">
+                            <button id="browse-all-cloud" class="neon-button w-full rounded-md px-3 py-2 mono text-xs font-bold">Browse / Refresh All Folders</button>
+                            <p class="mt-2 text-xs text-slate-400">Expand arrows to browse. Select a folder to list and download its files, including subfolders.</p>
+                            <div id="cloud-directory-tree" class="scroll-soft mt-3 max-h-80 overflow-auto" aria-label="R2 folders"></div>
+                        </div>
+                        <p id="cloud-selected-folder" class="mt-3 break-all mono text-xs text-green-200" aria-live="polite">Selected folder: none</p>
+
                         <details class="mt-3 rounded-md border border-slate-500/20 bg-slate-950/30 p-2">
                             <summary class="cursor-pointer mono text-[10px] font-bold uppercase tracking-widest text-slate-400">Manual folder filter</summary>
                             <input id="cloud-prefix" class="input-dark mt-3 w-full rounded-md px-3 py-2 mono text-xs" placeholder="Folder prefix">
@@ -1070,6 +1077,9 @@
             sort: 'score',
             files: [],
             cloudObjects: [],
+            cloudListedPrefix: null,
+            cloudDirectoryObjects: null,
+            cloudListRequest: 0,
             customTargets: loadCustomTargets(),
             hiddenTargetIds: loadHiddenTargetIds(),
             customRigProfiles: loadRigProfiles(),
@@ -1839,7 +1849,75 @@
                     : `observations/${cleanCloudSegment(date)}`;
         }
 
+        function selectCloudDirectory(prefix) {
+            // Invalidate an older request so it cannot replace this selection.
+            state.cloudListRequest += 1;
+            setCloudPrefix(prefix);
+            state.cloudListedPrefix = prefix;
+            state.cloudObjects = state.cloudDirectoryObjects.filter(object => object.key.startsWith(prefix) && !object.key.endsWith('/'));
+            renderCloudInventory();
+            renderCloudDirectories();
+        }
+
+        function renderCloudDirectories() {
+            const container = document.getElementById('cloud-directory-tree');
+            container.replaceChildren();
+            if (state.cloudDirectoryObjects === null) return;
+            const root = { name: 'Bucket root', prefix: '', count: 0, children: new Map() };
+            for (const object of state.cloudDirectoryObjects) {
+                const parts = object.key.split('/');
+                const isFile = !object.key.endsWith('/');
+                let node = root;
+                if (isFile) node.count += 1;
+                for (const part of parts.slice(0, -1)) {
+                    const prefix = node.prefix + part + '/';
+                    if (!node.children.has(part)) node.children.set(part, { name: part, prefix, count: 0, children: new Map() });
+                    node = node.children.get(part);
+                    if (isFile) node.count += 1;
+                }
+            }
+            const folderButton = node => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'rounded px-2 py-1 text-left mono text-xs break-all ' + (state.cloudListedPrefix === node.prefix ? 'neon-button' : 'ghost-button');
+                button.textContent = `📁 ${node.name} (${node.count} files)`;
+                button.title = node.prefix || 'Bucket root';
+                button.setAttribute('aria-pressed', String(state.cloudListedPrefix === node.prefix));
+                button.addEventListener('click', event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    selectCloudDirectory(node.prefix);
+                });
+                return button;
+            };
+            container.appendChild(folderButton(root));
+            const appendChildren = (node, parent) => {
+                for (const child of [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name))) {
+                    const details = document.createElement('details');
+                    details.className = 'ml-3 mt-2 border-l border-cyan-300/20 pl-2';
+                    details.open = Boolean(state.cloudListedPrefix && state.cloudListedPrefix.startsWith(child.prefix));
+                    const summary = document.createElement('summary');
+                    summary.className = 'cursor-pointer text-cyan-100';
+                    summary.appendChild(folderButton(child));
+                    details.appendChild(summary);
+                    appendChildren(child, details);
+                    parent.appendChild(details);
+                }
+            };
+            appendChildren(root, container);
+            if (!root.children.size) {
+                const message = document.createElement('p');
+                message.className = 'mt-2 text-xs text-slate-400';
+                message.textContent = 'No subfolders found. Files stored at the bucket root appear below.';
+                container.appendChild(message);
+            }
+        }
+
+
         function renderCloudInventory() {
+            document.getElementById('cloud-selected-folder').textContent = state.cloudListedPrefix === null
+                ? 'Selected folder: none'
+                : 'Selected folder: ' + (state.cloudListedPrefix || 'Bucket root');
             els.cloudInventoryList.innerHTML = '';
             if (!state.cloudObjects.length) {
                 els.cloudInventoryStatus.textContent = 'Cloud inventory is empty for that prefix.';
@@ -1986,14 +2064,22 @@
             els.addTargetStatus.textContent = 'Archive lookup complete. Magnitude, size, and object type were populated when available. Review fields, then add target.';
         }
 
-        async function listCloudObjects() {
+        async function listCloudObjects(requestedPrefix) {
             const endpoint = cloudEndpoint();
             const token = cloudToken();
             if (!endpoint || !token) {
                 els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
                 return;
             }
-            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            const prefix = typeof requestedPrefix === 'string' ? requestedPrefix : (els.cloudPrefix.value.trim() || defaultCloudPrefix());
+            const requestId = ++state.cloudListRequest;
+            state.cloudObjects = [];
+            state.cloudListedPrefix = null;
+            renderCloudInventory();
+            if (prefix === '') {
+                state.cloudDirectoryObjects = null;
+                renderCloudDirectories();
+            }
             els.cloudPrefix.value = prefix;
             localStorage.setItem('observingCloudPrefix', prefix);
             els.cloudInventoryStatus.textContent = `Cloud: listing ${prefix || 'bucket root'}...`;
@@ -2006,22 +2092,31 @@
                 const response = await fetch(`${endpoint}/list?${params.toString()}`, {
                     headers: { authorization: `Bearer ${token}` }
                 }).catch(() => null);
+                if (requestId !== state.cloudListRequest) return;
                 if (!response) {
                     els.cloudInventoryStatus.textContent = 'Cloud: list request blocked or unreachable.';
                     return;
                 }
                 const result = await response.json().catch(() => ({}));
-                if (!response.ok || !result.ok) {
+                if (requestId !== state.cloudListRequest) return;
+                if (!response.ok || !result.ok || !Array.isArray(result.objects)) {
                     els.cloudInventoryStatus.textContent = `Cloud: list failed. ${result.error || response.status}`;
                     return;
                 }
-                objects.push(...(result.objects || []));
+                objects.push(...result.objects);
+                if (result.truncated && !result.cursor) {
+                    els.cloudInventoryStatus.textContent = 'Cloud: incomplete listing. Refresh and try again.';
+                    return;
+                }
                 page += 1;
                 cursor = result.truncated && result.cursor ? result.cursor : '';
                 els.cloudInventoryStatus.textContent = `Cloud: listed ${objects.length} object${objects.length === 1 ? '' : 's'} across ${page} page${page === 1 ? '' : 's'}...`;
             } while (cursor);
-            state.cloudObjects = objects;
+            state.cloudListedPrefix = prefix;
+            state.cloudObjects = objects.filter(object => !object.key.endsWith('/'));
+            if (prefix === '') state.cloudDirectoryObjects = objects;
             renderCloudInventory();
+            renderCloudDirectories();
         }
 
         async function downloadCloudObject(object) {
@@ -2061,7 +2156,7 @@
                 els.cloudInventoryStatus.textContent = 'Cloud: ZIP library unavailable. Reload the page and try again.';
                 return;
             }
-            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            const prefix = state.cloudListedPrefix ?? (els.cloudPrefix.value.trim() || defaultCloudPrefix());
             const filename = (prefix.replace(/\/+$/, '').split('/').pop() || 'cloud-files') + '.zip';
             const buttons = ['download-cloud-listed', 'download-cloud-zip'].map(id => document.getElementById(id));
             if (buttons.some(button => button.disabled)) return;
@@ -2145,7 +2240,7 @@
                 els.cloudInventoryStatus.textContent = 'Cloud: enter endpoint and upload token first.';
                 return;
             }
-            const prefix = els.cloudPrefix.value.trim() || defaultCloudPrefix();
+            const prefix = state.cloudListedPrefix ?? (els.cloudPrefix.value.trim() || defaultCloudPrefix());
             let directory;
             try {
                 // Open the picker before any network awaits to retain user activation.
@@ -3691,6 +3786,7 @@
         els.cloudPrefix.addEventListener('change', () => {
             localStorage.setItem('observingCloudPrefix', els.cloudPrefix.value.trim());
         });
+        document.getElementById('browse-all-cloud').addEventListener('click', () => listCloudObjects(''));
         document.getElementById('list-cloud').addEventListener('click', listCloudObjects);
         document.getElementById('browse-latest-cloud').addEventListener('click', async () => {
             const prefix = localStorage.getItem('observingLastCloudPrefix');
