@@ -3,565 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outreach - Nicholas J. McClure</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <script>
-      MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']]
-        }
-      };
-    </script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>Outreach | Nicholas J. McClure</title>
+    <meta name="description" content="Public outreach: AstroNight 2025 viewing sessions and talks.">
+    <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="files/css/site.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000000;
-        }
-
-        #floating-lines-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 0;
-        }
-
-        nav, footer {
-            position: relative;
-            z-index: 60;
-        }
-        
-        main {
-            position: relative;
-            z-index: 10;
-        }
-
-        .bg-navy { background-color: #001f3f; }
-        .bg-forest { background-color: #228B22; }
-        .text-navy { color: #001f3f; }
-        .text-forest { color: #228B22; }
-        .border-forest { border-color: #228B22; }
-        .border-navy { border-color: #001f3f; }
-
-        .nav-link {
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: #228B22;
-        }
-        
-        .active-link {
-            color: #228B22;
-            border-bottom: 2px solid #228B22;
-        }
-        
-        /* Prevent dropdown flicker */
-        .group:hover .group-hover\:block,
-        .group:focus-within .group-hover\:block {
-            display: block;
-        }
+        .gallery { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .gallery figure { margin: 0; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+        .gallery figure.wide { grid-column: 1 / -1; }
+        .gallery img { width: 100%; height: 340px; object-fit: cover; transition: transform 0.6s ease; }
+        .gallery figure.wide img { height: clamp(300px, 46vw, 520px); }
+        .gallery figure:hover img { transform: scale(1.03); }
+        .gallery figcaption { padding: 12px 16px; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+        @media (max-width: 720px) { .gallery { grid-template-columns: 1fr; } .gallery img { height: 260px; } }
     </style>
-    <link rel="stylesheet" href="files/neon-theme.css">
 </head>
-<body class="text-gray-800 flex flex-col min-h-screen">
-    <div id="floating-lines-bg"></div>
+<body data-page="outreach">
+    <script src="files/js/site.js"></script>
 
-    <nav class="bg-navy p-4 shadow-md sticky top-0">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
-            <div class="hidden md:flex space-x-8 items-center">
-                <a href="index.html" class="nav-link text-white">Home</a>
-                <div class="relative group">
-                    <button class="text-white nav-link flex items-center space-x-1">
-                        <span>🔭 Science</span><span class="text-sm">▼</span>
-                    </button>
-                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-56 py-2 z-[70]">
-                        <a href="astrophotography.html" class="block px-4 py-2 hover:bg-gray-100">Astrophotography</a>
-                        <a href="observing.html" class="block px-4 py-2 hover:bg-gray-100">NightVector</a>
-                        <a href="exoplanets.html" class="block px-4 py-2 hover:bg-gray-100">Transit Planner</a>
-                    </div>
+    <main class="container">
+        <header class="page-head">
+            <p class="eyebrow">Outreach &middot; November 2025</p>
+            <h1 style="margin-top: 10px;">AstroNight 2025</h1>
+            <p>I volunteered at AstroNight, an event dedicated to bringing the cosmos closer to the community. I spent the evening guiding public viewing sessions and leading educational talks with my personal telescope setup.</p>
+        </header>
+
+        <div class="gallery">
+            <figure class="wide">
+                <img src="files/astronight3.jpg" alt="Leading an educational talk at AstroNight" loading="lazy">
+                <figcaption>Leading an educational talk at AstroNight.</figcaption>
+            </figure>
+            <figure>
+                <img src="files/astronight1.jpg" alt="Telescope demonstration outdoors" loading="lazy">
+                <figcaption>Telescope demonstration.</figcaption>
+            </figure>
+            <figure>
+                <img src="files/astronight2.jpg" alt="Public viewing session" loading="lazy">
+                <figcaption>Public viewing session.</figcaption>
+            </figure>
+        </div>
+
+        <section class="card card-pad-lg" style="margin-top: 24px;">
+            <div class="grid-2" style="align-items: start;">
+                <div>
+                    <p class="eyebrow">Ongoing</p>
+                    <h2 style="margin-top: 8px; font-size: 1.2rem;">Teaching &amp; public astronomy</h2>
+                    <p class="muted" style="margin-top: 10px;">Astronights volunteer with the TTU Department of Physics &amp; Astronomy since 2024, and former STEM educator at Science Spectrum in Lubbock, where I developed curriculum and led eclipse-outreach events with more than 800 attendees.</p>
                 </div>
-                <div class="relative group">
-                    <button class="text-white nav-link flex items-center space-x-1">
-                        <span>👤 About</span><span class="text-sm">▼</span>
-                    </button>
-                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
-                        <a href="cv.html" class="block px-4 py-2 hover:bg-gray-100">CV</a>
-                        <a href="outreach.html" class="block px-4 py-2 hover:bg-gray-100">Outreach</a>
-                        <a href="poster.html" class="block px-4 py-2 hover:bg-gray-100">Poster</a>
-                    </div>
-                </div>
-
-            </div>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden mt-2 bg-navy text-white rounded-md overflow-hidden">
-            <a href="index.html" class="block py-2 px-4">Home</a>
-            <p class="px-4 pt-3 pb-1 text-sm opacity-70">Science</p>
-            <a href="astrophotography.html" class="block py-2 px-4">Astrophotography</a>
-            <a href="observing.html" class="block py-2 px-4">NightVector</a>
-            <a href="exoplanets.html" class="block py-2 px-4">Transit Planner</a>
-            <p class="px-4 pt-3 pb-1 text-sm opacity-70">About</p>
-            <a href="cv.html" class="block py-2 px-4">CV</a>
-            <a href="outreach.html" class="block py-2 px-4">Outreach</a>
-            <a href="poster.html" class="block py-2 px-4">Poster</a>
-        </div>
-    </nav>
-
-    <main class="container mx-auto px-4 py-12 flex-grow">
-        
-        <div class="text-center mb-12">
-            <h1 class="text-5xl font-bold text-white mb-4">AstroNight 2025</h1>
-            <div class="h-1 w-24 bg-forest mx-auto mb-6"></div>
-            <p class="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
-                In November, I had the privilege of volunteering at AstroNight, an event dedicated to bringing the cosmos closer to the community.
-                I spent the evening guiding public viewing sessions and leading educational talks with my personal telescope setup.
-            </p>
-        </div>
-
-        <div class="max-w-6xl mx-auto space-y-8">
-            
-            <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
-                <img src="files/astronight3.jpg" 
-                     alt="Leading an educational talk at AstroNight" 
-                     class="w-full h-[400px] md:h-[500px] object-cover object-center transform transition-transform duration-700 hover:scale-105">
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+                <div>
+                    <p class="eyebrow">Classroom</p>
+                    <h2 style="margin-top: 8px; font-size: 1.2rem;">Lab &amp; learning assistant</h2>
+                    <p class="muted" style="margin-top: 10px;">Supported laboratory instruction for more than 200 students in the Solar System and Stellar Astronomy labs at Texas Tech, including observing instruction and equipment troubleshooting.</p>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
-                    <img src="files/astronight1.jpg" 
-                         alt="Telescope demonstration outdoors" 
-                         class="w-full h-[350px] object-cover transform transition-transform duration-700 hover:scale-105">
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
-                    </div>
-                </div>
-
-                <div class="relative group overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
-                    <img src="files/astronight2.jpg" 
-                         alt="Public viewing session" 
-                         class="w-full h-[350px] object-cover transform transition-transform duration-700 hover:scale-105">
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-        
+        </section>
     </main>
-    <footer class="bg-navy p-4 text-center text-white mt-12">
-        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
-        <p>Contact: nic5153mcclure@gmail.com</p>
-    </footer>
-
-    <script type="module">
-        import {
-            Scene,
-            OrthographicCamera,
-            WebGLRenderer,
-            PlaneGeometry,
-            Mesh,
-            ShaderMaterial,
-            Vector3,
-            Vector2,
-            Clock
-        } from 'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js';
-
-        const vertexShader = `precision highp float;
-
-void main() {
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-        const fragmentShader = `precision highp float;
-
-uniform float iTime;
-uniform vec3  iResolution;
-uniform float animationSpeed;
-
-uniform bool enableTop;
-uniform bool enableMiddle;
-uniform bool enableBottom;
-
-uniform int topLineCount;
-uniform int middleLineCount;
-uniform int bottomLineCount;
-
-uniform float topLineDistance;
-uniform float middleLineDistance;
-uniform float bottomLineDistance;
-
-uniform vec3 topWavePosition;
-uniform vec3 middleWavePosition;
-uniform vec3 bottomWavePosition;
-
-uniform vec2 iMouse;
-uniform bool interactive;
-uniform float bendRadius;
-uniform float bendStrength;
-uniform float bendInfluence;
-
-uniform bool parallax;
-uniform float parallaxStrength;
-uniform vec2 parallaxOffset;
-
-uniform vec3 lineGradient[8];
-uniform int lineGradientCount;
-
-const vec3 BLACK = vec3(0.0);
-const vec3 PINK  = vec3(233.0, 71.0, 245.0) / 255.0;
-const vec3 BLUE  = vec3(47.0,  75.0, 162.0) / 255.0;
-
-mat2 rotate(float r) {
-  return mat2(cos(r), sin(r), -sin(r), cos(r));
-}
-
-vec3 background_color(vec2 uv) {
-  vec3 col = vec3(0.0);
-
-  float y = sin(uv.x - 0.2) * 0.3 - 0.1;
-  float m = uv.y - y;
-
-  col += mix(BLUE, BLACK, smoothstep(0.0, 1.0, abs(m)));
-  col += mix(PINK, BLACK, smoothstep(0.0, 1.0, abs(m - 0.8)));
-  return col * 0.5;
-}
-
-vec3 getLineColor(float t, vec3 baseColor) {
-  if (lineGradientCount <= 0) {
-    return baseColor;
-  }
-
-  vec3 gradientColor;
-  
-  if (lineGradientCount == 1) {
-    gradientColor = lineGradient[0];
-  } else {
-    float clampedT = clamp(t, 0.0, 0.9999);
-    float scaled = clampedT * float(lineGradientCount - 1);
-    int idx = int(floor(scaled));
-    float f = fract(scaled);
-    int idx2 = min(idx + 1, lineGradientCount - 1);
-
-    vec3 c1 = lineGradient[idx];
-    vec3 c2 = lineGradient[idx2];
-    
-    gradientColor = mix(c1, c2, f);
-  }
-  
-  return gradientColor * 0.5;
-}
-
-float wave(vec2 uv, float offset, vec2 screenUv, vec2 mouseUv, bool shouldBend) {
-  float time = iTime * animationSpeed;
-
-  float x_offset   = offset;
-  float x_movement = time * 0.1;
-  float amp        = sin(offset + time * 0.2) * 0.3;
-  float y          = sin(uv.x + x_offset + x_movement) * amp;
-
-  if (shouldBend) {
-    vec2 d = screenUv - mouseUv;
-    float influence = exp(-dot(d, d) * bendRadius);
-    float bendOffset = (mouseUv.y - screenUv.y) * influence * bendStrength * bendInfluence;
-    y += bendOffset;
-  }
-
-  float m = uv.y - y;
-  return 0.0175 / max(abs(m) + 0.01, 1e-3) + 0.01;
-}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  vec2 baseUv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
-  baseUv.y *= -1.0;
-  
-  if (parallax) {
-    baseUv += parallaxOffset;
-  }
-
-  vec3 col = vec3(0.0);
-
-  vec3 b = lineGradientCount > 0 ? vec3(0.0) : background_color(baseUv);
-
-  vec2 mouseUv = vec2(0.0);
-  if (interactive) {
-    mouseUv = (2.0 * iMouse - iResolution.xy) / iResolution.y;
-    mouseUv.y *= -1.0;
-  }
-  
-  if (enableBottom) {
-    for (int i = 0; i < bottomLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(bottomLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = bottomWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      col += lineCol * wave(
-        ruv + vec2(bottomLineDistance * fi + bottomWavePosition.x, bottomWavePosition.y),
-        1.5 + 0.2 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      ) * 0.2;
-    }
-  }
-
-  if (enableMiddle) {
-    for (int i = 0; i < middleLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(middleLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = middleWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      col += lineCol * wave(
-        ruv + vec2(middleLineDistance * fi + middleWavePosition.x, middleWavePosition.y),
-        2.0 + 0.15 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      );
-    }
-  }
-
-  if (enableTop) {
-    for (int i = 0; i < topLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(topLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = topWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      ruv.x *= -1.0;
-      col += lineCol * wave(
-        ruv + vec2(topLineDistance * fi + topWavePosition.x, topWavePosition.y),
-        1.0 + 0.2 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      ) * 0.1;
-    }
-  }
-
-  fragColor = vec4(col, 1.0);
-}
-
-void main() {
-  vec4 color = vec4(0.0);
-  mainImage(color, gl_FragCoord.xy);
-  gl_FragColor = color;
-}
-`;
-
-        const MAX_GRADIENT_STOPS = 8;
-
-        function hexToVec3(hex) {
-          let value = hex.trim();
-
-          if (value.startsWith('#')) {
-            value = value.slice(1);
-          }
-
-          let r = 255;
-          let g = 255;
-          let b = 255;
-
-          if (value.length === 3) {
-            r = parseInt(value[0] + value[0], 16);
-            g = parseInt(value[1] + value[1], 16);
-            b = parseInt(value[2] + value[2], 16);
-          } else if (value.length === 6) {
-            r = parseInt(value.slice(0, 2), 16);
-            g = parseInt(value.slice(2, 4), 16);
-            b = parseInt(value.slice(4, 6), 16);
-          }
-
-          return new Vector3(r / 255, g / 255, b / 255);
-        }
-
-        const container = document.getElementById('floating-lines-bg');
-        if (container) {
-          const scene = new Scene();
-          const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-          camera.position.z = 1;
-
-          const renderer = new WebGLRenderer({ antialias: true, alpha: false });
-          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-          renderer.domElement.style.width = '100%';
-          renderer.domElement.style.height = '100%';
-          container.appendChild(renderer.domElement);
-
-          const uniforms = {
-            iTime: { value: 0 },
-            iResolution: { value: new Vector3(1, 1, 1) },
-            animationSpeed: { value: 1.0 },
-
-            enableTop: { value: true },
-            enableMiddle: { value: true },
-            enableBottom: { value: true },
-
-            topLineCount: { value: 6 },
-            middleLineCount: { value: 6 },
-            bottomLineCount: { value: 6 },
-
-            topLineDistance: { value: 0.05 },
-            middleLineDistance: { value: 0.03 },
-            bottomLineDistance: { value: 0.05 },
-
-            topWavePosition: { value: new Vector3(10.0, 0.5, -0.4) },
-            middleWavePosition: { value: new Vector3(5.0, 0.0, 0.2) },
-            bottomWavePosition: { value: new Vector3(2.0, -0.7, 0.4) },
-
-            iMouse: { value: new Vector2(-1000, -1000) },
-            interactive: { value: true },
-            bendRadius: { value: 5.0 },
-            bendStrength: { value: -0.5 },
-            bendInfluence: { value: 0.0 },
-
-            parallax: { value: true },
-            parallaxStrength: { value: 0.2 },
-            parallaxOffset: { value: new Vector2(0, 0) },
-
-            lineGradient: {
-              value: Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1))
-            },
-            lineGradientCount: { value: 0 }
-          };
-
-          const linesGradient = ['#2f4ba2', '#e947f5', '#ffffff'];
-
-          if (linesGradient && linesGradient.length > 0) {
-            const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
-            uniforms.lineGradientCount.value = stops.length;
-
-            stops.forEach((hex, i) => {
-              const color = hexToVec3(hex);
-              uniforms.lineGradient.value[i].set(color.x, color.y, color.z);
-            });
-          }
-
-          const material = new ShaderMaterial({
-            uniforms,
-            vertexShader,
-            fragmentShader
-          });
-
-          const geometry = new PlaneGeometry(2, 2);
-          const mesh = new Mesh(geometry, material);
-          scene.add(mesh);
-
-          const clock = new Clock();
-
-          function setSize() {
-            const width = window.innerWidth || 1;
-            const height = window.innerHeight || 1;
-
-            renderer.setSize(width, height, false);
-
-            const canvasWidth = renderer.domElement.width;
-            const canvasHeight = renderer.domElement.height;
-            uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1);
-          }
-
-          setSize();
-          window.addEventListener('resize', setSize);
-
-          const targetMouse = new Vector2(-1000, -1000);
-          const currentMouse = new Vector2(-1000, -1000);
-          let targetInfluence = 0.0;
-          let currentInfluence = 0.0;
-
-          const targetParallax = new Vector2(0, 0);
-          const currentParallax = new Vector2(0, 0);
-          const mouseDamping = 0.05;
-
-          function handlePointerMove(event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const dpr = renderer.getPixelRatio();
-
-            targetMouse.set(x * dpr, (rect.height - y) * dpr);
-            targetInfluence = 1.0;
-
-            if (uniforms.parallax.value) {
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const offsetX = (x - centerX) / rect.width;
-              const offsetY = -(y - centerY) / rect.height;
-              targetParallax.set(offsetX * uniforms.parallaxStrength.value, offsetY * uniforms.parallaxStrength.value);
-            }
-          }
-
-          function handlePointerLeave() {
-            targetInfluence = 0.0;
-          }
-
-          renderer.domElement.addEventListener('pointermove', handlePointerMove);
-          renderer.domElement.addEventListener('pointerleave', handlePointerLeave);
-
-          function renderLoop() {
-            uniforms.iTime.value = clock.getElapsedTime();
-
-            if (uniforms.interactive.value) {
-              currentMouse.lerp(targetMouse, mouseDamping);
-              uniforms.iMouse.value.copy(currentMouse);
-
-              currentInfluence += (targetInfluence - currentInfluence) * mouseDamping;
-              uniforms.bendInfluence.value = currentInfluence;
-            }
-
-            if (uniforms.parallax.value) {
-              currentParallax.lerp(targetParallax, mouseDamping);
-              uniforms.parallaxOffset.value.copy(currentParallax);
-            }
-
-            renderer.render(scene, camera);
-            requestAnimationFrame(renderLoop);
-          }
-
-          renderLoop();
-        }
-    </script>
-
-    <script>
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-
-        if (mobileMenuButton && mobileMenu) {
-            mobileMenuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-        
-        // Set active link based on current page
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active-link');
-            if (link.getAttribute('href') === currentPage) {
-                link.classList.add('active-link');
-            }
-        });
-        document.querySelectorAll('#mobile-menu a').forEach(link => {
-            if (link.getAttribute('href') === currentPage) {
-                link.classList.add('bg-forest');
-            }
-        });
-    </script>
 </body>
 </html>

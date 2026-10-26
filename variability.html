@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variability Analysis | NightVector</title>
+    <meta name="description" content="Tonight's exoplanet transits, eclipsing-binary minima, pulsating stars and cataclysmic variables that a specific telescope and camera can actually capture.">
+    <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="files/css/site.css">
+    <link rel="stylesheet" href="files/css/planner.css">
+</head>
+<body data-page="variability" data-starfield="static">
+    <script src="files/js/site.js"></script>
+
+    <main class="container-wide">
+        <header class="planner-head">
+            <div>
+                <p class="eyebrow">NightVector &middot; Time-series photometry</p>
+                <h1>Variability Analysis</h1>
+                <p>Exoplanet transits, eclipsing-binary minima, pulsating stars and cataclysmic variables for the selected night, checked against your site, sky and rig. Only targets the camera can actually measure are listed by default.</p>
+            </div>
+            <div class="night-picker">
+                <button class="btn btn-icon" id="prev-night" type="button" aria-label="Previous night">&larr;</button>
+                <label class="sr-only" for="night-date">Night of</label>
+                <input class="input mono" id="night-date" type="date">
+                <button class="btn btn-icon" id="next-night" type="button" aria-label="Next night">&rarr;</button>
+                <button class="btn" id="tonight" type="button">Tonight</button>
+                <button class="btn btn-primary" id="open-setup" type="button">Setup</button>
+            </div>
+        </header>
+
+        <div id="site-notice" class="notice notice-info hidden" style="margin-bottom: 14px;"></div>
+
+        <section class="context-strip" aria-label="Night summary">
+            <div class="stat clickable" id="ctx-site" title="Change site in Setup">
+                <div class="label">Site</div>
+                <div class="value" id="ctx-site-name">â€”</div>
+                <div class="sub" id="ctx-site-sub">â€”</div>
+            </div>
+            <div class="stat">
+                <div class="label" id="ctx-dark-label">Dark window</div>
+                <div class="value" id="ctx-dark">â€”</div>
+                <div class="sub" id="ctx-dark-sub">â€”</div>
+            </div>
+            <div class="stat">
+                <div class="label">Moon</div>
+                <div class="value" id="ctx-moon">â€”</div>
+                <div class="sub" id="ctx-moon-sub">â€”</div>
+            </div>
+            <div class="stat">
+                <div class="label">Clouds (forecast)</div>
+                <div class="value" id="ctx-weather">â€”</div>
+                <div class="cloud-strip" id="ctx-cloud-strip" aria-hidden="true"></div>
+            </div>
+            <div class="stat clickable" id="ctx-rig" title="Change rig in Setup">
+                <div class="label">Rig</div>
+                <div class="value" id="ctx-rig-name">â€”</div>
+                <div class="sub" id="ctx-rig-sub">â€”</div>
+            </div>
+        </section>
+
+        <div class="planner">
+            <section class="card" aria-label="Targets">
+                <div class="toolbar">
+                    <div class="segmented" id="tabs" role="group" aria-label="Target class">
+                        <button type="button" data-tab="shortlist" aria-pressed="true">Shortlist <span class="count" data-count="shortlist"></span></button>
+                        <button type="button" data-tab="transit" aria-pressed="false">Transits <span class="count" data-count="transit"></span></button>
+                        <button type="button" data-tab="eclipse" aria-pressed="false">Eclipsing binaries <span class="count" data-count="eclipse"></span></button>
+                        <button type="button" data-tab="pulsator" aria-pressed="false">Pulsators <span class="count" data-count="pulsator"></span></button>
+                        <button type="button" data-tab="cv" aria-pressed="false">Cataclysmic <span class="count" data-count="cv"></span></button>
+                    </div>
+                    <div class="right">
+                        <label class="check"><input type="checkbox" id="show-marginal" checked> Marginal</label>
+                        <label class="check"><input type="checkbox" id="show-rejected"> Rejected</label>
+                        <select class="input" id="sort" style="width: 150px;" aria-label="Sort">
+                            <option value="time">Sort: start time</option>
+                            <option value="score">Sort: best first</option>
+                            <option value="mag">Sort: brightness</option>
+                            <option value="depth">Sort: depth / amplitude</option>
+                        </select>
+                        <input class="input" id="search" type="search" placeholder="Find a target (e.g. WASP-12, RR Lyr)" aria-label="Find a target">
+                    </div>
+                </div>
+                <div class="list-scroll">
+                    <table class="data" id="target-table">
+                        <thead>
+                            <tr>
+                                <th aria-label="Add to plan"></th>
+                                <th>Target</th>
+                                <th>Event</th>
+                                <th class="num">Window</th>
+                                <th class="tl"><div class="tl-axis" id="tl-axis"></div></th>
+                                <th class="num hide-sm">Alt</th>
+                                <th class="num hide-sm">Mag</th>
+                                <th class="num">Depth</th>
+                                <th class="num hide-md">Exp</th>
+                                <th class="num hide-md" title="Expected scatter of a 5-minute bin">&sigma; 5 min</th>
+                                <th class="num">S/N</th>
+                                <th>Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="target-rows"></tbody>
+                    </table>
+                    <div id="list-empty" class="empty-state hidden"></div>
+                </div>
+                <div class="list-foot">
+                    <span id="list-status">Loading catalogsâ€¦</span>
+                    <button class="btn btn-sm hidden" id="show-more" type="button">Show more</button>
+                </div>
+            </section>
+
+            <aside class="detail-col">
+                <section class="card" id="plan-card" aria-label="Tonight's plan">
+                    <div class="card-head">
+                        <h2>Tonight's plan</h2>
+                        <div class="row">
+                            <button class="btn btn-sm" id="plan-csv" type="button">CSV</button>
+                            <button class="btn btn-sm" id="plan-apt" type="button">APT plan</button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="plan-body">
+                        <p class="muted small">Star (&#9734;) targets in the list to build a schedule. Overlapping windows are flagged.</p>
+                    </div>
+                </section>
+                <section class="card" id="detail" style="margin-top: 16px;" aria-live="polite">
+                    <div class="empty-state">
+                        <h3>Select a target</h3>
+                        <p class="small">Altitude, predicted light curve, exposure settings and export appear here.</p>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <section class="card card-pad-lg method" style="margin-top: 22px;" id="method">
+            <details>
+                <summary style="cursor: pointer; font-weight: 600;">How targets are judged, and data sources</summary>
+                <div class="grid-2" style="margin-top: 14px; align-items: start;">
+                    <div>
+                        <h3>Can the rig capture it?</h3>
+                        <p>For every event the planner builds an exposure plan for your camera and predicts the photometric scatter, then compares it with the size of the signal:</p>
+                        <ul>
+                            <li><strong>Saturation.</strong> Exposure is chosen up to the cadence the event needs; if the star would exceed 70% of full well it is defocused (up to the limit in Setup) and then the exposure is shortened. A star that still saturates at the minimum exposure is rejected as too bright.</li>
+                            <li><strong>Noise.</strong> Star, sky, read and dark noise per frame plus scintillation (Young 1967 with the Osborn et al. 2015 correction), and the noise of a three-star comparison ensemble drawn from the expected star counts in your field. A correlated "systematics" floor is added in quadrature.</li>
+                            <li><strong>Sky.</strong> Site sky brightness (Bortle or SQM), airmass brightening, twilight, and moonlight using Krisciunas &amp; Schaefer (1991) at the event time.</li>
+                            <li><strong>S/N.</strong> Transits: depth divided by the uncertainty of the in-transit minus out-of-transit level. Eclipses and pulsators: amplitude divided by the scatter of a bin sized to the event. Go &ge; the Go threshold, Marginal &ge; the Marginal threshold.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Can the site see it?</h3>
+                        <ul>
+                            <li>The whole required window (transit plus baselines, or the eclipse minimum, or a full pulsation cycle) must lie in darkness (Sun below your limit) with the target above your minimum altitude and horizon mask.</li>
+                            <li>Transit windows are padded by the propagated ephemeris uncertainty (up to 45 min). Predictions convert BJD<sub>TDB</sub> / HJD to UTC including the light-time correction.</li>
+                            <li>Eclipse durations come from VSX; where VSX has none, a period-based estimate is used and flagged.</li>
+                        </ul>
+                        <h3>Sources</h3>
+                        <ul>
+                            <li>Transiting planets: <a href="https://www.exoclock.space" target="_blank" rel="noopener">ExoClock</a> ephemerides (Kokori et al. 2023) and the <a href="https://exoplanetarchive.ipac.caltech.edu/" target="_blank" rel="noopener">NASA Exoplanet Archive</a>.</li>
+                            <li>Variable stars: the AAVSO <a href="https://vsx.aavso.org" target="_blank" rel="noopener">International Variable Star Index (VSX)</a>.</li>
+                            <li>Weather: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>. Catalog snapshot dates: <span id="catalog-dates">â€”</span>.</li>
+                        </ul>
+                        <p class="xsmall dim">Estimates are for planning. Confirm exposure with a test frame and check comparison stars before committing a night.</p>
+                    </div>
+                </div>
+            </details>
+        </section>
+    </main>
+
+
+    <script src="files/js/astro.js"></script>
+    <script src="files/js/nv-settings.js"></script>
+    <script src="files/js/nv-sky.js"></script>
+    <script src="files/js/nv-setup.js"></script>
+    <script src="files/js/nv-context.js"></script>
+    <script src="files/js/variability.js"></script>
+</body>
+</html>

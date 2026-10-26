@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Vault | NightVector</title>
+    <meta name="description" content="Stage, upload and browse observing sessions and calibration libraries in cloud storage.">
+    <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="files/css/site.css">
+    <link rel="stylesheet" href="files/css/planner.css">
+    <script defer src="files/vendor/zip.js-2.16.1/zip-native.min.js"></script>
+    <style>
+        /* Utility classes used by the generated cloud listing */
+        .flex { display: flex; } .items-center { align-items: center; } .items-start { align-items: flex-start; }
+        .justify-between { justify-content: space-between; } .gap-2 { gap: 8px; } .min-w-0 { min-width: 0; } .shrink-0 { flex-shrink: 0; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .break-all { word-break: break-all; }
+        .text-left { text-align: left; } .cursor-pointer { cursor: pointer; } .font-bold { font-weight: 600; }
+        .rounded, .rounded-md { border-radius: 8px; } .border { border: 1px solid var(--border); } .border-l { border-left: 1px solid var(--border); }
+        .p-2 { padding: 8px; } .px-2 { padding-left: 8px; padding-right: 8px; } .py-1 { padding-top: 4px; padding-bottom: 4px; } .pl-2 { padding-left: 8px; }
+        .ml-3 { margin-left: 12px; } .mt-1 { margin-top: 4px; } .mt-2 { margin-top: 8px; }
+        .text-xs { font-size: 0.78rem; } .text-\[11px\] { font-size: 11px; } .text-\[10px\] { font-size: 10px; }
+        .text-cyan-100, .text-cyan-200 { color: var(--accent); } .text-slate-300 { color: #cdd6e6; } .text-slate-400 { color: var(--text-muted); } .text-slate-500 { color: var(--text-dim); }
+        .bg-slate-950\/40 { background: rgba(5, 9, 19, 0.55); }
+        .ghost-button { border: 1px solid var(--border-strong); background: rgba(148, 163, 184, 0.06); color: var(--text); cursor: pointer; }
+        .ghost-button:hover { background: rgba(148, 163, 184, 0.14); }
+        .neon-button { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+        .vault-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+        @media (max-width: 980px) { .vault-grid { grid-template-columns: 1fr; } }
+        .drop-zone { display: block; padding: 26px 16px; border: 1.5px dashed var(--border-strong); border-radius: 12px; text-align: center; cursor: pointer; background: rgba(5, 9, 19, 0.45); transition: border-color 0.15s ease, background 0.15s ease; }
+        .drop-zone:hover, .drop-zone.border-green-300\/80 { border-color: var(--accent); background: var(--accent-soft); }
+        .status-line { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin: 8px 0 0; }
+        #cloud-directory-tree summary { list-style: none; }
+        #cloud-directory-tree summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body data-page="vault" data-starfield="static">
+    <script src="files/js/site.js"></script>
+
+    <main class="container-wide">
+        <header class="planner-head">
+            <div>
+                <p class="eyebrow">NightVector &middot; Data</p>
+                <h1>Data Vault</h1>
+                <p>Stage an observing night or a calibration library, read FITS headers locally, then upload to Cloudflare R2. Browse stored folders and download them to disk or as a ZIP.</p>
+            </div>
+        </header>
+
+        <div class="vault-grid">
+            <section class="card">
+                <div class="card-head">
+                    <h2>Stage &amp; upload</h2>
+                    <button class="btn btn-sm" id="clear-files" type="button">Clear staged</button>
+                </div>
+                <div class="card-body stack">
+                    <div class="form-grid">
+                        <label class="field" style="grid-column: 1 / -1;"><span>Collection</span>
+                            <select class="input" id="vault-collection">
+                                <option value="session">Observing session</option>
+                                <option value="calibration">Calibration library (FITS auto-detect)</option>
+                            </select>
+                        </label>
+                        <label class="field" style="grid-column: 1 / -1;"><span>Target name</span><input class="input" id="vault-target-name" placeholder="e.g. M51, RR Lyr, WASP-12"></label>
+                        <label class="field"><span>Frame type</span>
+                            <select class="input" id="frame-kind">
+                                <option value="Auto" selected>Auto-detect</option>
+                                <optgroup label="Science frames">
+                                    <option value="Lights">Lights / unfiltered</option>
+                                    <option value="Lights L">Lights L</option><option value="Lights R">Lights R</option>
+                                    <option value="Lights G">Lights G</option><option value="Lights B">Lights B</option>
+                                </optgroup>
+                                <optgroup label="Calibration frames">
+                                    <option value="Flats">Flats / unfiltered</option>
+                                    <option value="Flats L">Flats L</option><option value="Flats R">Flats R</option>
+                                    <option value="Flats G">Flats G</option><option value="Flats B">Flats B</option>
+                                    <option value="Dark Flats">Dark flats</option><option value="Darks">Darks</option><option value="Bias">Bias / offset</option>
+                                </optgroup>
+                            </select>
+                        </label>
+                        <label class="field"><span>Session date</span><input class="input mono" id="session-date" type="date"></label>
+                    </div>
+
+                    <label id="fits-drop-zone" class="drop-zone">
+                        <strong>Drop session files or folders here</strong>
+                        <span class="muted small" style="display:block;margin-top:4px;">or click to choose an observing-night directory</span>
+                        <input id="directory-input" type="file" multiple webkitdirectory directory class="sr-only">
+                    </label>
+
+                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="stat"><div class="label">Files</div><div class="value" id="vault-count">0</div></div>
+                        <div class="stat"><div class="label">Size</div><div class="value" id="vault-size">0 MB</div></div>
+                    </div>
+                    <div id="vault-groups" class="stack" style="--gap: 4px;"></div>
+                    <div id="calibration-summary" class="inset hidden">
+                        <p class="eyebrow" style="color: var(--go);">Calibration FITS metadata</p>
+                        <p id="calibration-summary-text" class="small muted" style="margin-top: 6px;">Choose Calibration library, then stage FITS files to read their headers locally.</p>
+                    </div>
+
+                    <details class="inset">
+                        <summary style="cursor:pointer;font-weight:600;font-size:0.86rem;">Connection &amp; upload options</summary>
+                        <div class="form-grid" style="margin-top: 12px;">
+                            <label class="field" style="grid-column: 1 / -1;"><span>Worker URL</span><input class="input mono" id="cloud-endpoint" placeholder="https://…workers.dev"></label>
+                            <label class="field" style="grid-column: 1 / -1;"><span>Upload token</span><input class="input mono" id="upload-token" type="password" autocomplete="off" placeholder="Not stored"></label>
+                            <label class="field"><span>Upload route</span>
+                                <select class="input" id="upload-mode">
+                                    <option value="auto" selected>Direct R2, auto fallback</option>
+                                    <option value="proxy">Worker proxy (compatibility)</option>
+                                </select>
+                            </label>
+                            <label class="field"><span>Parallel uploads</span>
+                                <select class="input" id="upload-concurrency">
+                                    <option value="1">1 (compatibility)</option><option value="4">4</option><option value="8">8</option>
+                                    <option value="12" selected>12 (recommended)</option><option value="16">16</option><option value="24">24</option>
+                                </select>
+                            </label>
+                        </div>
+                    </details>
+
+                    <div class="row">
+                        <button class="btn btn-primary" id="upload-cloud" type="button">Upload staged batch</button>
+                        <button class="btn" id="download-manifest" type="button">Save manifest</button>
+                    </div>
+                    <div class="progress"><span id="upload-progress-bar"></span></div>
+                    <p id="upload-detail" class="status-line truncate">Upload queue idle.</p>
+                    <p id="vault-status" class="status-line">Local: no files staged.</p>
+                    <p id="cloud-status" class="status-line">Cloud: ready.</p>
+                    <p class="xsmall dim">Accepts FITS, XISF, SER, common video, JPG/PNG/TIFF and camera RAW files. Nothing leaves the browser until you press Upload.</p>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <h2>Cloud library</h2>
+                    <div class="row">
+                        <button class="btn btn-sm" id="browse-latest-cloud" type="button">Latest upload</button>
+                        <button class="btn btn-sm" id="browse-current-cloud" type="button">This session</button>
+                    </div>
+                </div>
+                <div class="card-body stack">
+                    <button class="btn btn-primary" id="browse-all-cloud" type="button" style="width:100%;">Browse all folders</button>
+                    <p class="xsmall dim">Expand folders with the arrows; select a folder to list its files, including subfolders.</p>
+                    <div id="cloud-directory-tree" class="scroll-y" style="max-height: 320px;" aria-label="R2 folders"></div>
+                    <p id="cloud-selected-folder" class="status-line" style="word-break: break-all; color: var(--go);" aria-live="polite">Selected folder: none</p>
+                    <details class="inset">
+                        <summary style="cursor:pointer;font-weight:600;font-size:0.86rem;">Manual folder prefix</summary>
+                        <div class="row" style="margin-top: 10px;">
+                            <input class="input mono grow" id="cloud-prefix" placeholder="observations/2026-10-25/M51" style="flex:1 1 200px;">
+                            <button class="btn btn-sm" id="list-cloud" type="button">List</button>
+                        </div>
+                    </details>
+                    <div class="row">
+                        <button class="btn" id="download-cloud-listed" type="button">Download folder to disk</button>
+                        <button class="btn" id="download-cloud-zip" type="button">Download as ZIP</button>
+                    </div>
+                    <div class="progress"><span id="download-progress-bar"></span></div>
+                    <p id="cloud-inventory-status" class="status-line">No cloud inventory loaded.</p>
+                    <div id="cloud-inventory-list" class="scroll-y stack" style="max-height: 360px; --gap: 6px;"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="files/js/astro.js"></script>
+    <script src="files/js/nv-settings.js"></script>
+    <script src="files/js/vault.js"></script>
+</body>
+</html>

@@ -3,567 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nicholas J. McClure - Astronomy Portfolio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Nicholas J. McClure | Astrophysics</title>
+    <meta name="description" content="Nicholas J. McClure: time-domain astronomy, cataclysmic variables and stellar pulsations. Research, CV, outreach and observing tools.">
+    <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="files/css/site.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000000;
+        .hero { padding: 72px 0 40px; }
+        .hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr); gap: 56px; align-items: center; }
+        .hero h1 { font-size: clamp(2.4rem, 5.4vw, 3.9rem); margin-top: 14px; }
+        .hero .role { font-size: 1.12rem; color: var(--text-muted); margin-top: 12px; }
+        .hero .lead { font-size: 1.04rem; color: #cdd6e6; margin-top: 22px; max-width: 62ch; }
+        .hero .actions { margin-top: 28px; }
+        .portrait { position: relative; justify-self: end; width: 100%; max-width: 330px; }
+        .portrait::before {
+            content: ""; position: absolute; inset: -14px; border-radius: 26px;
+            background: radial-gradient(circle at 30% 20%, rgba(143, 211, 255, 0.25), transparent 60%),
+                        radial-gradient(circle at 80% 90%, rgba(183, 166, 255, 0.22), transparent 60%);
+            filter: blur(6px);
         }
-
-        #floating-lines-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 0;
+        .portrait img { position: relative; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 18px; border: 1px solid var(--border-strong); }
+        .portrait figcaption { position: relative; margin-top: 12px; font-size: 0.8rem; color: var(--text-dim); text-align: center; }
+        .feature h3 { margin: 10px 0 8px; }
+        .feature p { color: var(--text-muted); font-size: 0.92rem; }
+        .feature .arrow { margin-top: 14px; display: inline-flex; gap: 6px; align-items: center; font-weight: 600; font-size: 0.88rem; }
+        .icon-badge { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); border: 1px solid rgba(143, 211, 255, 0.25); }
+        .icon-badge svg { width: 20px; height: 20px; }
+        .about-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+        @media (max-width: 860px) {
+            .hero-grid, .about-grid { grid-template-columns: 1fr; }
+            .portrait { justify-self: center; max-width: 280px; order: -1; }
+            .hero { padding-top: 40px; }
         }
-
-        nav, footer {
-            position: relative;
-            z-index: 60;
-        }
-        
-        main {
-            position: relative;
-            z-index: 10;
-        }
-        
-        .bg-navy { background-color: #001f3f; }
-        .bg-forest { background-color: #228B22; }
-        .text-navy { color: #001f3f; }
-        .text-forest { color: #228B22; }
-        .border-forest { border-color: #228B22; }
-        .border-navy { border-color: #001f3f; }
-
-        .nav-link {
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: #228B22; /* Forest Green */
-        }
-        
-        .active-link {
-            color: #228B22; /* Forest Green */
-            border-bottom: 2px solid #228B22;
-        }
-        /* Prevent dropdown flicker */
-        .group:hover .group-hover\:block,
-        .group:focus-within .group-hover\:block {
-            display: block;
-        }
-
     </style>
-    <link rel="stylesheet" href="files/neon-theme.css">
 </head>
-<body class="text-gray-800 flex flex-col min-h-screen">
-    <div id="floating-lines-bg"></div>
+<body data-page="home">
+    <script src="files/js/site.js"></script>
 
-    <nav class="bg-navy p-4 shadow-md sticky top-0">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-white text-2xl font-bold">Nicholas J. McClure</a>
-            <div class="hidden md:flex space-x-8 items-center">
-                <a href="index.html" class="nav-link text-white">Home</a>
-                <div class="relative group">
-                    <button class="text-white nav-link flex items-center space-x-1">
-                        <span>🔭 Science</span><span class="text-sm">▼</span>
-                    </button>
-                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-56 py-2 z-[70]">
-                        <a href="astrophotography.html" class="block px-4 py-2 hover:bg-gray-100">Astrophotography</a>
-                        <a href="observing.html" class="block px-4 py-2 hover:bg-gray-100">NightVector</a>
-                        <a href="exoplanets.html" class="block px-4 py-2 hover:bg-gray-100">Transit Planner</a>
+    <main>
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="fade-in">
+                    <p class="eyebrow">Time-domain astronomy &middot; Texas Tech University</p>
+                    <h1>Nicholas J. McClure</h1>
+                    <p class="role">Astrophysics Research Assistant</p>
+                    <p class="lead">
+                        I study periodic variability in compact binary systems and pulsating stars, working with large
+                        time-series data sets such as TESS and ZTF alongside ground-based observations.
+                    </p>
+                    <div class="row actions">
+                        <a class="btn btn-primary" href="cv.html">View CV</a>
+                        <a class="btn" href="variability.html">Tonight's targets</a>
+                        <a class="btn btn-ghost" href="mailto:nimcclur@ttu.edu">nimcclur@ttu.edu</a>
                     </div>
                 </div>
-                <div class="relative group">
-                    <button class="text-white nav-link flex items-center space-x-1">
-                        <span>👤 About</span><span class="text-sm">▼</span>
-                    </button>
-                    <div class="absolute left-0 top-full hidden group-hover:block bg-white text-navy rounded-md shadow-lg w-48 py-2 z-[70]">
-                        <a href="cv.html" class="block px-4 py-2 hover:bg-gray-100">CV</a>
-                        <a href="outreach.html" class="block px-4 py-2 hover:bg-gray-100">Outreach</a>
-                        <a href="poster.html" class="block px-4 py-2 hover:bg-gray-100">Poster</a>
-                    </div>
-                </div>
-
+                <figure class="portrait fade-in">
+                    <img src="profile.jpeg" alt="Portrait of Nicholas J. McClure">
+                </figure>
             </div>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden mt-2 bg-navy text-white rounded-md overflow-hidden">
-            <a href="index.html" class="block py-2 px-4">Home</a>
-            <p class="px-4 pt-3 pb-1 text-sm opacity-70">Science</p>
-            <a href="astrophotography.html" class="block py-2 px-4">Astrophotography</a>
-            <a href="observing.html" class="block py-2 px-4">NightVector</a>
-            <a href="exoplanets.html" class="block py-2 px-4">Transit Planner</a>
-            <p class="px-4 pt-3 pb-1 text-sm opacity-70">About</p>
-            <a href="cv.html" class="block py-2 px-4">CV</a>
-            <a href="outreach.html" class="block py-2 px-4">Outreach</a>
-            <a href="poster.html" class="block py-2 px-4">Poster</a>
-        </div>
-    </nav>
+        </section>
 
-    <main class="flex-grow flex items-center justify-center py-12 px-4">
-        <div class="container mx-auto max-w-5xl">
-            <section id="about" class="bg-white bg-opacity-95 p-8 md:p-12 rounded-xl shadow-2xl backdrop-blur-sm">
-                
-                <div class="flex flex-col md:flex-row items-center md:items-start gap-10">
-                    
-                    <div class="w-64 flex-shrink-0">
-                        <div class="relative group">
-                            <div class="absolute -inset-1 bg-gradient-to-r from-navy to-forest rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
-                            <img src="profile.jpeg" 
-                                 alt="Nicholas J. McClure Graduation Photo" 
-                                 class="relative w-full h-auto rounded-lg shadow-lg border-2 border-white object-cover transform transition duration-500 hover:scale-[1.02]">
-                        </div>
+        <section class="section" style="padding-top: 8px;">
+            <div class="container about-grid">
+                <article class="card card-pad-lg">
+                    <p class="eyebrow">About</p>
+                    <div class="prose" style="margin-top: 14px;">
+                        <p>
+                            I am an astrophysics research assistant at Texas Tech University with a B.S. in physics
+                            (astrophysics) and a minor in mathematics, with a passion for time-domain astronomy,
+                            cataclysmic variables, and stellar pulsations. I work primarily with large data sets such as
+                            TESS, ZTF, and ground-based observations to investigate periodic variability in compact binary
+                            systems and pulsating stars.
+                        </p>
+                        <p>
+                            My core interests lie in stellar structure and evolution, accretion physics, and
+                            asteroseismology, with an emphasis on signal processing. I am also passionate about public and
+                            academic outreach and science education. My research experience has given me a strong
+                            foundation in astronomical image calibration, observational strategy and planning, public
+                            communication, and extensive Python work with NumPy, SciPy, Astropy, Tkinter, Matplotlib and more.
+                            My goal is to continue this work by earning a PhD in Astronomy/Astrophysics.
+                        </p>
+                        <p>
+                            Outside of my academic pursuits, I enjoy astrophotography, orchestral and wind ensemble music,
+                            and spending time with my dog, Orion, and my cat, Cassie (short for Cassiopeia).
+                        </p>
                     </div>
-
-                    <div class="flex-grow text-center md:text-left">
-                        <h1 class="text-4xl font-bold text-navy mb-2">
-                            Nicholas J. McClure
-                        </h1>
-                        <h2 class="text-xl text-forest font-medium mb-6">
-                            Astrophysics Research Assistant | Texas Tech University
-                        </h2>
-                        
-                        <div class="space-y-4 text-gray-700 leading-relaxed">
-                            <p>
-                                I am an astrophysics research assistant at Texas Tech University with a B.S. in physics (astrophysics)/minor in mathematics with a passion for
-                                time-domain astronomy, cataclysmic variables, and stellar pulsations. I work primarily with
-                                large data sets such as TESS, ZTF, and ground-based observations to investigate
-                                periodic variability in compact binary systems and pulsating stars.
-                            </p>
-                            <p>
-                                My core interests lie in stellar structure and evolution, accretion physics, and asteroseismology
-                                with an emphasis in signal processing. I am also passionate about public and academic/scientific outreach, as well as science education.
-                                My research experience has given me a strong foundation in astronomical image calibration,
-                                observational strategies and planning, public presentation/communication skills, and extensive Python utilization with packages such as NumPy, SciPy, Astropy, Tkinter, Matplotlib and more.
-                                My goal is to continue this work by earning a PhD in Astronomy/Astrophysics.
-                            </p>
-                            <p>
-                                Outside of my academic pursuits, I enjoy astrophotography, orchestral and wind ensemble music,
-                                and spending time with my dog, Orion, and my cat, Cassie (short for Cassiopeia).
-                            </p>
-                        </div>
-
-                        <div class="mt-8 pt-6 border-t border-gray-200">
-                            <p class="text-gray-600">
-                                Please feel free to explore this site, view my <a href="cv.html" class="text-forest font-bold hover:underline">CV</a>, and contact me at
-                                <a href="mailto:nimcclur@ttu.edu" class="text-forest font-bold hover:underline">nimcclur@ttu.edu</a> with any questions. Thanks for visiting!
-                            </p>
-                        </div>
+                </article>
+                <article class="card card-pad-lg">
+                    <p class="eyebrow">Research interests</p>
+                    <ul class="prose" style="margin-top: 14px; padding-left: 1.1em;">
+                        <li>Time-domain astronomy and photometric variability in compact binary systems</li>
+                        <li>Accretion physics and outbursts in cataclysmic variables</li>
+                        <li>Time-series analysis of large data sets</li>
+                        <li>Asteroseismology and stellar evolution</li>
+                    </ul>
+                    <hr class="divider">
+                    <p class="eyebrow">Recognition</p>
+                    <p class="muted small" style="margin-top: 10px;">
+                        First place, Undergraduate Research Poster, TTU PHAS Sigma Pi Sigma Research Contest (2025) for
+                        <em>Mysterious Modulations: TESS Insights into the Dwarf Nova AT2019muu</em>.
+                    </p>
+                    <div class="row" style="margin-top: 16px;">
+                        <a class="btn btn-sm" href="poster.html">View poster</a>
+                        <a class="btn btn-sm btn-ghost" href="https://orcid.org/0009-0000-9626-2192" target="_blank" rel="noopener">ORCID</a>
                     </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="row-between" style="margin-bottom: 18px;">
+                    <div>
+                        <p class="eyebrow">Observing tools</p>
+                        <h2 style="margin-top: 8px;">NightVector</h2>
+                    </div>
+                    <p class="muted small" style="max-width: 52ch; margin: 0;">Browser-based planning for my own telescope. Every target is checked against the rig, the site and the night before it is listed.</p>
                 </div>
-
-            </section>
-        </div>
+                <div class="grid-3">
+                    <a class="card card-pad feature" href="variability.html" style="color: inherit; text-decoration: none;">
+                        <div class="icon-badge"><svg viewBox="0 0 20 20" fill="none" stroke="#8fd3ff" stroke-width="1.6" stroke-linecap="round"><path d="M1 8h3l2 5 3-10 3 13 2-8h5"/></svg></div>
+                        <h3>Variability Analysis</h3>
+                        <p>Transits, eclipsing-binary minima, pulsators and cataclysmic variables observable tonight, filtered by what the camera can actually measure.</p>
+                        <span class="arrow">Open planner &rarr;</span>
+                    </a>
+                    <a class="card card-pad feature" href="observing.html" style="color: inherit; text-decoration: none;">
+                        <div class="icon-badge"><svg viewBox="0 0 20 20" fill="none" stroke="#b7a6ff" stroke-width="1.6"><rect x="2" y="4" width="16" height="12" rx="1.5"/><ellipse cx="10" cy="10" rx="4.5" ry="2.4" transform="rotate(-25 10 10)"/></svg></div>
+                        <h3>Deep-Sky Planner</h3>
+                        <p>Galaxies, nebulae and clusters that fit the field of view and are reachable from the site tonight, with sub-exposure and integration estimates.</p>
+                        <span class="arrow">Open planner &rarr;</span>
+                    </a>
+                    <a class="card card-pad feature" href="vault.html" style="color: inherit; text-decoration: none;">
+                        <div class="icon-badge"><svg viewBox="0 0 20 20" fill="none" stroke="#f3c45a" stroke-width="1.6" stroke-linejoin="round"><path d="M3 6.5 10 3l7 3.5v7L10 17l-7-3.5z"/><path d="M3 6.5 10 10l7-3.5M10 10v7"/></svg></div>
+                        <h3>Data Vault</h3>
+                        <p>Stage, upload and browse FITS sessions and calibration libraries in cloud storage.</p>
+                        <span class="arrow">Open vault &rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
-
-    <footer class="bg-navy p-4 text-center text-white">
-        <p>&copy; 2025 Nicholas J. McClure. All Rights Reserved.</p>
-        <p>Contact: nic5153mcclure@gmail.com</p>
-    </footer>
-
-    <script type="module">
-        import {
-            Scene,
-            OrthographicCamera,
-            WebGLRenderer,
-            PlaneGeometry,
-            Mesh,
-            ShaderMaterial,
-            Vector3,
-            Vector2,
-            Clock
-        } from 'https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js';
-
-        const vertexShader = `precision highp float;
-
-void main() {
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-        const fragmentShader = `precision highp float;
-
-uniform float iTime;
-uniform vec3  iResolution;
-uniform float animationSpeed;
-
-uniform bool enableTop;
-uniform bool enableMiddle;
-uniform bool enableBottom;
-
-uniform int topLineCount;
-uniform int middleLineCount;
-uniform int bottomLineCount;
-
-uniform float topLineDistance;
-uniform float middleLineDistance;
-uniform float bottomLineDistance;
-
-uniform vec3 topWavePosition;
-uniform vec3 middleWavePosition;
-uniform vec3 bottomWavePosition;
-
-uniform vec2 iMouse;
-uniform bool interactive;
-uniform float bendRadius;
-uniform float bendStrength;
-uniform float bendInfluence;
-
-uniform bool parallax;
-uniform float parallaxStrength;
-uniform vec2 parallaxOffset;
-
-uniform vec3 lineGradient[8];
-uniform int lineGradientCount;
-
-const vec3 BLACK = vec3(0.0);
-const vec3 PINK  = vec3(233.0, 71.0, 245.0) / 255.0;
-const vec3 BLUE  = vec3(47.0,  75.0, 162.0) / 255.0;
-
-mat2 rotate(float r) {
-  return mat2(cos(r), sin(r), -sin(r), cos(r));
-}
-
-vec3 background_color(vec2 uv) {
-  vec3 col = vec3(0.0);
-
-  float y = sin(uv.x - 0.2) * 0.3 - 0.1;
-  float m = uv.y - y;
-
-  col += mix(BLUE, BLACK, smoothstep(0.0, 1.0, abs(m)));
-  col += mix(PINK, BLACK, smoothstep(0.0, 1.0, abs(m - 0.8)));
-  return col * 0.5;
-}
-
-vec3 getLineColor(float t, vec3 baseColor) {
-  if (lineGradientCount <= 0) {
-    return baseColor;
-  }
-
-  vec3 gradientColor;
-  
-  if (lineGradientCount == 1) {
-    gradientColor = lineGradient[0];
-  } else {
-    float clampedT = clamp(t, 0.0, 0.9999);
-    float scaled = clampedT * float(lineGradientCount - 1);
-    int idx = int(floor(scaled));
-    float f = fract(scaled);
-    int idx2 = min(idx + 1, lineGradientCount - 1);
-
-    vec3 c1 = lineGradient[idx];
-    vec3 c2 = lineGradient[idx2];
-    
-    gradientColor = mix(c1, c2, f);
-  }
-  
-  return gradientColor * 0.5;
-}
-
-float wave(vec2 uv, float offset, vec2 screenUv, vec2 mouseUv, bool shouldBend) {
-  float time = iTime * animationSpeed;
-
-  float x_offset   = offset;
-  float x_movement = time * 0.1;
-  float amp        = sin(offset + time * 0.2) * 0.3;
-  float y          = sin(uv.x + x_offset + x_movement) * amp;
-
-  if (shouldBend) {
-    vec2 d = screenUv - mouseUv;
-    float influence = exp(-dot(d, d) * bendRadius);
-    float bendOffset = (mouseUv.y - screenUv.y) * influence * bendStrength * bendInfluence;
-    y += bendOffset;
-  }
-
-  float m = uv.y - y;
-  return 0.0175 / max(abs(m) + 0.01, 1e-3) + 0.01;
-}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  vec2 baseUv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;
-  baseUv.y *= -1.0;
-  
-  if (parallax) {
-    baseUv += parallaxOffset;
-  }
-
-  vec3 col = vec3(0.0);
-
-  vec3 b = lineGradientCount > 0 ? vec3(0.0) : background_color(baseUv);
-
-  vec2 mouseUv = vec2(0.0);
-  if (interactive) {
-    mouseUv = (2.0 * iMouse - iResolution.xy) / iResolution.y;
-    mouseUv.y *= -1.0;
-  }
-  
-  if (enableBottom) {
-    for (int i = 0; i < bottomLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(bottomLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = bottomWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      col += lineCol * wave(
-        ruv + vec2(bottomLineDistance * fi + bottomWavePosition.x, bottomWavePosition.y),
-        1.5 + 0.2 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      ) * 0.2;
-    }
-  }
-
-  if (enableMiddle) {
-    for (int i = 0; i < middleLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(middleLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = middleWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      col += lineCol * wave(
-        ruv + vec2(middleLineDistance * fi + middleWavePosition.x, middleWavePosition.y),
-        2.0 + 0.15 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      );
-    }
-  }
-
-  if (enableTop) {
-    for (int i = 0; i < topLineCount; ++i) {
-      float fi = float(i);
-      float t = fi / max(float(topLineCount - 1), 1.0);
-      vec3 lineCol = getLineColor(t, b);
-      
-      float angle = topWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate(angle);
-      ruv.x *= -1.0;
-      col += lineCol * wave(
-        ruv + vec2(topLineDistance * fi + topWavePosition.x, topWavePosition.y),
-        1.0 + 0.2 * fi,
-        baseUv,
-        mouseUv,
-        interactive
-      ) * 0.1;
-    }
-  }
-
-  fragColor = vec4(col, 1.0);
-}
-
-void main() {
-  vec4 color = vec4(0.0);
-  mainImage(color, gl_FragCoord.xy);
-  gl_FragColor = color;
-}
-`;
-
-        const MAX_GRADIENT_STOPS = 8;
-
-        function hexToVec3(hex) {
-          let value = hex.trim();
-
-          if (value.startsWith('#')) {
-            value = value.slice(1);
-          }
-
-          let r = 255;
-          let g = 255;
-          let b = 255;
-
-          if (value.length === 3) {
-            r = parseInt(value[0] + value[0], 16);
-            g = parseInt(value[1] + value[1], 16);
-            b = parseInt(value[2] + value[2], 16);
-          } else if (value.length === 6) {
-            r = parseInt(value.slice(0, 2), 16);
-            g = parseInt(value.slice(2, 4), 16);
-            b = parseInt(value.slice(4, 6), 16);
-          }
-
-          return new Vector3(r / 255, g / 255, b / 255);
-        }
-
-        const container = document.getElementById('floating-lines-bg');
-        if (container) {
-          const scene = new Scene();
-          const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-          camera.position.z = 1;
-
-          const renderer = new WebGLRenderer({ antialias: true, alpha: false });
-          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-          renderer.domElement.style.width = '100%';
-          renderer.domElement.style.height = '100%';
-          container.appendChild(renderer.domElement);
-
-          const uniforms = {
-            iTime: { value: 0 },
-            iResolution: { value: new Vector3(1, 1, 1) },
-            animationSpeed: { value: 1.0 },
-
-            enableTop: { value: true },
-            enableMiddle: { value: true },
-            enableBottom: { value: true },
-
-            topLineCount: { value: 6 },
-            middleLineCount: { value: 6 },
-            bottomLineCount: { value: 6 },
-
-            topLineDistance: { value: 0.05 },
-            middleLineDistance: { value: 0.03 },
-            bottomLineDistance: { value: 0.05 },
-
-            topWavePosition: { value: new Vector3(10.0, 0.5, -0.4) },
-            middleWavePosition: { value: new Vector3(5.0, 0.0, 0.2) },
-            bottomWavePosition: { value: new Vector3(2.0, -0.7, 0.4) },
-
-            iMouse: { value: new Vector2(-1000, -1000) },
-            interactive: { value: true },
-            bendRadius: { value: 5.0 },
-            bendStrength: { value: -0.5 },
-            bendInfluence: { value: 0.0 },
-
-            parallax: { value: true },
-            parallaxStrength: { value: 0.2 },
-            parallaxOffset: { value: new Vector2(0, 0) },
-
-            lineGradient: {
-              value: Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1))
-            },
-            lineGradientCount: { value: 0 }
-          };
-
-          const linesGradient = ['#2f4ba2', '#e947f5', '#ffffff'];
-
-          if (linesGradient && linesGradient.length > 0) {
-            const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
-            uniforms.lineGradientCount.value = stops.length;
-
-            stops.forEach((hex, i) => {
-              const color = hexToVec3(hex);
-              uniforms.lineGradient.value[i].set(color.x, color.y, color.z);
-            });
-          }
-
-          const material = new ShaderMaterial({
-            uniforms,
-            vertexShader,
-            fragmentShader
-          });
-
-          const geometry = new PlaneGeometry(2, 2);
-          const mesh = new Mesh(geometry, material);
-          scene.add(mesh);
-
-          const clock = new Clock();
-
-          function setSize() {
-            const width = window.innerWidth || 1;
-            const height = window.innerHeight || 1;
-
-            renderer.setSize(width, height, false);
-
-            const canvasWidth = renderer.domElement.width;
-            const canvasHeight = renderer.domElement.height;
-            uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1);
-          }
-
-          setSize();
-          window.addEventListener('resize', setSize);
-
-          const targetMouse = new Vector2(-1000, -1000);
-          const currentMouse = new Vector2(-1000, -1000);
-          let targetInfluence = 0.0;
-          let currentInfluence = 0.0;
-
-          const targetParallax = new Vector2(0, 0);
-          const currentParallax = new Vector2(0, 0);
-          const mouseDamping = 0.05;
-
-          function handlePointerMove(event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            const dpr = renderer.getPixelRatio();
-
-            targetMouse.set(x * dpr, (rect.height - y) * dpr);
-            targetInfluence = 1.0;
-
-            if (uniforms.parallax.value) {
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const offsetX = (x - centerX) / rect.width;
-              const offsetY = -(y - centerY) / rect.height;
-              targetParallax.set(offsetX * uniforms.parallaxStrength.value, offsetY * uniforms.parallaxStrength.value);
-            }
-          }
-
-          function handlePointerLeave() {
-            targetInfluence = 0.0;
-          }
-
-          renderer.domElement.addEventListener('pointermove', handlePointerMove);
-          renderer.domElement.addEventListener('pointerleave', handlePointerLeave);
-
-          function renderLoop() {
-            uniforms.iTime.value = clock.getElapsedTime();
-
-            if (uniforms.interactive.value) {
-              currentMouse.lerp(targetMouse, mouseDamping);
-              uniforms.iMouse.value.copy(currentMouse);
-
-              currentInfluence += (targetInfluence - currentInfluence) * mouseDamping;
-              uniforms.bendInfluence.value = currentInfluence;
-            }
-
-            if (uniforms.parallax.value) {
-              currentParallax.lerp(targetParallax, mouseDamping);
-              uniforms.parallaxOffset.value.copy(currentParallax);
-            }
-
-            renderer.render(scene, camera);
-            requestAnimationFrame(renderLoop);
-          }
-
-          renderLoop();
-        }
-    </script>
-
-    <script>
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-        
-        // Set active link based on current page
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active-link');
-            if (link.getAttribute('href') === currentPage) {
-                link.classList.add('active-link');
-            }
-        });
-        document.querySelectorAll('#mobile-menu a').forEach(link => {
-            if (link.getAttribute('href') === currentPage) {
-                link.classList.add('bg-forest');
-            }
-        });
-    </script>
-
 </body>
 </html>
