@@ -953,8 +953,13 @@
                 .filter(row => Number.isFinite(row.mid));
             const match = rows.sort((a, b) => Math.abs(a.mid - r.t) - Math.abs(b.mid - r.t))[0];
             if (!result.ok || !match) throw new Error(result.error || 'no matching transit');
-            const diff = (match.mid - r.t) * 1440;
-            box.innerHTML = `<div class="notice notice-info">NASA Transit Service mid-transit ${t(match.mid)} (${tUtc(match.mid)} UT), ±${fmt(match.unc, 1)} min${match.ref ? `, ${esc(match.ref)}` : ''}. Difference from this planner: ${diff >= 0 ? '+' : ''}${fmt(diff, 1)} min.</div>`;
+            // The service may return a neighbouring transit; compare like cycles by removing whole periods.
+            const cycles = Math.round((match.mid - r.t) / r.period);
+            const diff = (match.mid - cycles * r.period - r.t) * 1440;
+            const which = cycles === 0
+                ? `mid-transit ${t(match.mid)} (${tUtc(match.mid)} UT)`
+                : `ephemeris (checked on the transit ${Math.abs(cycles)} orbit${Math.abs(cycles) === 1 ? '' : 's'} ${cycles > 0 ? 'later' : 'earlier'})`;
+            box.innerHTML = `<div class="notice notice-info">NASA Transit Service ${which}, ±${fmt(match.unc, 1)} min${match.ref ? `, ${esc(match.ref)}` : ''}. Difference from this planner: ${diff >= 0 ? '+' : ''}${fmt(diff, 1)} min.</div>`;
         } catch (error) {
             box.innerHTML = `<p class="small muted">NASA timing check unavailable (${esc(error.message)}).</p>`;
         }
