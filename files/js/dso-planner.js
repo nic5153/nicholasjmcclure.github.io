@@ -63,17 +63,6 @@
         return 'nebula';
     }
 
-    function download(filename, text, type) {
-        const url = URL.createObjectURL(new Blob([text], { type }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }
-
     // ------------------------------------------------------------------ data & migration
 
     async function loadCatalog() {
@@ -342,21 +331,6 @@
         ].filter(line => line.count > 0);
     }
 
-    function gotoCommand(r) {
-        return `#GoTo++ Auto Blind ${A.formatRa(r.o.ra, 1)} ${A.formatDec(r.o.dec, 0)} ${String(r.o.id).replace(/\s+/g, '_')}`;
-    }
-
-    function aptXml(r) {
-        const s = state.settings;
-        const lines = planFor(r);
-        const xml = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]));
-        const entries = [{ exp: 0, count: 1, gain: '', offset: '', command: gotoCommand(r), wait: 1 }]
-            .concat(lines.map(l => ({ exp: l.sub, count: l.count, gain: s.rig.gain, offset: s.rig.offset, command: '', wait: 0, filter: l.filter })))
-            .map((e, i) => `\t\t\t<Exposures>\n\t\t\t\t<Order>${i + 1}</Order>\n\t\t\t\t<Exp>${xml(e.exp)}</Exp>\n\t\t\t\t<Binning>1</Binning>\n\t\t\t\t<Gain>${xml(e.gain)}</Gain>\n\t\t\t\t<Offset>${xml(e.offset)}</Offset>\n\t\t\t\t<Pause>0</Pause>\n\t\t\t\t<Count>${e.count}</Count>\n\t\t\t\t<Filter>-1</Filter>\n\t\t\t\t<RunCommand>${xml(e.command)}</RunCommand>\n\t\t\t\t<WaitCommand>${e.wait}</WaitCommand>\n\t\t\t</Exposures>`).join('\n');
-        const note = `${r.o.id}${r.o.name ? ` (${r.o.name})` : ''}: usable ${t(r.window[0])}-${t(r.window[1])} local; ${lines.map(l => `${l.filter} ${l.count}x${l.sub}s`).join(', ')}; change filters manually between blocks; dither every 3-5 frames`;
-        return `<?xml version="1.0"?>\n<!-- NightVector deep-sky plan for the night of ${state.date} -->\n<!-- ${note.replace(/--/g, '-')} -->\n<Plans>\n\t<LightPlans>\n\t\t<Plan>\n\t\t\t<Name>${xml(String(r.o.id).replace(/\s+/g, '_'))}_LRGB</Name>\n\t\t\t<DontDither>0</DontDither>\n\t\t\t<Vertical>0</Vertical>\n${entries}\n\t\t</Plan>\n\t</LightPlans>\n</Plans>\n`;
-    }
-
     function renderDetail(r) {
         state.selectedId = r.id;
         const o = r.o;
@@ -427,18 +401,11 @@
             <div class="detail-section">
                 <div class="row">
                     <button class="btn btn-sm ${starred ? '' : 'btn-primary'}" type="button" data-star="${esc(r.id)}">${starred ? 'In projects' : 'Add to projects'}</button>
-                    <button class="btn btn-sm" type="button" id="d-apt">APT plan</button>
-                    <button class="btn btn-sm" type="button" id="d-goto">Copy GoTo</button>
                     <button class="btn btn-sm" type="button" id="d-nights">Best nights ahead</button>
                 </div>
                 <div id="d-extra" style="margin-top: 12px;"></div>
             </div>`;
         $('d-rotate').addEventListener('click', () => { state.rotate = !state.rotate; renderDetail(r); });
-        $('d-apt').addEventListener('click', () => download(`${String(o.id).replace(/\s+/g, '_')}_${state.date}_APT.xml`, aptXml(r), 'application/xml'));
-        $('d-goto').addEventListener('click', async () => {
-            await navigator.clipboard.writeText(gotoCommand(r)).catch(() => {});
-            $('d-goto').textContent = 'Copied';
-        });
         $('d-nights').addEventListener('click', () => bestNights(o));
         document.querySelectorAll('#target-rows tr').forEach(row => row.classList.toggle('is-selected', row.dataset.id === r.id));
     }

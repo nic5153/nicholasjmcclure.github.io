@@ -47,16 +47,17 @@
     /** Rig description for upload keys and manifests, from the shared planner settings. */
     function selectedRig() {
         const rig = window.NVSettings.load().rig;
+        const preset = window.NVSettings.RIG_PRESETS[rig.preset] || {};
         return {
             name: rig.name,
-            telescope: rig.preset && rig.preset.startsWith('c8') ? 'Celestron C8' : rig.name,
+            telescope: rig.telescope || preset.telescope || rig.name,
             camera: rig.camera || 'Camera',
             filters: 'LRGB',
             aperture: rig.aperture,
             nativeFocalLength: rig.focalLength,
             reducer: rig.reducer || 1,
             pixelSize: rig.pixelSize,
-            guideFocalLength: 120
+            guideFocalLength: rig.guideFocalLength ?? preset.guideFocalLength ?? null
         };
     }
 

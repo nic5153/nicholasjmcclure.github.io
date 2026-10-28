@@ -49,9 +49,8 @@
             <legend>Telescope &amp; camera</legend>
             <div class="form-grid">
                 <label class="field" style="grid-column: span 2;"><span>Preset</span>
-                    <select class="input" id="f-preset">
-                        <option value="c8-reduced-atr585m">C8 + 0.63x reducer + ATR585M</option>
-                        <option value="c8-native-atr585m">C8 native f/10 + ATR585M</option>
+                    <select class="input" id="f-preset">${Object.entries(NV.RIG_PRESETS).map(([key, preset]) =>
+                        `<option value="${key}">${esc(preset.name)}${key === NV.DEFAULT_PRESET ? ' (current rig)' : ''}</option>`).join('')}
                         <option value="custom">Custom</option>
                     </select>
                 </label>
@@ -154,6 +153,19 @@
         if (present('f-red')) {
             const red = Number($('f-red').value);
             if (Number.isFinite(red)) next.rig.redNoise = red / 1000;
+        }
+        // Name the rig after its preset, flagging edits so the summary strip never shows a stale telescope.
+        const preset = NV.RIG_PRESETS[next.rig.preset];
+        if (preset) {
+            const edited = ['aperture', 'focalLength', 'reducer', 'pixelSize', 'sensorW', 'sensorH']
+                .some(key => Math.abs(Number(next.rig[key]) - Number(preset[key])) > 1e-6);
+            next.rig.name = edited ? `${preset.name} (modified)` : preset.name;
+            next.rig.telescope = preset.telescope;
+            next.rig.camera = preset.camera;
+            next.rig.guideFocalLength = preset.guideFocalLength ?? null;
+        } else if (next.rig.preset === 'custom' && NV.RIG_PRESETS[current.rig.preset]) {
+            next.rig.name = 'Custom rig';
+            next.rig.telescope = 'Custom telescope';
         }
         try { new Intl.DateTimeFormat('en-US', { timeZone: next.site.tz }); } catch { next.site.tz = current.site.tz; }
         if (Math.abs(next.site.lat) > 90) next.site.lat = current.site.lat;

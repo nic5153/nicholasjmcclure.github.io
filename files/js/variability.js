@@ -918,19 +918,11 @@
             <div class="detail-section">
                 <div class="row">
                     <button class="btn ${planned ? '' : 'btn-primary'} btn-sm" type="button" data-star="${esc(r.id)}">${planned ? 'Remove from plan' : 'Add to plan'}</button>
-                    <button class="btn btn-sm" type="button" id="d-apt">APT plan</button>
-                    <button class="btn btn-sm" type="button" id="d-goto">Copy GoTo</button>
                     <button class="btn btn-sm" type="button" data-next="${esc(r.key)}">Find next nights</button>
                     ${r.group === 'transit' ? '<button class="btn btn-sm" type="button" id="d-refine">Check NASA timing</button>' : ''}
                 </div>
                 <div id="d-extra" style="margin-top: 12px;"></div>
             </div>`;
-        $('d-apt').addEventListener('click', () => download(`${safeName(r.name)}_${state.date}_APT.xml`, aptXml([r]), 'application/xml'));
-        $('d-goto').addEventListener('click', async () => {
-            await navigator.clipboard.writeText(gotoCommand(r)).catch(() => {});
-            $('d-goto').textContent = 'Copied';
-            setTimeout(() => { const el = $('d-goto'); if (el) el.textContent = 'Copy GoTo'; }, 1500);
-        });
         const refine = $('d-refine');
         if (refine) refine.addEventListener('click', () => refineTiming(r));
         document.querySelectorAll('#target-rows tr').forEach(row => row.classList.toggle('is-selected', row.dataset.id === r.id));
@@ -1000,30 +992,6 @@
     }
 
     // ------------------------------------------------------------------ plan & export
-
-    function safeName(name) { return String(name).replace(/[^A-Za-z0-9+._-]+/g, '_'); }
-
-    function gotoCommand(r) {
-        return `#GoTo++ Auto Blind ${A.formatRa(r.ra, 1)} ${A.formatDec(r.dec, 0)} ${safeName(r.name)}`;
-    }
-
-    function xmlEscape(value) {
-        return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]));
-    }
-
-    function aptXml(list) {
-        const rig = state.settings.rig;
-        const plans = list.map(r => {
-            const count = Math.ceil((r.end - r.start) * 86400 / r.plan.cadence);
-            const exposures = [
-                { exp: 0, count: 1, gain: '', offset: '', command: gotoCommand(r), wait: 1 },
-                { exp: r.plan.exposure, count, gain: rig.gain, offset: rig.offset, command: '', wait: 0 }
-            ].map((e, i) => `\t\t\t<Exposures>\n\t\t\t\t<Order>${i + 1}</Order>\n\t\t\t\t<Exp>${xmlEscape(e.exp)}</Exp>\n\t\t\t\t<Binning>1</Binning>\n\t\t\t\t<Gain>${xmlEscape(e.gain)}</Gain>\n\t\t\t\t<Offset>${xmlEscape(e.offset)}</Offset>\n\t\t\t\t<Pause>0</Pause>\n\t\t\t\t<Count>${e.count}</Count>\n\t\t\t\t<Filter>-1</Filter>\n\t\t\t\t<RunCommand>${xmlEscape(e.command)}</RunCommand>\n\t\t\t\t<WaitCommand>${e.wait}</WaitCommand>\n\t\t\t</Exposures>`).join('\n');
-            const note = `${r.name}: ${r.kind} ${t(r.t)} local / ${tUtc(r.t)} UT; start ${t(r.start)} (${tUtc(r.start)} UT), end ${t(r.end)} (${tUtc(r.end)} UT); filter ${rig.filter}; ${r.plan.defocused ? `defocus to ~${fmt(r.plan.psf, 0)} arcsec FWHM` : 'in focus'}`;
-            return `\t\t<!-- ${note.replace(/--/g, '-')} -->\n\t\t<Plan>\n\t\t\t<Name>${xmlEscape(`${safeName(r.name)}_${r.kind.replace(/\s+/g, '')}`)}</Name>\n\t\t\t<DontDither>1</DontDither>\n\t\t\t<Vertical>0</Vertical>\n${exposures}\n\t\t</Plan>`;
-        }).join('\n');
-        return `<?xml version="1.0"?>\n<!-- NightVector plan for the night of ${state.date} at ${state.settings.site.name.replace(/--/g, '-')} -->\n<Plans>\n\t<LightPlans>\n${plans}\n\t</LightPlans>\n</Plans>\n`;
-    }
 
     function plannedResults() {
         const ids = planIds();
@@ -1125,12 +1093,6 @@
             if (open) { const key = state.selectedKey; setDate(open.dataset.gotoNight); state.selectedKey = key; }
         });
         $('plan-csv').addEventListener('click', exportCsv);
-        $('plan-apt').addEventListener('click', () => {
-            const items = plannedResults();
-            if (!items.length) { $('plan-body').insertAdjacentHTML('beforeend', '<p class="xsmall" style="color:var(--warn)">Add targets to the plan first.</p>'); return; }
-            download(`nightvector_${state.date}_APT.xml`, aptXml(items), 'application/xml');
-        });
-
         window.NVSetup.mount({
             criteria: 'photometry',
             getSettings: () => state.settings,

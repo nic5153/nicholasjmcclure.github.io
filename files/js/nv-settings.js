@@ -9,23 +9,40 @@
     const KEY = 'nv.settings.v2';
 
     const RIG_PRESETS = {
+        // Apertura CarbonStar 150 (High Point Scientific specs): 150 mm parabolic primary, 600 mm f/4,
+        // 62 mm central obstruction, 96% enhanced-aluminium mirrors; the 0.95x PRCC coma corrector
+        // gives ~570 mm at f/3.8 (28 mm image circle, 55 mm back focus).  Throughput ~0.6:
+        // two 96% mirrors x corrector x L filter x IMX585 band-averaged QE.
+        'carbonstar150-atr585m': {
+            name: 'CarbonStar 150 + 0.95x PRCC + ATR585M',
+            telescope: 'Apertura CarbonStar 150 (150 mm f/4 Newtonian)',
+            aperture: 150, obstruction: 0.41, focalLength: 600, reducer: 0.95,
+            pixelSize: 2.9, sensorW: 3840, sensorH: 2160,
+            camera: 'ToupTek ATR585M (IMX585, mono)',
+            readNoise: 2.74, fullWell: 38900, darkCurrent: 0.002, throughput: 0.6,
+            readout: 'LCG', guideFocalLength: null
+        },
         'c8-reduced-atr585m': {
             name: 'C8 + 0.63x reducer + ATR585M',
+            telescope: 'Celestron C8',
             aperture: 203.2, obstruction: 0.34, focalLength: 2032, reducer: 0.63,
             pixelSize: 2.9, sensorW: 3840, sensorH: 2160,
             camera: 'ToupTek ATR585M (IMX585, mono)',
             readNoise: 2.74, fullWell: 38900, darkCurrent: 0.002, throughput: 0.5,
-            readout: 'LCG'
+            readout: 'LCG', guideFocalLength: 120
         },
         'c8-native-atr585m': {
             name: 'C8 native f/10 + ATR585M',
+            telescope: 'Celestron C8',
             aperture: 203.2, obstruction: 0.34, focalLength: 2032, reducer: 1,
             pixelSize: 2.9, sensorW: 3840, sensorH: 2160,
             camera: 'ToupTek ATR585M (IMX585, mono)',
             readNoise: 2.74, fullWell: 38900, darkCurrent: 0.002, throughput: 0.5,
-            readout: 'LCG'
+            readout: 'LCG', guideFocalLength: 120
         }
     };
+
+    const DEFAULT_PRESET = 'carbonstar150-atr585m';
 
     function defaults() {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -38,8 +55,8 @@
                 isDefault: true, browserTz: tz
             },
             rig: {
-                preset: 'c8-reduced-atr585m',
-                ...RIG_PRESETS['c8-reduced-atr585m'],
+                preset: DEFAULT_PRESET,
+                ...RIG_PRESETS[DEFAULT_PRESET],
                 filter: 'L', gain: 100, offset: 30, seeing: 3.0, maxDefocus: 20, overhead: 3, minExposure: 1,
                 saturationFraction: 0.7, redNoise: 0.0006
             },
@@ -163,5 +180,5 @@
         }));
     }
 
-    global.NVSettings = { KEY, RIG_PRESETS, defaults, load, save, skyMu, parseHorizon, horizonAlt, geocode, lookupPoint, weather };
+    global.NVSettings = { KEY, RIG_PRESETS, DEFAULT_PRESET, defaults, load, save, skyMu, parseHorizon, horizonAlt, geocode, lookupPoint, weather };
 })(window);
