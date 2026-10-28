@@ -50,15 +50,28 @@
             <div class="mobile-panel">${mobile}</div>`;
         document.body.prepend(header);
 
+        const canHover = () => window.matchMedia('(hover: hover)').matches;
         header.querySelectorAll('.has-menu').forEach(item => {
             const button = item.querySelector('button');
+            let closeTimer = null;
             const open = state => {
+                clearTimeout(closeTimer);
                 item.classList.toggle('open', state);
                 button.setAttribute('aria-expanded', String(state));
             };
-            button.addEventListener('click', event => { event.stopPropagation(); open(!item.classList.contains('open')); });
-            item.addEventListener('mouseenter', () => window.matchMedia('(hover: hover)').matches && open(true));
-            item.addEventListener('mouseleave', () => window.matchMedia('(hover: hover)').matches && open(false));
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                // With a mouse the menu is already open from hovering; a click on the label should not
+                // close it. Keyboard activation (event.detail === 0) still toggles.
+                if (canHover() && event.detail > 0 && item.classList.contains('open')) return;
+                open(!item.classList.contains('open'));
+            });
+            item.addEventListener('mouseenter', () => { if (canHover()) open(true); });
+            item.addEventListener('mouseleave', () => {
+                if (!canHover()) return;
+                clearTimeout(closeTimer);
+                closeTimer = setTimeout(() => open(false), 300); // grace period for diagonal mouse paths
+            });
             item.addEventListener('keydown', event => { if (event.key === 'Escape') { open(false); button.focus(); } });
         });
         document.addEventListener('click', () => header.querySelectorAll('.has-menu.open').forEach(item => {

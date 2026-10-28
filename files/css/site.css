@@ -199,6 +199,9 @@ p:last-child { margin-bottom: 0; }
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
     display: none;
 }
+/* Invisible bridge over the gap between the button and the menu, so moving the
+   pointer down to the links never "leaves" the menu and closes it. */
+.dropdown::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; height: 14px; }
 .has-menu.open .dropdown { display: block; }
 .has-menu.open .chev { transform: rotate(180deg); }
 .dropdown a {
