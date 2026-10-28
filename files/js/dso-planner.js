@@ -226,6 +226,8 @@
         if (state.search) {
             const q = norm(state.search);
             list = list.filter(r => norm(`${r.o.id} ${r.o.name} ${r.o.ref}`).includes(q));
+        } else if (state.tab === 'projects') {
+            list = list.filter(isProject); // every project, whatever tonight's verdict
         } else {
             if (state.tab !== 'all') list = list.filter(r => r.o.group === state.tab);
             list = list.filter(r => r.verdict === 'go' || (r.verdict === 'marginal' && state.showMarginal) || (r.verdict === 'skip' && state.showRejected));
@@ -280,6 +282,7 @@
         $('tl-axis').innerHTML = state.grid ? CTX.axisLabels(state.grid, tz()) : '';
         const counts = { all: 0, galaxy: 0, nebula: 0, pn: 0, cluster: 0 };
         for (const r of state.results) if (r.verdict === 'go') { counts.all += 1; counts[r.o.group] += 1; }
+        counts.projects = state.projects.length;
         document.querySelectorAll('[data-count]').forEach(el => { el.textContent = String(counts[el.dataset.count] ?? 0); });
         const rows = visible();
         const shown = rows.slice(0, state.limit);
@@ -287,7 +290,11 @@
         const empty = $('list-empty');
         empty.classList.toggle('hidden', rows.length > 0);
         if (!rows.length) {
-            empty.innerHTML = state.night && state.night.darkHours <= 0.25
+            empty.innerHTML = state.tab === 'projects' && !state.search
+                ? (state.projects.length
+                    ? '<h3>No project is above your limits tonight</h3><p class="small">Use “Best nights ahead” on a project to find when it is well placed.</p>'
+                    : '<h3>No projects yet</h3><p class="small">Star (☆) objects to keep them here across nights and track captured hours.</p>')
+                : state.night && state.night.darkHours <= 0.25
                 ? '<h3>No dark time</h3><p class="small">The Sun does not reach the imaging darkness limit on this night.</p>'
                 : state.search ? `<h3>No match for “${esc(state.search)}” above your limits tonight</h3><p class="small">It may be below the minimum altitude, or not in the catalog (add it as a custom target).</p>`
                     : '<h3>Nothing passes the cuts</h3><p class="small">Show marginal or rejected objects, or relax the limits in Setup.</p>';
@@ -523,7 +530,8 @@
             settings: state.settings,
             dsoProjects: state.projects,
             dsoCustom: state.custom,
-            variabilityPlans: readJson('nv.plan.v1', {})
+            variabilityPlans: readJson('nv.plan.v1', {}),
+            variabilityQueue: readJson('nv.queue.v1', [])
         };
     }
 
@@ -557,6 +565,7 @@
                 if (Array.isArray(bundle.dsoProjects)) state.projects = bundle.dsoProjects;
                 if (Array.isArray(bundle.dsoCustom)) state.custom = bundle.dsoCustom;
                 if (bundle.variabilityPlans) writeJson('nv.plan.v1', bundle.variabilityPlans);
+                if (Array.isArray(bundle.variabilityQueue)) writeJson('nv.queue.v1', bundle.variabilityQueue);
             } else if (Array.isArray(bundle.plannerProfiles)) {
                 writeJson('observingPlannerProfiles', bundle.plannerProfiles);
                 state.projects = null;

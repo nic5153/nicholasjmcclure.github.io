@@ -45,6 +45,7 @@
         limit: PAGE_SIZE,
         selectedId: null,
         plan: readPlan(),
+        queue: readQueue(),
         computing: false
     };
 
@@ -67,6 +68,23 @@
         try { localStorage.setItem('nv.plan.v1', JSON.stringify(state.plan)); } catch { /* ignore */ }
     }
     function planIds() { return state.plan[state.date] || []; }
+
+    // Target queue: targets you want to come back to, kept across nights (catalog keys, e.g. "P:WASP-12b").
+    function readQueue() {
+        try { const q = JSON.parse(localStorage.getItem('nv.queue.v1') || '[]'); return Array.isArray(q) ? q : []; } catch { return []; }
+    }
+    function writeQueue() {
+        try { localStorage.setItem('nv.queue.v1', JSON.stringify(state.queue)); } catch { /* ignore */ }
+    }
+    function isQueued(key) { return state.queue.includes(key); }
+    function toggleQueue(key) {
+        state.queue = isQueued(key) ? state.queue.filter(k => k !== key) : [...state.queue, key];
+        writeQueue();
+        renderList();
+        const selected = state.results.find(r => r.id === state.selectedId);
+        if (selected && selected.key === key) renderDetail(selected);
+        else if (state.selectedKey === key) nextNights(key);
+    }
 
     /** Half a unit in the last quoted decimal: the implied precision of a catalogue value. */
     function periodDecimalsSigma(value) {
@@ -586,6 +604,9 @@
             const q = norm(state.search);
             return all.filter(r => norm(r.name).includes(q) || norm(r.target.d.host).includes(q));
         }
+        if (state.tab === 'queue') {
+            return sortResults(all.filter(r => isQueued(r.key)));
+        }
         if (state.tab === 'shortlist') {
             const picks = [];
             for (const group of Object.keys(SHORTLIST_SIZE)) {
@@ -615,7 +636,7 @@
 
     function counts() {
         const all = bestPerTarget(state.results);
-        const out = { shortlist: 0 };
+        const out = { shortlist: 0, queue: state.queue.length };
         for (const group of Object.keys(GROUPS)) {
             out[group] = all.filter(r => r.group === group && r.verdict === 'go').length;
         }
@@ -641,7 +662,7 @@
         const sub = r.group === 'transit'
             ? `${esc(r.target.d.host || 'Host')} · P ${fmt(r.period, 3)} d`
             : `${esc(r.target.d.type)} · P ${r.period < 1 ? A.formatDuration(r.period * 24) : `${fmt(r.period, 3)} d`}`;
-        const extra = r.siblings > 0 ? ` · +${r.siblings} more tonight` : '';
+        const extra = (r.siblings > 0 ? ` · +${r.siblings} more tonight` : '') + (isQueued(r.key) && state.tab !== 'queue' ? ' · queued' : '');
         const p = r.plan;
         return `<tr data-id="${esc(r.id)}" class="${r.id === state.selectedId ? 'is-selected' : ''}">
             <td><button class="star-btn" type="button" data-star="${esc(r.id)}" aria-pressed="${planned}" title="${planned ? 'Remove from plan' : 'Add to plan'}">${planned ? '★' : '☆'}</button></td>
@@ -670,8 +691,8 @@
         const body = $('target-rows');
         const empty = $('list-empty');
         const shown = rows.slice(0, state.limit);
-        body.innerHTML = shown.map(rowHtml).join('');
-        if (!rows.length) {
+        body.innerHTML = shown.map(rowHtml).join('') + (state.tab === 'queue' && !state.search ? queueMissingRows(rows) : '');
+        if (!rows.length && !(state.tab === 'queue' && state.queue.length && !state.search)) {
             empty.classList.remove('hidden');
             empty.innerHTML = emptyMessage();
         } else {
@@ -686,7 +707,24 @@
             : `${shown.length} of ${rows.length} shown · ${go} capturable targets tonight from ${state.targets.length.toLocaleString()} in the catalogs (${total.toLocaleString()} events checked)`;
     }
 
+    /** Queued targets with no usable event tonight, so the queue always shows everything in it. */
+    function queueMissingRows(rows) {
+        const present = new Set(rows.map(r => r.key));
+        return state.queue.filter(key => !present.has(key)).map(key => {
+            const tg = state.targets.find(x => x.key === key);
+            if (!tg) return '';
+            return `<tr class="queue-missing" style="cursor:default">
+                <td><button class="star-btn" type="button" data-queue="${esc(key)}" title="Remove from queue">✕</button></td>
+                <td><span class="cls-dot" style="background:${GROUPS[tg.group].hex}"></span><span class="name">${esc(tg.name)}</span><span class="sub">${esc(CLASS_LABEL[tg.cls])}</span></td>
+                <td colspan="10"><span class="dim small">No usable event tonight</span> <button class="btn btn-sm" type="button" data-next="${esc(key)}" style="margin-left:10px;">Find next nights</button></td>
+            </tr>`;
+        }).join('');
+    }
+
     function emptyMessage() {
+        if (state.tab === 'queue' && !state.search) {
+            return '<h3>Your queue is empty</h3><p class="small">Open any target (or search for one) and press <strong>Add to queue</strong>. Queued targets stay here across nights, with tonight\'s event when there is one.</p>';
+        }
         if (state.search) {
             const q = norm(state.search);
             const rank = tg => {
@@ -701,7 +739,7 @@
             return `<h3>No event for these targets tonight</h3><p class="small">They are below your limits, or their transit / minimum / maximum falls outside the dark window.</p>
                 <div class="stack" style="max-width: 460px; margin: 16px auto 0; text-align: left;">${matches.map(tg => `
                     <div class="row-between inset"><span><strong>${esc(tg.name)}</strong> <span class="dim small">${esc(CLASS_LABEL[tg.cls])}</span></span>
-                    <button class="btn btn-sm" type="button" data-next="${esc(tg.key)}">Find next nights</button></div>`).join('')}</div>`;
+                    <span class="row"><button class="btn btn-sm" type="button" data-queue="${esc(tg.key)}">${isQueued(tg.key) ? 'Queued ✓' : 'Add to queue'}</button><button class="btn btn-sm" type="button" data-next="${esc(tg.key)}">Find next nights</button></span></div>`).join('')}</div>`;
         }
         if (state.night && state.night.darkHours <= 0.25) return '<h3>No dark time</h3><p class="small">The Sun does not reach your darkness limit on this night.</p>';
         return `<h3>Nothing passes the cuts</h3><p class="small">Try showing marginal or rejected targets, lowering the minimum altitude, or checking the rig settings in Setup.</p>`;
@@ -918,6 +956,7 @@
             <div class="detail-section">
                 <div class="row">
                     <button class="btn ${planned ? '' : 'btn-primary'} btn-sm" type="button" data-star="${esc(r.id)}">${planned ? 'Remove from plan' : 'Add to plan'}</button>
+                    <button class="btn btn-sm" type="button" data-queue="${esc(r.key)}">${isQueued(r.key) ? 'Remove from queue' : 'Add to queue'}</button>
                     <button class="btn btn-sm" type="button" data-next="${esc(r.key)}">Find next nights</button>
                     ${r.group === 'transit' ? '<button class="btn btn-sm" type="button" id="d-refine">Check NASA timing</button>' : ''}
                 </div>
@@ -1085,6 +1124,8 @@
             }
         });
         document.addEventListener('click', event => {
+            const queue = event.target.closest('[data-queue]');
+            if (queue) { event.stopPropagation(); toggleQueue(queue.dataset.queue); return; }
             const next = event.target.closest('[data-next]');
             if (next) { nextNights(next.dataset.next); return; }
             const star = event.target.closest('#detail [data-star], #plan-body [data-star]');
@@ -1110,7 +1151,7 @@
         window.__nightVector = state; // handy for inspecting results from the console
         bind();
         const hashTab = location.hash.replace('#', '');
-        if (['transit', 'eclipse', 'pulsator', 'cv'].includes(hashTab)) {
+        if (['transit', 'eclipse', 'pulsator', 'cv', 'queue'].includes(hashTab)) {
             state.tab = hashTab;
             document.querySelectorAll('#tabs [data-tab]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === hashTab)));
         }
