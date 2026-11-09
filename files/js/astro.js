@@ -403,7 +403,9 @@
         V: { label: 'Johnson V', zp: 0.85e6, k: 0.17 },
         G: { label: 'Green', zp: 0.80e6, k: 0.17 },
         R: { label: 'Red', zp: 0.85e6, k: 0.12 },
-        B: { label: 'Blue', zp: 0.85e6, k: 0.25 }
+        B: { label: 'Blue', zp: 0.85e6, k: 0.25 },
+        // 7 nm H-alpha: passes ~7/300 of the luminance continuum (stars, sky, moonlight).
+        HA: { label: 'H-alpha (7 nm)', zp: 2.8e6 * 7 / 300, k: 0.09 }
     };
 
     /** Derived optics of a rig profile. */
@@ -554,11 +556,12 @@
     }
 
     /** Surface-brightness SNR for extended objects: hours to reach `snr` per (2" x 2") element. */
-    function hoursForSurfaceBrightness({ rig, mu, sky, filter = rig.filter, snr = 10, element = 4 }) {
+    /** objectScale multiplies the object's signal (e.g. emission-line flux concentrated in a narrowband filter). */
+    function hoursForSurfaceBrightness({ rig, mu, sky, filter = rig.filter, snr = 10, element = 4, objectScale = 1 }) {
         const o = optics(rig);
         const band = BANDS[filter] || BANDS.L;
         const perArcsec = m => band.zp * Math.pow(10, -0.4 * m) * o.area * rig.throughput; // e-/s/arcsec^2
-        const s = perArcsec(mu) * element;
+        const s = perArcsec(mu) * element * objectScale;
         const b = perArcsec(sky) * element;
         // Sky-limited: SNR = s t / sqrt((s + b) t)  ->  t = snr^2 (s + b) / s^2
         return snr * snr * (s + b) / (s * s) / 3600;

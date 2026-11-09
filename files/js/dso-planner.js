@@ -156,6 +156,21 @@
         return capped >= 60 ? Math.round(capped / 10) * 10 : Math.round(capped / 5) * 5;
     }
 
+    /**
+     * Fraction of an object's luminance-band light emitted in H-alpha (+[N II]) - a planning approximation.
+     * HII regions and SNRs are line-dominated; planetaries are brighter in [O III]; reflection nebulae,
+     * clusters and galaxies are continuum sources that a 7 nm filter mostly rejects.
+     */
+    function haFraction(o) {
+        const t = o.type.toLowerCase();
+        if (t.includes('reflection')) return 0;
+        if (t.includes('emission') || t.includes('supernova') || t.includes('cluster + nebula') || t === 'nebula') return 0.4;
+        if (t.includes('planetary')) return 0.25;
+        return 0;
+    }
+
+    function filterSet() { return state.settings.imaging.filterSet || 'LRGB'; }
+
     function evaluate(o, grid) {
         const trk = SKY.track(grid, o.ra, o.dec);
         if (!trk) return null;
@@ -169,9 +184,20 @@
         const mu = meanSurfaceBrightness(o);
         const starry = o.group === 'cluster';
         // "Clean image": S/N 30 per 2" x 2" element at the mean surface brightness, in luminance.
-        const hours = starry ? 0.5 : mu ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'L', snr: 30, element: 4 }) : null;
+        const hoursBroad = starry ? 0.5 : mu ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'L', snr: 30, element: 4 }) : null;
         const subL = subExposure(cond.sky, 'L');
         const subRGB = subExposure(cond.sky, 'G');
+        // H-alpha: same object light concentrated in 7 nm, sky and moonlight cut by the bandwidth.
+        const set = filterSet();
+        const eta = haFraction(o);
+        const subHa = subExposure(cond.sky, 'HA');
+        const hoursHa = set !== 'LRGB' && eta > 0 && mu
+            ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'HA', snr: 30, element: 4, objectScale: eta * A.BANDS.L.zp / A.BANDS.HA.zp })
+            : null;
+        let hours = hoursBroad;
+        if (set === 'Ha') hours = hoursHa;
+        else if (hoursHa !== null && hoursBroad !== null) hours = Math.min(hoursBroad, hoursHa);
+        const useHa = hoursHa !== null && hours === hoursHa;
         const reasons = [];
         const minHours = Number(s.imaging.minHours) || 1.5;
         const maxInt = Number(s.imaging.maxIntegration) || 12;
@@ -182,11 +208,13 @@
         else if (frame.kind === 'tiny') reasons.push({ level: 'bad', text: `Very small (${fmt(o.maj * 60, 0)}″): a few dozen pixels at ${fmt(optics.scale, 2)}″/px` });
         else if (frame.kind === 'small') reasons.push({ level: 'info', text: `Small (${fmt(o.maj, 1)}′): needs good seeing; consider a crop` });
         else if (frame.kind === 'fits') reasons.push({ level: 'good', text: `Fits the field, spanning ${Math.round(frame.fill * 100)}% of the long side` });
-        if (starry) reasons.push({ level: 'good', text: 'Star cluster: short integrations work well' });
+        if (set === 'Ha' && eta === 0) reasons.push({ level: 'bad', text: 'Little H-alpha emission: not an H-alpha target' });
+        else if (starry) reasons.push({ level: 'good', text: 'Star cluster: short integrations work well' });
         else if (hours === null) reasons.push({ level: 'warn', text: 'No brightness data; integration unknown' });
         else if (hours > maxInt * 2) reasons.push({ level: 'bad', text: `Needs ≈${fmt(hours, 0)} h at tonight's sky (${fmt(cond.sky, 1)} mag/″²); limit ${maxInt} h` });
         else if (hours > maxInt) reasons.push({ level: 'warn', text: `Needs ≈${fmt(hours, 0)} h at tonight's sky: a multi-night project` });
-        else reasons.push({ level: 'good', text: `≈${hours < 1 ? `${Math.max(5, Math.round(hours * 60))} min` : `${fmt(hours, 1)} h`} for a clean image at tonight's sky` });
+        else reasons.push({ level: 'good', text: `≈${hours < 1 ? `${Math.max(5, Math.round(hours * 60))} min` : `${fmt(hours, 1)} h`} ${useHa ? 'of H-alpha' : ''} for a clean image at tonight's sky` });
+        if (useHa && hoursBroad !== null && hoursBroad > hours * 1.5) reasons.push({ level: 'info', text: `H-alpha beats luminance tonight (≈${fmt(hoursBroad, 1)} h in L)` });
         if (cond.moonAlt > 0 && cond.moonSep < 35) reasons.push({ level: cond.moonSep < 20 ? 'warn' : 'info', text: `Moon ${Math.round(cond.moonSep)}° away (${Math.round(grid.moonPhase.fraction * 100)}% lit)` });
         if (o.custom) reasons.push({ level: 'info', text: 'Custom target' });
         const verdict = reasons.some(r => r.level === 'bad') ? 'skip' : reasons.some(r => r.level === 'warn') ? 'marginal' : 'go';
@@ -198,7 +226,7 @@
         const fame = (o.messier ? 1.25 : 1) * (o.name ? 1.1 : 1);
         const score = (0.3 * signalScore + 0.25 * sizeScore + 0.2 * timeScore + 0.15 * altScore + 0.1 * moonScore) * fame * { go: 1, marginal: 0.55, skip: 0.1 }[verdict];
         return {
-            id: o.key, o, trk, window: iv, peak, best, cond, frame, mu, hours, subL, subRGB, reasons, verdict, score
+            id: o.key, o, trk, window: iv, peak, best, cond, frame, mu, hours, hoursBroad, hoursHa, useHa, eta, subL, subRGB, subHa, reasons, verdict, score
         };
     }
 
@@ -328,9 +356,15 @@
         const s = state.settings;
         const hours = Math.max(0, r.best);
         const overhead = (s.rig.overhead || 3) + 2; // download + dither settle, averaged
-        const lSeconds = hours * 3600 * 0.5;
-        const cSeconds = hours * 3600 * 0.5 / 3;
+        const set = filterSet();
+        const ha = r.eta > 0 && set !== 'LRGB';
+        // Time split: Ha only -> all H-alpha; HaRGB -> 60% Ha + RGB; HaLRGB -> 40% Ha, 30% L, 30% RGB.
+        const share = !ha ? { Ha: 0, L: 0.5, C: 0.5 } : set === 'Ha' ? { Ha: 1, L: 0, C: 0 } : set === 'HaRGB' ? { Ha: 0.6, L: 0, C: 0.4 } : { Ha: 0.4, L: 0.3, C: 0.3 };
+        const lSeconds = hours * 3600 * share.L;
+        const cSeconds = hours * 3600 * share.C / 3;
+        const haSeconds = hours * 3600 * share.Ha;
         return [
+            { filter: 'Ha', sub: r.subHa, count: Math.floor(haSeconds / (r.subHa + overhead)) },
             { filter: 'L', sub: r.subL, count: Math.floor(lSeconds / (r.subL + overhead)) },
             { filter: 'R', sub: r.subRGB, count: Math.floor(cSeconds / (r.subRGB + overhead)) },
             { filter: 'G', sub: r.subRGB, count: Math.floor(cSeconds / (r.subRGB + overhead)) },
@@ -387,7 +421,7 @@
                 <h3>Exposure plan</h3>
                 <div class="mini-grid">
                     <div class="stat"><div class="label">L sub</div><div class="value">${r.subL} s</div><div class="sub">sky-limited</div></div>
-                    <div class="stat"><div class="label">RGB sub</div><div class="value">${r.subRGB} s</div><div class="sub">each filter</div></div>
+                    <div class="stat"><div class="label">${r.eta > 0 && filterSet() !== 'LRGB' ? 'H-alpha sub' : 'RGB sub'}</div><div class="value">${r.eta > 0 && filterSet() !== 'LRGB' ? r.subHa : r.subRGB} s</div><div class="sub">${r.eta > 0 && filterSet() !== 'LRGB' ? '7 nm, guiding-limited' : 'each filter'}</div></div>
                     <div class="stat"><div class="label">Needed</div><div class="value">${integrationText(r)}</div><div class="sub">S/N 30 per 2″</div></div>
                 </div>
                 <table class="data" style="margin-top: 12px;">
@@ -604,6 +638,12 @@
         $('show-marginal').addEventListener('change', e => { state.showMarginal = e.target.checked; renderList(); });
         $('show-rejected').addEventListener('change', e => { state.showRejected = e.target.checked; renderList(); });
         $('sort').addEventListener('change', e => { state.sort = e.target.value; renderList(); });
+        $('filter-set').value = filterSet();
+        $('filter-set').addEventListener('change', e => {
+            state.settings.imaging.filterSet = e.target.value;
+            NV.save(state.settings);
+            recompute();
+        });
         let timer;
         $('search').addEventListener('input', e => { clearTimeout(timer); timer = setTimeout(() => { state.search = e.target.value.trim(); state.limit = PAGE_SIZE; renderList(); }, 150); });
         $('show-more').addEventListener('click', () => { state.limit += PAGE_SIZE; renderList(); });

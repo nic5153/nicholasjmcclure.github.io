@@ -84,6 +84,12 @@
                     <div class="right">
                         <label class="check"><input type="checkbox" id="show-marginal" checked> Marginal</label>
                         <label class="check"><input type="checkbox" id="show-rejected"> Rejected</label>
+                        <select class="input" id="filter-set" style="width: 150px;" aria-label="Filters">
+                            <option value="LRGB">Filters: LRGB</option>
+                            <option value="HaLRGB">Filters: Ha + LRGB</option>
+                            <option value="HaRGB">Filters: Ha + RGB</option>
+                            <option value="Ha">Filters: Ha only</option>
+                        </select>
                         <select class="input" id="sort" style="width: 160px;" aria-label="Sort">
                             <option value="score">Sort: best first</option>
                             <option value="transit">Sort: highest first</option>

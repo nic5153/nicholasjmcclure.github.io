@@ -61,7 +61,7 @@
                 saturationFraction: 0.7, redNoise: 0.0006
             },
             criteria: { baseline: 30, goSnr: 10, marginalSnr: 5 },
-            imaging: { darkLimit: -18, minHours: 1.5, maxSub: 180, swamp: 10, readNoise: 2.74, maxIntegration: 12 },
+            imaging: { filterSet: 'LRGB', darkLimit: -18, minHours: 1.5, maxSub: 180, swamp: 10, readNoise: 2.74, maxIntegration: 12 },
             cloud: { endpoint: 'https://observing-vault.nic5153mcclure.workers.dev' }
         };
     }
