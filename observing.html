@@ -113,7 +113,7 @@
                                 <th>Framing</th>
                                 <th class="num hide-sm">Mag</th>
                                 <th class="num hide-md">Moon</th>
-                                <th class="num" title="Luminance integration for S/N 30 per 2x2 arcsec at the mean surface brightness, under tonight's sky">Integration</th>
+                                <th class="num" title="Integration (luminance, or H-alpha when that is faster) for S/N 30 per 2x2 arcsec at the mean surface brightness, under tonight's sky">Integration</th>
                                 <th>Verdict</th>
                             </tr>
                         </thead>
@@ -190,6 +190,7 @@
                         <ul>
                             <li>Sub-exposures are sky-limited: long enough that sky noise swamps read noise (sky &ge; swamp factor &times; RN&sup2;), capped by your guiding limit. RGB subs are longer than luminance because each colour filter passes about a third of the sky light.</li>
                             <li>Tonight's time is split roughly half luminance and half RGB; dither every few frames.</li>
+                            <li><strong>H-alpha.</strong> With an H-alpha filter set, emission nebulae and supernova remnants are assumed to emit about 40% of their broadband light in H-alpha + [N II] (planetaries 25%). Reflection nebulae, galaxies and clusters get no H-alpha benefit. The filter keeps that line light but passes only bandwidth/300 of the sky and moonlight (set the bandwidth in Setup), so H-alpha subs are much longer and the Moon matters far less. Time splits: H-alpha + RGB 60/40, H-alpha + LRGB 40/30/30.</li>
                         </ul>
                         <h3>Sources</h3>
                         <ul>

@@ -159,7 +159,7 @@
     /**
      * Fraction of an object's luminance-band light emitted in H-alpha (+[N II]) - a planning approximation.
      * HII regions and SNRs are line-dominated; planetaries are brighter in [O III]; reflection nebulae,
-     * clusters and galaxies are continuum sources that a 7 nm filter mostly rejects.
+     * clusters and galaxies are continuum sources that a narrowband filter mostly rejects.
      */
     function haFraction(o) {
         const t = o.type.toLowerCase();
@@ -187,12 +187,12 @@
         const hoursBroad = starry ? 0.5 : mu ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'L', snr: 30, element: 4 }) : null;
         const subL = subExposure(cond.sky, 'L');
         const subRGB = subExposure(cond.sky, 'G');
-        // H-alpha: same object light concentrated in 7 nm, sky and moonlight cut by the bandwidth.
+        // H-alpha: the object's line light is kept, sky and moonlight are cut by the filter bandwidth.
         const set = filterSet();
         const eta = haFraction(o);
         const subHa = subExposure(cond.sky, 'HA');
         const hoursHa = set !== 'LRGB' && eta > 0 && mu
-            ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'HA', snr: 30, element: 4, objectScale: eta * A.BANDS.L.zp / A.BANDS.HA.zp })
+            ? A.hoursForSurfaceBrightness({ rig: imagingRig(), mu, sky: cond.sky, filter: 'HA', snr: 30, element: 4, objectScale: eta * A.BANDS.L.zp / A.band('HA', imagingRig()).zp })
             : null;
         let hours = hoursBroad;
         if (set === 'Ha') hours = hoursHa;
@@ -421,7 +421,7 @@
                 <h3>Exposure plan</h3>
                 <div class="mini-grid">
                     <div class="stat"><div class="label">L sub</div><div class="value">${r.subL} s</div><div class="sub">sky-limited</div></div>
-                    <div class="stat"><div class="label">${r.eta > 0 && filterSet() !== 'LRGB' ? 'H-alpha sub' : 'RGB sub'}</div><div class="value">${r.eta > 0 && filterSet() !== 'LRGB' ? r.subHa : r.subRGB} s</div><div class="sub">${r.eta > 0 && filterSet() !== 'LRGB' ? '7 nm, guiding-limited' : 'each filter'}</div></div>
+                    <div class="stat"><div class="label">${r.eta > 0 && filterSet() !== 'LRGB' ? 'H-alpha sub' : 'RGB sub'}</div><div class="value">${r.eta > 0 && filterSet() !== 'LRGB' ? r.subHa : r.subRGB} s</div><div class="sub">${r.eta > 0 && filterSet() !== 'LRGB' ? `${state.settings.rig.haBandwidth || 12} nm` : 'each filter'}</div></div>
                     <div class="stat"><div class="label">Needed</div><div class="value">${integrationText(r)}</div><div class="sub">S/N 30 per 2″</div></div>
                 </div>
                 <table class="data" style="margin-top: 12px;">

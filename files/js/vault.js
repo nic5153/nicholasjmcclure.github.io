@@ -52,7 +52,7 @@
             name: rig.name,
             telescope: rig.telescope || preset.telescope || rig.name,
             camera: rig.camera || 'Camera',
-            filters: 'LRGB',
+            filters: rig.haFilter ? `LRGB + ${rig.haFilter} (${rig.haBandwidth || 12} nm)` : 'LRGB',
             aperture: rig.aperture,
             nativeFocalLength: rig.focalLength,
             reducer: rig.reducer || 1,
@@ -528,7 +528,9 @@
         const tokens = path.split(/[^a-z0-9]+/).filter(Boolean);
         const hasToken = (...terms) => terms.some(term => tokens.includes(term));
         const defaultKind = fallback === 'Auto' ? 'Unknown' : fallback;
-        const filter = hasToken('l', 'lum', 'luminance')
+        const filter = hasToken('ha', 'halpha', 'hydrogen')
+            ? 'Ha'
+            : hasToken('l', 'lum', 'luminance')
             ? 'L'
             : hasToken('r', 'red')
                 ? 'R'
@@ -585,6 +587,7 @@
 
     function normalizeFitsFilter(value, fallback = '') {
         const filter = String(value || fallback || '').trim().toLowerCase();
+        if (/^(h[\s_-]?(a|alpha|α)|hydrogen[\s_-]?alpha)([^a-z]|$)/.test(filter)) return 'Ha';
         if (['l', 'lum', 'luminance', 'clear'].includes(filter)) return 'L';
         if (['r', 'red'].includes(filter)) return 'R';
         if (['g', 'green'].includes(filter)) return 'G';
@@ -593,7 +596,7 @@
     }
 
     function filterFromKind(kind) {
-        const match = String(kind || '').match(/\b([LRGB])$/);
+        const match = String(kind || '').match(/\b(Ha|[LRGB])$/);
         return match ? match[1] : '';
     }
 

@@ -36,7 +36,7 @@
         $('ctx-moon').textContent = `${Math.round(m.fraction * 100)}% ${m.waxing ? 'waxing' : 'waning'}`;
         const parts = [night.moonRise !== null ? `rises ${t(night.moonRise)}` : '', night.moonSet !== null ? `sets ${t(night.moonSet)}` : ''].filter(Boolean);
         $('ctx-moon-sub').textContent = parts.join(' · ') || (m.alt > 0 ? 'up all night' : 'down all night');
-        $('ctx-rig-name').textContent = `${fmt(settings.rig.aperture / 25.4, 0)}" f/${fmt(o.fRatio, 1)} · ${settings.rig.filter}`;
+        $('ctx-rig-name').textContent = `${fmt(settings.rig.aperture / 25.4, 0)}" f/${fmt(o.fRatio, 1)} · ${settings.rig.filter === 'HA' ? 'H-alpha' : settings.rig.filter}`;
         $('ctx-rig-sub').textContent = `${fmt(o.fovW, 0)}′×${fmt(o.fovH, 0)}′ · ${fmt(o.scale, 2)}″/px · RN ${settings.rig.readNoise} e⁻`;
         const notice = $('site-notice');
         if (settings.site.isDefault) {

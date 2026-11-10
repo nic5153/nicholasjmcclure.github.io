@@ -57,7 +57,7 @@
             rig: {
                 preset: DEFAULT_PRESET,
                 ...RIG_PRESETS[DEFAULT_PRESET],
-                filter: 'L', gain: 100, offset: 30, seeing: 3.0, maxDefocus: 20, overhead: 3, minExposure: 1,
+                filter: 'L', haFilter: 'Astromania 1.25" H-alpha', haBandwidth: 12, gain: 100, offset: 30, seeing: 3.0, maxDefocus: 20, overhead: 3, minExposure: 1,
                 saturationFraction: 0.7, redNoise: 0.0006
             },
             criteria: { baseline: 30, goSnr: 10, marginalSnr: 5 },

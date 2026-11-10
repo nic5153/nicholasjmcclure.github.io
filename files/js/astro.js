@@ -404,9 +404,17 @@
         G: { label: 'Green', zp: 0.80e6, k: 0.17 },
         R: { label: 'Red', zp: 0.85e6, k: 0.12 },
         B: { label: 'Blue', zp: 0.85e6, k: 0.25 },
-        // 7 nm H-alpha: passes ~7/300 of the luminance continuum (stars, sky, moonlight).
-        HA: { label: 'H-alpha (7 nm)', zp: 2.8e6 * 7 / 300, k: 0.09 }
+        // H-alpha (default 12 nm; see band()): passes bandwidth/300 of the luminance continuum (stars, sky, moonlight).
+        HA: { label: 'H-alpha (12 nm)', zp: 2.8e6 * 12 / 300, k: 0.09 }
     };
+
+    /** Band for a filter, with the H-alpha zero point scaled by the rig's filter bandwidth (rig.haBandwidth, nm). */
+    function band(filter, rig) {
+        const b = BANDS[filter] || BANDS.L;
+        const bw = Number(rig?.haBandwidth);
+        if (filter !== 'HA' || !(bw > 0)) return b;
+        return { ...b, label: `H-alpha (${bw} nm)`, zp: BANDS.L.zp * bw / 300 };
+    }
 
     /** Derived optics of a rig profile. */
     function optics(rig) {
@@ -472,10 +480,10 @@
      */
     function photometryPlan({ rig, mag, magFaint = mag, X = 1.2, sky = 19.5, tMax = 60, galLat = 30, elevation = 1000 }) {
         const o = optics(rig);
-        const band = BANDS[rig.filter] || BANDS.L;
+        const b = band(rig.filter, rig);
         const tau = rig.throughput;
-        const rate = m => band.zp * Math.pow(10, -0.4 * (m + band.k * X)) * o.area * tau; // e-/s
-        const skyPix = band.zp * Math.pow(10, -0.4 * sky) * o.area * tau * o.scale * o.scale; // e-/s/px
+        const rate = m => b.zp * Math.pow(10, -0.4 * (m + b.k * X)) * o.area * tau; // e-/s
+        const skyPix = b.zp * Math.pow(10, -0.4 * sky) * o.area * tau * o.scale * o.scale; // e-/s/px
         const fullWell = rig.fullWell * (rig.saturationFraction || 0.7);
         const tMin = rig.minExposure || 1;
         const seeing = Math.max(rig.seeing, 1.2 * o.scale);
@@ -550,8 +558,7 @@
     /** Sky-limited sub-exposure (Glover criterion: sky >= swamp * RN^2) for imaging. */
     function skyLimitedSub({ rig, sky, filter = rig.filter, swamp = 10 }) {
         const o = optics(rig);
-        const band = BANDS[filter] || BANDS.L;
-        const skyPix = band.zp * Math.pow(10, -0.4 * sky) * o.area * rig.throughput * o.scale * o.scale;
+        const skyPix = band(filter, rig).zp * Math.pow(10, -0.4 * sky) * o.area * rig.throughput * o.scale * o.scale;
         return { seconds: swamp * rig.readNoise ** 2 / skyPix, skyPerSecond: skyPix };
     }
 
@@ -559,8 +566,8 @@
     /** objectScale multiplies the object's signal (e.g. emission-line flux concentrated in a narrowband filter). */
     function hoursForSurfaceBrightness({ rig, mu, sky, filter = rig.filter, snr = 10, element = 4, objectScale = 1 }) {
         const o = optics(rig);
-        const band = BANDS[filter] || BANDS.L;
-        const perArcsec = m => band.zp * Math.pow(10, -0.4 * m) * o.area * rig.throughput; // e-/s/arcsec^2
+        const zp = band(filter, rig).zp;
+        const perArcsec = m => zp * Math.pow(10, -0.4 * m) * o.area * rig.throughput; // e-/s/arcsec^2
         const s = perArcsec(mu) * element * objectScale;
         const b = perArcsec(sky) * element;
         // Sky-limited: SNR = s t / sqrt((s + b) t)  ->  t = snr^2 (s + b) / s^2
@@ -568,7 +575,7 @@
     }
 
     global.Astro = {
-        D2R, R2D, J2000, TT_MINUS_UTC_DAYS, BORTLE_SQM, BANDS,
+        D2R, R2D, J2000, TT_MINUS_UTC_DAYS, BORTLE_SQM, BANDS, band,
         sind, cosd, tand, clamp, norm360, norm180,
         jdFromMs, msFromJd, jdFromDate, dateFromJd,
         tzOffsetMinutes, zonedToUtc, zonedDateString, addDays, nightDateNow,

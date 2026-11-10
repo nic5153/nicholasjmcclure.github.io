@@ -914,7 +914,7 @@
                 <p class="xsmall dim" style="margin-top: 6px;">Grey: simulated ${p.exposure}s frames with the predicted scatter; coloured: 5-minute means. Shape is schematic; depth, timing and noise are from the model.</p>
             </div>
             <div class="detail-section">
-                <h3>Exposure plan (${esc(s.rig.filter)} filter)</h3>
+                <h3>Exposure plan (${esc(window.Astro.band(s.rig.filter, s.rig).label)} filter)</h3>
                 <div class="mini-grid">
                     <div class="stat"><div class="label">Exposure</div><div class="value">${p.exposure} s</div><div class="sub">cadence ${fmt(p.cadence, 1)} s</div></div>
                     <div class="stat"><div class="label">Focus</div><div class="value">${p.defocused ? `defocus ${fmt(p.psf, 0)}″` : 'in focus'}</div><div class="sub">aperture r≈${fmt(p.apertureRadius, 1)}″</div></div>

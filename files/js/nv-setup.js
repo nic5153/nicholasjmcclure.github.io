@@ -68,8 +68,11 @@
                     <select class="input" id="f-filter">
                         <option value="L">L (luminance)</option><option value="CLEAR">No filter</option><option value="V">V</option>
                         <option value="G">G</option><option value="R">R</option><option value="B">B</option>
+                        <option value="HA">H-alpha (very bright stars)</option>
                     </select>
                 </label>
+                <label class="field"><span>H-alpha filter</span><input class="input" id="f-ha-name" placeholder='e.g. Astromania 1.25" H-alpha'></label>
+                <label class="field"><span>H-alpha bandwidth (nm)</span><input class="input mono" id="f-ha-bw" type="number" step="0.5" min="1" max="50"><small>FWHM, from the box or ring</small></label>
                 <label class="field"><span>Gain / offset</span><input class="input mono" id="f-gain" placeholder="100 / 30"></label>
                 <label class="field"><span>Typical seeing (")</span><input class="input mono" id="f-seeing" type="number" step="0.1"></label>
                 <label class="field"><span>Max defocus FWHM (")</span><input class="input mono" id="f-defocus" type="number" step="1"></label>
@@ -116,7 +119,7 @@
         'f-sw': ['rig', 'sensorW', Number], 'f-sh': ['rig', 'sensorH', Number], 'f-rn': ['rig', 'readNoise', Number],
         'f-fw': ['rig', 'fullWell', Number], 'f-tau': ['rig', 'throughput', Number], 'f-filter': ['rig', 'filter', String],
         'f-seeing': ['rig', 'seeing', Number], 'f-defocus': ['rig', 'maxDefocus', Number], 'f-overhead': ['rig', 'overhead', Number],
-        'f-minexp': ['rig', 'minExposure', Number],
+        'f-minexp': ['rig', 'minExposure', Number], 'f-ha-name': ['rig', 'haFilter', String], 'f-ha-bw': ['rig', 'haBandwidth', Number],
         'f-baseline': ['criteria', 'baseline', Number], 'f-go': ['criteria', 'goSnr', Number], 'f-marginal': ['criteria', 'marginalSnr', Number],
         'f-img-dark': ['imaging', 'darkLimit', Number], 'f-img-hours': ['imaging', 'minHours', Number], 'f-img-maxsub': ['imaging', 'maxSub', Number],
         'f-img-swamp': ['imaging', 'swamp', Number], 'f-img-rn': ['imaging', 'readNoise', Number], 'f-img-maxint': ['imaging', 'maxIntegration', Number]
